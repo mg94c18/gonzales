@@ -1,4 +1,4 @@
-package org.mg94c18.alanford;
+package org.mg94c18.gonzales;
 
 import android.content.Context;
 import android.content.res.AssetManager;
@@ -22,8 +22,8 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
-import static org.mg94c18.alanford.Logger.LOG_V;
-import static org.mg94c18.alanford.Logger.TAG;
+import static org.mg94c18.gonzales.Logger.LOG_V;
+import static org.mg94c18.gonzales.Logger.TAG;
 
 public final class AssetLoader {
     public static final String TITLES = "titles";

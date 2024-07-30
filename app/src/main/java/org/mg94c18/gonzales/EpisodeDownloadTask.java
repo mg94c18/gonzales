@@ -1,4 +1,4 @@
-package org.mg94c18.alanford;
+package org.mg94c18.gonzales;
 
 import android.app.Activity;
 import android.content.Context;
@@ -9,8 +9,8 @@ import android.util.Log;
 import android.view.WindowManager;
 import android.widget.Toast;
 
-import static org.mg94c18.alanford.Logger.LOG_V;
-import static org.mg94c18.alanford.Logger.TAG;
+import static org.mg94c18.gonzales.Logger.LOG_V;
+import static org.mg94c18.gonzales.Logger.TAG;
 
 import java.io.File;
 import java.io.FilenameFilter;

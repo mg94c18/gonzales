@@ -1,4 +1,4 @@
-package org.mg94c18.alanford;
+package org.mg94c18.gonzales;
 
 import android.app.AlertDialog;
 import android.app.SearchManager;
@@ -55,8 +55,8 @@ import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import static org.mg94c18.alanford.Logger.LOG_V;
-import static org.mg94c18.alanford.Logger.TAG;
+import static org.mg94c18.gonzales.Logger.LOG_V;
+import static org.mg94c18.gonzales.Logger.TAG;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -145,16 +145,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     public static SharedPreferences getSharedPreferences(@NonNull Context context) {
         SharedPreferences prefs = context.getSharedPreferences(SHARED_PREFS_NAME, MODE_PRIVATE);
         if (!prefs.contains(MIGRATION_ID)) {
-            String episodeId = prefs.getString(EPISODE_NUMBER, null);
-            if (episodeId != null) {
-                Map<String, String> migrationMap = EpisodeIdMigration.getMigrationMap();
-                String newValue = migrationMap.get(episodeId);
-                if (newValue != null) {
-                    prefs.edit().putString(EPISODE_NUMBER, newValue).apply();
-                    Log.i(TAG, "Migrated from " + episodeId + " to " + newValue);
-                }
-            }
-            prefs.edit().putInt(MIGRATION_ID, 1).apply();
         }
         return prefs;
     }

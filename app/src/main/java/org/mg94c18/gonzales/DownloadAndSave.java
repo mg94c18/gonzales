@@ -1,4 +1,4 @@
-package org.mg94c18.alanford;
+package org.mg94c18.gonzales;
 
 import android.graphics.Bitmap;
 import android.os.Build;
@@ -33,8 +33,8 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
-import static org.mg94c18.alanford.Logger.LOG_V;
-import static org.mg94c18.alanford.Logger.TAG;
+import static org.mg94c18.gonzales.Logger.LOG_V;
+import static org.mg94c18.gonzales.Logger.TAG;
 
 public class DownloadAndSave {
     private static final String TMP_SUFFIX = ".tmp";

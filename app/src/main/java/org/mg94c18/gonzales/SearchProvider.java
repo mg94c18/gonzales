@@ -1,4 +1,4 @@
-package org.mg94c18.alanford;
+package org.mg94c18.gonzales;
 
 import android.app.SearchManager;
 import android.content.ContentProvider;
@@ -18,7 +18,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.mg94c18.alanford.Logger.LOG_V;
+import static org.mg94c18.gonzales.Logger.LOG_V;
 
 public class SearchProvider extends ContentProvider {
     public static List<String> TITLES = Collections.emptyList();

@@ -1,4 +1,4 @@
-package org.mg94c18.alanford;
+package org.mg94c18.gonzales;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -11,7 +11,7 @@ import android.util.Log;
 
 import java.io.File;
 
-import static org.mg94c18.alanford.Logger.TAG;
+import static org.mg94c18.gonzales.Logger.TAG;
 
 public class ExternalStorageHelper {
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
