@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -29,6 +30,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatDelegate;
 import android.support.v7.widget.AppCompatImageView;
+import android.support.v7.widget.AppCompatTextView;
 import android.text.InputType;
 import android.util.Log;
 import android.util.Pair;
@@ -977,7 +979,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     iterator.remove();
                     continue;
                 }
-                f.updateScaleFromPrefs(context);
             }
         }
 
@@ -1055,10 +1056,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 if (BuildConfig.DEBUG) { LOG_V("onCreateView(" + filename + ")"); }
 
                 View pageView = inflater.inflate(R.layout.image, container, false);
-                AppCompatImageView imageView = pageView.findViewById(R.id.imageView);
+                AppCompatTextView imageView = pageView.findViewById(R.id.original);
                 ProgressBar progressBar = pageView.findViewById(R.id.progressBar);
                 imageView.setTag(progressBar);
-                updateScaleFromPrefs(getContext(), imageView);
                 pageView.setOnTouchListener(this);
 
                 loadTask = new MyLoadTask(getContext(), episodeId, link, filename, imageView);
@@ -1088,7 +1088,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 if (loadTask == null) {
                     return true;
                 }
-                ImageView view = loadTask.getImageView();
+                View view = loadTask.getImageView();
                 if (view == null) {
                     return true;
                 }
@@ -1106,13 +1106,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                         .putFloat(getScaleKey(SCALE_Y), scaleY)
                         .apply();
 
-                updateScaleFromPrefs(context, view);
                 scaleCachedFragments(context);
                 return true;
-            }
-
-            public void updateScaleFromPrefs(Context context) {
-                updateScaleFromPrefs(context, loadTask != null ? loadTask.getImageView() : null);
             }
 
             private String getScaleKey(String axis) {
@@ -1121,33 +1116,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     key = key + ".0";
                 }
                 return key;
-            }
-
-            private void updateScaleFromPrefs(Context context, @Nullable ImageView imageView) {
-                if (imageView == null) {
-                    return;
-                }
-                if (getAutoZoomFromSharedPrefs(context)) {
-                    Log.i(TAG, "auto zoom: ON");
-                    imageView.setScaleType(ImageView.ScaleType.FIT_XY);
-
-                    imageView.setScaleX(1.0f);
-                    imageView.setScaleY(1.0f);
-                } else {
-                    Log.i(TAG, "auto zoom: OFF");
-                    imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-
-                    SharedPreferences preferences = getSharedPreferences(context);
-                    mScaleX = preferences.getFloat(getScaleKey(SCALE_X), 1.0f);
-                    mScaleY = preferences.getFloat(getScaleKey(SCALE_Y), 1.0f);
-                    if (Float.compare(mScaleX, imageView.getScaleX()) == 0 && Float.compare(mScaleY, imageView.getScaleY()) == 0) {
-                        return;
-                    }
-
-                    imageView.setScaleX(mScaleX);
-                    imageView.setScaleY(mScaleY);
-                }
-                imageView.invalidate();
             }
 
             private static float calculateScale(float scale, float scaleFactor, float currentSpan, float scaleMax) {
@@ -1178,14 +1146,14 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
             private static class MyLoadTask extends AsyncTask<Void, Void, Bitmap> {
                 String imageFile;
-                WeakReference<ImageView> imageView;
+                WeakReference<TextView> imageView;
                 String link;
                 WeakReference<Context> contextRef;
                 String episodeId;
                 int destinationViewWidth;
                 int destinationViewHeight;
 
-                MyLoadTask(Context context, String episodeId, String link, String imageFile, ImageView imageView) {
+                MyLoadTask(Context context, String episodeId, String link, String imageFile, TextView imageView) {
                     this.imageFile = imageFile;
                     this.link = link;
                     this.contextRef = new WeakReference<>(context);
@@ -1246,7 +1214,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                         return savedBitmap;
                     }
 
-                    ImageView destinationView = imageView.get();
+                    View destinationView = imageView.get();
                     if (destinationView == null) {
                         return null;
                     }
@@ -1263,26 +1231,28 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     }
                 }
 
-                private synchronized ImageView getImageView() {
+                private synchronized View getImageView() {
                     return imageView.get();
                 }
 
                 @Override
                 protected void onPostExecute(Bitmap bitmap) {
-                    ImageView view = getImageView();
+                    View view = getImageView();
                     ProgressBar progressBar = view != null ? (ProgressBar) view.getTag() : null;
                     try {
                         if (BuildConfig.DEBUG) { LOG_V("onPostExecute(" + imageFile + ")"); }
                         if (bitmap == null && !isCancelled()) {
                             Context context = contextRef.get();
                             if (view != null && context != null && internetNotAvailable(context)) {
-                                view.setImageResource(R.drawable.internet_problem);
+                                // view.setImageResource(R.drawable.internet_problem);
                             }
                             return;
                         }
                         if (view != null) {
                             if (BuildConfig.DEBUG) { LOG_V("Loading into ImageView(" + imageFile + ")"); }
-                            view.setImageBitmap(bitmap);
+                            // view.setImageBitmap(bitmap);
+                            view.setBackgroundColor(Color.RED);
+                            ((TextView) view).setText("Hello, World!");
                         }
                     } finally {
                         if (progressBar != null) {

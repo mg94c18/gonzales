@@ -10,11 +10,27 @@
     android:id="@+id/progressBar"
     style="@android:style/Widget.ProgressBar.Small"
     android:layout_gravity="center"/>
-    
-<android.support.v7.widget.AppCompatImageView
-    android:id="@+id/imageView"
-    android:layout_height="match_parent"
-    android:layout_width="match_parent">
 
-</android.support.v7.widget.AppCompatImageView>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+    <TextView
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:id="@+id/original">
+    </TextView>
+    <TextView
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:id="@+id/bukvalno">
+    </TextView>
+    <TextView
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:id="@+id/prevod">
+    </TextView>
+    </LinearLayout>
 </FrameLayout>
