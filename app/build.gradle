@@ -1,0 +1,92 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 33
+    defaultConfig {
+        applicationId 'org.mg94c18'
+        minSdkVersion 15
+        targetSdkVersion 33
+        versionCode 314159266 // izgleda da je 32-bit integer pa ne ne dopušta više decimala
+        versionName "3.14159266" // Kada menjam ovo, treba da promenim i apk_assets_time!
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    flavorDimensions "strip"
+    productFlavors {
+        martiMisterija {
+            dimension "strip"
+            applicationIdSuffix ".martimisterija"
+        }
+        alanFord {
+            dimension "strip"
+            applicationIdSuffix ".alanford"
+        }
+        strip82 {
+            dimension "strip"
+            applicationIdSuffix ".strip82"
+        }
+        zagor {
+            dimension "strip"
+            applicationIdSuffix ".zagor"
+        }
+        nathanNever {
+            dimension "strip"
+            applicationIdSuffix ".nathannever"
+        }
+        druzinaOdVjesala {
+            dimension "strip"
+            applicationIdSuffix ".druzinaodvjesala"
+        }
+        komandantMark {
+            dimension "strip"
+            applicationIdSuffix ".komandantmark"
+        }
+        ninja {
+            dimension "strip"
+            applicationIdSuffix ".ninja"
+        }
+        asterix {
+            dimension "strip"
+            applicationIdSuffix ".asterix"
+        }
+        misterNo {
+            dimension "strip"
+            applicationIdSuffix ".misterno"
+        }
+        dylanDog {
+            dimension "strip"
+            applicationIdSuffix ".dylandog"
+        }
+        texWiller {
+            dimension "strip"
+            applicationIdSuffix ".texwiller"
+        }
+        talicniTom {
+            dimension "strip"
+            applicationIdSuffix ".talicnitom"
+        }
+        blek {
+            dimension "strip"
+            applicationIdSuffix ".blek"
+        }
+        otkriceSveta {
+            dimension "strip"
+            applicationIdSuffix ".otkricesveta"
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    //noinspection GradleCompatible (actually upselling AndroidX, so let's skip it)
+    implementation 'com.android.support:appcompat-v7:26.1.0'
+    implementation 'com.android.support.constraint:constraint-layout:1.0.2'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.1'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
+}
