@@ -29,8 +29,6 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatDelegate;
-import android.support.v7.widget.AppCompatImageView;
-import android.support.v7.widget.AppCompatTextView;
 import android.text.InputType;
 import android.util.Log;
 import android.util.Pair;
@@ -44,11 +42,11 @@ import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.webkit.WebView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.SearchView;
@@ -1046,7 +1044,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 if (BuildConfig.DEBUG) { LOG_V("onCreateView(" + filename + ")"); }
 
                 View pageView = inflater.inflate(R.layout.image, container, false);
-                AppCompatTextView imageView = pageView.findViewById(R.id.original);
+                WebView imageView = pageView.findViewById(R.id.original);
                 ProgressBar progressBar = pageView.findViewById(R.id.progressBar);
                 imageView.setTag(progressBar);
                 pageView.setOnTouchListener(this);
@@ -1136,14 +1134,14 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
             private static class MyLoadTask extends AsyncTask<Void, Void, Bitmap> {
                 String imageFile;
-                WeakReference<TextView> imageView;
+                WeakReference<WebView> imageView;
                 String link;
                 WeakReference<Context> contextRef;
                 String episodeId;
                 int destinationViewWidth;
                 int destinationViewHeight;
 
-                MyLoadTask(Context context, String episodeId, String link, String imageFile, TextView imageView) {
+                MyLoadTask(Context context, String episodeId, String link, String imageFile, WebView imageView) {
                     this.imageFile = imageFile;
                     this.link = link;
                     this.contextRef = new WeakReference<>(context);
@@ -1241,8 +1239,29 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                         if (view != null) {
                             if (BuildConfig.DEBUG) { LOG_V("Loading into ImageView(" + imageFile + ")"); }
                             // view.setImageBitmap(bitmap);
-                            view.setBackgroundColor(Color.RED);
-                            ((TextView) view).setText("Hello, World!");
+                            // view.setBackgroundColor(Color.RED);
+                            ((WebView) view).loadData("<html><head></head><body><p>...<br>\n" +
+                                    "abvgd đežzij klǉmnǌ oprstć ufh cčǆšab<br>\n" +
+                                    "vgd đež zij klǉmnǌop rst ćufh sčǆšabvg<br>\n" +
+                                    "dđežzijklǉ mnǌ oprs tćufhc čǆš<br>\n" +
+                                    "ab abvgdđežzijklǉ.<br>\n" +
+                                    "...<br>\n" +
+                                    "ABV GDĐ EŽZIJK<br>\n" +
+                                    "LǈMNǋ O PRSTĆU FH<br>\n" +
+                                    "CČǅŠABV GDĐEŽZIJKLǈMNǋ!<br>\n" +
+                                    "...<br>\n" +
+                                    "Abvgd Đežzij<br>\n" +
+                                    "Kl<em>lj</em>mn<em>nj</em>oprstćufh<br>\n" +
+                                    "Sč<em>dž</em>šab Vgd Đežzijk<br>\n" +
+                                    "Abvgdđežzijkl<em>lj</em>.<br>\n" +
+                                    "...<br>\n" +
+                                    "Abvgd Đežzij<br>\n" +
+                                    "Klljmnnjoprstćufh<br>\n" +
+                                    "Cčdžšab Vgd Đežzijk<br>\n" +
+                                    "llj mnnjoprstć ufhcč<br>\n" +
+                                    "džšab vgd đež zijk<br>\n" +
+                                    "lljmnnjopr stćufhc...<br>\n", "text/html", "UTF-8");
+                            ((WebView) view).getSettings().setTextZoom(150);
                         }
                     } finally {
                         if (progressBar != null) {
