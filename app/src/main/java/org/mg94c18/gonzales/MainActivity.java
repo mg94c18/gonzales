@@ -1045,6 +1045,11 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
                 View pageView = inflater.inflate(R.layout.image, container, false);
                 WebView imageView = pageView.findViewById(R.id.original);
+
+                // TODO: ovo u zavisnosti od orijentacije i da li prikazuje bukvalno ili prevod
+                pageView.findViewById(R.id.bukvalno).setVisibility(View.GONE);
+                pageView.findViewById(R.id.prevod).setVisibility(View.GONE);
+
                 ProgressBar progressBar = pageView.findViewById(R.id.progressBar);
                 imageView.setTag(progressBar);
                 pageView.setOnTouchListener(this);
@@ -1232,7 +1237,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                         if (bitmap == null && !isCancelled()) {
                             Context context = contextRef.get();
                             if (view != null && context != null && internetNotAvailable(context)) {
-                                // view.setImageResource(R.drawable.internet_problem);
+                                ((WebView) view).loadData("<html><head></head><body><p>Internet Problem</p></body></html>", "text/html", "UTF-8");
                             }
                             return;
                         }
@@ -1242,13 +1247,13 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                             // view.setBackgroundColor(Color.RED);
                             ((WebView) view).loadData("<html><head></head><body><p>...<br>\n" +
                                     "abvgd đežzij klǉmnǌ oprstć ufh cčǆšab<br>\n" +
-                                    "vgd đež zij klǉmnǌop rst ćufh sčǆšabvg<br>\n" +
+                                    "vgd đež zij klǉmnǌop rst ćufh sč,ǆ,š,abvg<br>\n" +
                                     "dđežzijklǉ mnǌ oprs tćufhc čǆš<br>\n" +
                                     "ab abvgdđežzijklǉ.<br>\n" +
                                     "...<br>\n" +
                                     "ABV GDĐ EŽZIJK<br>\n" +
                                     "LǈMNǋ O PRSTĆU FH<br>\n" +
-                                    "CČǅŠABV GDĐEŽZIJKLǈMNǋ!<br>\n" +
+                                    "CČ,ǅ,Š,ABV GDĐEŽZIJKLǈMNǋ!<br>\n" +
                                     "...<br>\n" +
                                     "Abvgd Đežzij<br>\n" +
                                     "Kl<em>lj</em>mn<em>nj</em>oprstćufh<br>\n" +
@@ -1260,7 +1265,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                                     "Cčdžšab Vgd Đežzijk<br>\n" +
                                     "llj mnnjoprstć ufhcč<br>\n" +
                                     "džšab vgd đež zijk<br>\n" +
-                                    "lljmnnjopr stćufhc...<br>\n", "text/html", "UTF-8");
+                                    "llj mnnjopr stćufhc...<br>\n", "text/html", "UTF-8");
+                            // TODO: da li ovo ugasi zoom?
                             ((WebView) view).getSettings().setTextZoom(150);
                         }
                     } finally {
