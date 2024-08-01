@@ -4,9 +4,6 @@
     <item android:id="@+id/action_email"
         android:title="Pitanja i problemi"
         app:showAsAction="never" />
-    <item android:id="@+id/go_to_page"
-        android:title="Idi na stranu..."
-        app:showAsAction="never"/>
     <item android:id="@+id/action_dark_mode"
         android:title="Dark mode on/off"
         app:showAsAction="never"

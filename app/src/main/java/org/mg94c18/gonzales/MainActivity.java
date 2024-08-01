@@ -29,6 +29,7 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatDelegate;
+import android.support.v7.widget.ContentFrameLayout;
 import android.text.InputType;
 import android.util.Log;
 import android.util.Pair;
@@ -77,8 +78,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private static final String EPISODE_INDEX = "episode";
     private static final String MIGRATION_ID = "migration_id";
     private static final String DRAWER = "drawer";
-    private static final String CURRENT_PAGE_EPISODE = "current_page_episode";
-    private static final String CURRENT_PAGE = "current_page";
     private static final String NIGHT_MODE = "night_mode";
     private static final String AUTO_ZOOM = "auto_zoom";
     private static final String CONTACT_EMAIL = "yckopo@gmail.com";
@@ -87,7 +86,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     static final String INTERNAL_OFFLINE = "offline";
     private static final long BYTES_PER_MB = 1024 * 1024;
 
-    ViewPager viewPager;
     MyPagerAdapter pagerAdapter;
     DrawerLayout drawerLayout;
     ListView drawerList;
@@ -269,8 +267,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         dates = Collections.emptyList();
         numberAndTitle = Collections.emptyList();
 
-        viewPager = findViewById(R.id.pager);
-
         drawerLayout = findViewById(R.id.drawer_layout);
 
         drawerList = findViewById(R.id.navigation);
@@ -305,17 +301,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 if (BuildConfig.DEBUG) { LOG_V("Can't restore drawer instance state"); }
             }
         }
-
-        Pair<Integer, Integer> currentPageAndEpizode = loadSavedCurrentPage(savedInstanceState);
-        if (viewPager.getCurrentItem() == 0 && currentPageAndEpizode != null
-                && currentPageAndEpizode.first != -1
-                && currentPageAndEpizode.second != -1
-                && currentPageAndEpizode.second == selectedEpisode) {
-            if (BuildConfig.DEBUG) { LOG_V("setCurrentItem(" + currentPageAndEpizode.first + ")"); }
-            viewPager.setCurrentItem(currentPageAndEpizode.first);
-        } else {
-            if (BuildConfig.DEBUG) { LOG_V("Can't load current page: " + "getCurrentItem=" + viewPager.getCurrentItem() + ", currentPageAndEpizode=" + currentPageAndEpizode + ", selectedEpisode=" + selectedEpisode); }
-        }
+        pagerAdapter.getItem(0);
+        pagerAdapter.fragment.onCreate(savedInstanceState);
+        pagerAdapter.fragment.onCreateView(this);
     }
 
     private static void startAssetLoadingThread(MainActivity mainActivity) {
@@ -390,19 +378,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         invalidateOptionsMenu();
     }
 
-    Pair<Integer, Integer> loadSavedCurrentPage(Bundle savedInstanceState) {
-        if (savedInstanceState != null
-                && savedInstanceState.containsKey(CURRENT_PAGE)
-                && savedInstanceState.containsKey(CURRENT_PAGE_EPISODE)) {
-            return Pair.create(savedInstanceState.getInt(CURRENT_PAGE), savedInstanceState.getInt(CURRENT_PAGE_EPISODE));
-        }
-        final SharedPreferences preferences = getSharedPreferences();
-        if (preferences.contains(CURRENT_PAGE) && preferences.contains(CURRENT_PAGE_EPISODE)) {
-            return Pair.create(preferences.getInt(CURRENT_PAGE,-1), preferences.getInt(CURRENT_PAGE_EPISODE, -1));
-        }
-        return null;
-    }
-
     @Override
     public void onStop() {
         if (BuildConfig.DEBUG) { LOG_V("onStop"); }
@@ -412,7 +387,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             downloadTask = null;
         }
         dismissAlertDialogs();
-        saveCurrentPage(viewPager.getCurrentItem());
+        if (pagerAdapter != null) {
+            pagerAdapter.fragment.onDestroy();
+            pagerAdapter = null;
+        }
     }
 
     private void dismissAlertDialogs() {
@@ -593,40 +571,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     startActivity(intent);
                 }
                 return true;
-            case R.id.go_to_page:
-                final EditText input = new EditText(this);
-                String content = String.valueOf(viewPager.getCurrentItem() + 2);
-                input.setText(content);
-                input.setOnEditorActionListener(
-                        new TextView.OnEditorActionListener() {
-                            @Override
-                            public boolean onEditorAction(TextView textView, int actionId, KeyEvent keyEvent) {
-                                if (actionId == EditorInfo.IME_ACTION_DONE || (keyEvent != null && keyEvent.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
-                                    String numberString = textView.getText().toString();
-                                    dismissAlertDialogs();
-                                    tryGoingToPage(numberString);
-                                }
-                                return false;
-                            }
-                        });
-                dismissAlertDialogs();
-                input.setInputType(InputType.TYPE_CLASS_NUMBER);
-                input.setSelection(input.length());
-                pagePickerDialog = new AlertDialog.Builder(this)
-                        .setCancelable(true)
-                        .setMessage("Unesite broj strane:")
-                        .setView(input)
-                        .setNegativeButton(android.R.string.cancel, null)
-                        .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                tryGoingToPage(input.getText().toString());
-                            }
-                        })
-                        .create();
-                pagePickerDialog.setCanceledOnTouchOutside(false);
-                pagePickerDialog.show();
-                return true;
             case R.id.search:
                 if (BuildConfig.DEBUG) { LOG_V("Search requested"); }
                 onSearchRequested();
@@ -651,7 +595,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     private void setAutoZoomEnabled(boolean newValue) {
         getSharedPreferences().edit().putBoolean(AUTO_ZOOM, newValue).apply();
-        MyPagerAdapter.scaleCachedFragments(getApplicationContext());
     }
 
     private boolean getNightModeFromSharedPrefs() {
@@ -795,17 +738,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         configureDownloadDialog.setTitle(title);
     }
 
-    private void tryGoingToPage(String numberString) {
-        try {
-            int pagePicked = normalizePageIndex(Integer.parseInt(numberString), viewPager.getAdapter().getCount());
-            if (pagePicked != -1) {
-                viewPager.setCurrentItem(pagePicked);
-            }
-        } catch (NumberFormatException nfe) {
-            Log.wtf("Invalid input", nfe);
-        }
-    }
-
     @Override
     protected void onSaveInstanceState(Bundle instanceState) {
         if (BuildConfig.DEBUG) { LOG_V("onSaveInstanceState"); }
@@ -815,17 +747,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         instanceState.putString(EPISODE_NUMBER, selectedEpisodeNumber);
         instanceState.putParcelable(DRAWER, drawerList.onSaveInstanceState());
 
-        int currentPage = viewPager.getCurrentItem();
-        instanceState.putInt(CURRENT_PAGE, currentPage);
-        instanceState.putInt(CURRENT_PAGE_EPISODE, selectedEpisode);
-        saveCurrentPage(currentPage);
         super.onSaveInstanceState(instanceState);
-    }
-
-    private void saveCurrentPage(int currentPage) {
-        if (BuildConfig.DEBUG) { LOG_V("Saving currentPage=" + currentPage); }
-        SharedPreferences preferences = getSharedPreferences();
-        preferences.edit().putInt(CURRENT_PAGE, currentPage).putInt(CURRENT_PAGE_EPISODE, selectedEpisode).apply();
+        if (pagerAdapter != null) {
+            pagerAdapter.fragment.onSaveInstanceState(instanceState);
+        }
     }
 
     static boolean internetNotAvailable(@NonNull Context context) {
@@ -915,8 +840,15 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             selectedEpisodeNumber = number;
         }
         mySetActionBarTitle(getMyActionBar(), title);
+        if (pagerAdapter != null) {
+            pagerAdapter.fragment.onDestroy();
+            pagerAdapter = null;
+        }
+
         pagerAdapter = new MyPagerAdapter(this, getSupportFragmentManager(), number);
-        viewPager.setAdapter(pagerAdapter);
+        pagerAdapter.getItem(0);
+        pagerAdapter.fragment.onCreate(null);
+        pagerAdapter.fragment.onCreateView(this);
         if (position >= 0) {
             selectedEpisode = position;
             if (BuildConfig.DEBUG) { LOG_V("Saving episode " + selectedEpisode); }
@@ -928,54 +860,31 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
     }
 
-    public static class MyPagerAdapter extends FragmentStatePagerAdapter {
+    public static class MyPagerAdapter {
         List<String> links;
         String episode;
         Context context;
-        private static List<WeakReference<MyFragment>> FRAGMENTS_FOR_SCALING = new ArrayList<>();
+        public MyFragment fragment;
 
         MyPagerAdapter(Context context, FragmentManager fm, String episode) {
-            super(fm);
             links = AssetLoader.loadFromAssetOrUpdate(context, episode, syncIndex);
             this.episode = episode;
             this.context = context;
         }
 
-        @Override
-        public Fragment getItem(int position) {
+        // @Override
+        public void getItem(int position) {
             MyFragment f = new MyFragment();
             Bundle args = new Bundle();
             args.putString(MyFragment.FILENAME, DownloadAndSave.fileNameFromLink(links.get(position), episode, position));
             args.putString(MyFragment.LINK, links.get(position));
             args.putString(MyFragment.EPISODE_ID, episode);
             args.putInt(MyFragment.PAGE_NUMBER, position);
-            cacheFragmentForScaling(f);
-            f.setArguments(args);
-            return f;
+            f.setArguments(args, context);
+            fragment = f;
         }
 
-        private static synchronized void cacheFragmentForScaling(MyFragment f) {
-            FRAGMENTS_FOR_SCALING.add(new WeakReference<>(f));
-        }
-
-        public static synchronized void scaleCachedFragments(Context context) {
-            ListIterator<WeakReference<MyFragment>> iterator = FRAGMENTS_FOR_SCALING.listIterator();
-            while (iterator.hasNext()) {
-                WeakReference<MyFragment> elem = iterator.next();
-                MyFragment f = elem.get();
-                if (f == null) {
-                    iterator.remove();
-                    continue;
-                }
-            }
-        }
-
-        @Override
-        public int getCount() {
-            return links.size();
-        }
-
-        public static class MyFragment extends Fragment implements View.OnTouchListener, ScaleGestureDetector.OnScaleGestureListener {
+        public static class MyFragment implements View.OnTouchListener, ScaleGestureDetector.OnScaleGestureListener {
             public static final String FILENAME = "filename";
             public static final String LINK = "link";
             public static final String EPISODE_ID = "episode";
@@ -988,6 +897,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             private static final float SCALE_MAX_Y = 1.50f;
             private static final float SPAN_THRESHOLD = 100f;
 
+            private Bundle arguments;
+            private Context context;
+
             String episodeId;
             String filename;
             String link;
@@ -997,16 +909,13 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             float mScaleX = 1.0f;
             float mScaleY = 1.0f;
 
-            @Override
+            // @Override
             public void onCreate(Bundle savedInstanceState) {
                 mScaleDetector = new ScaleGestureDetector(getContext(), this);
-                super.onCreate(savedInstanceState);
                 restore();
             }
 
-            @Override
             public void onDestroy() {
-                super.onDestroy();
                 if (BuildConfig.DEBUG) { LOG_V("onDestroy(" + filename + ")"); }
                 if (loadTask != null) {
                     loadTask.cancel(true);
@@ -1023,15 +932,20 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 }
             }
 
-            @Override
-            public void onActivityCreated(Bundle savedInstanceState) {
-                super.onActivityCreated(savedInstanceState);
-                restore();
+            public void setArguments(Bundle arguments, Context context) {
+                this.arguments = arguments;
+                this.context = context;
             }
 
-            @Override
+            private Bundle getArguments() {
+                return arguments;
+            }
+
+            private Context getContext() {
+                return context;
+            }
+
             public void onSaveInstanceState(Bundle outState) {
-                super.onSaveInstanceState(outState);
                 if (outState == null) {
                     return;
                 }
@@ -1039,25 +953,24 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 outState.putString(LINK, link);
             }
 
-            @Override
-            public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle bundle) {
+            // @Override
+            public void onCreateView(MainActivity activity) {
                 if (BuildConfig.DEBUG) { LOG_V("onCreateView(" + filename + ")"); }
 
-                View pageView = inflater.inflate(R.layout.image, container, false);
-                WebView imageView = pageView.findViewById(R.id.original);
+                WebView imageView = activity.findViewById(R.id.original);
 
                 // TODO: ovo u zavisnosti od orijentacije i da li prikazuje bukvalno ili prevod
-                pageView.findViewById(R.id.bukvalno).setVisibility(View.GONE);
-                pageView.findViewById(R.id.prevod).setVisibility(View.GONE);
+                activity.findViewById(R.id.bukvalno).setVisibility(View.GONE);
+                activity.findViewById(R.id.prevod).setVisibility(View.GONE);
 
-                ProgressBar progressBar = pageView.findViewById(R.id.progressBar);
+                imageView.loadData("<html><head><title></title></head><body><p>...</p></body></html>", "text/html", "UTF-8");
+                ProgressBar progressBar = activity.findViewById(R.id.progressBar);
+                progressBar.setVisibility(View.VISIBLE);
                 imageView.setTag(progressBar);
-                pageView.setOnTouchListener(this);
+                imageView.setOnTouchListener(this);
 
-                loadTask = new MyLoadTask(getContext(), episodeId, link, filename, imageView);
+                loadTask = new MyLoadTask(activity, episodeId, link, filename, imageView);
                 loadTask.execute();
-
-                return pageView;
             }
 
             @Override
@@ -1099,7 +1012,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                         .putFloat(getScaleKey(SCALE_Y), scaleY)
                         .apply();
 
-                scaleCachedFragments(context);
                 return true;
             }
 
@@ -1246,28 +1158,30 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                             // view.setImageBitmap(bitmap);
                             // view.setBackgroundColor(Color.RED);
                             ((WebView) view).loadData("<html><head></head><body><p>...<br>\n" +
+                                    "{UTF-8}<br>\n" +
                                     "abvgd đežzij klǉmnǌ oprstć ufh cčǆšab<br>\n" +
-                                    "vgd đež zij klǉmnǌop rst ćufh sč,ǆ,š,abvg<br>\n" +
+                                    "vgd đež zij klǉmnǌop rst ćufh <del>s</del>č,ǆ,š,abvg<br>\n" +
                                     "dđežzijklǉ mnǌ oprs tćufhc čǆš<br>\n" +
                                     "ab abvgdđežzijklǉ.<br>\n" +
                                     "...<br>\n" +
+                                    "{UTF-8}<br>\n" +
                                     "ABV GDĐ EŽZIJK<br>\n" +
                                     "LǈMNǋ O PRSTĆU FH<br>\n" +
                                     "CČ,ǅ,Š,ABV GDĐEŽZIJKLǈMNǋ!<br>\n" +
                                     "...<br>\n" +
-                                    "Abvgd Đežzij<br>\n" +
-                                    "Kl<em>lj</em>mn<em>nj</em>oprstćufh<br>\n" +
-                                    "Sč<em>dž</em>šab Vgd Đežzijk<br>\n" +
-                                    "Abvgdđežzijkl<em>lj</em>.<br>\n" +
+                                    "Abvgd Đe<ins>z</ins>zij<br>\n" +
+                                    "Kl<em>lj</em>mn<em>nj</em>oprst<ins>c</ins>ufh<br>\n" +
+                                    "C<ins>c</ins><em>dž</em><ins>s</ins>ab Vgd <em>Dj</em>e<ins>z</ins>zijk<br>\n" +
+                                    "Abvgd<em>dj</em>ežzijkl<em>lj</em>.<br>\n" +
                                     "...<br>\n" +
                                     "Abvgd Đežzij<br>\n" +
                                     "Klljmnnjoprstćufh<br>\n" +
                                     "Cčdžšab Vgd Đežzijk<br>\n" +
-                                    "llj mnnjoprstć ufhcč<br>\n" +
-                                    "džšab vgd đež zijk<br>\n" +
-                                    "llj mnnjopr stćufhc...<br>\n", "text/html", "UTF-8");
+                                    "Llj Mnnjoprstć Ufhcč<br>\n" +
+                                    "Džšab Vgd Đež Zijk<br>\n" +
+                                    "Llj Mnnjopr Stćufhc...<br>\n", "text/html", "UTF-8");
                             // TODO: da li ovo ugasi zoom?
-                            ((WebView) view).getSettings().setTextZoom(150);
+                            ((WebView) view).getSettings().setTextZoom(125);
                         }
                     } finally {
                         if (progressBar != null) {
