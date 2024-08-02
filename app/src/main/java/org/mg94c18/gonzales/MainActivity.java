@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -19,22 +18,14 @@ import android.os.Environment;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatDelegate;
-import android.support.v7.widget.ContentFrameLayout;
-import android.text.InputType;
 import android.util.Log;
-import android.util.Pair;
-import android.view.KeyEvent;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -42,12 +33,10 @@ import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.EditorInfo;
 import android.webkit.WebView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.SearchView;
@@ -66,7 +55,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Map;
 
@@ -79,7 +67,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private static final String MIGRATION_ID = "migration_id";
     private static final String DRAWER = "drawer";
     private static final String NIGHT_MODE = "night_mode";
-    private static final String AUTO_ZOOM = "auto_zoom";
     private static final String CONTACT_EMAIL = "yckopo@gmail.com";
     private static final String MY_ACTION_VIEW = BuildConfig.APPLICATION_ID + ".VIEW";
     private static final String INTERNET_PROBLEM = "Internet Problem";
@@ -427,7 +414,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         sdCardReady = (ExternalStorageHelper.getExternalCacheDir(this) != null);
         updateDownloadButtons(menu);
         updateDarkModeButtons(menu);
-        updateAutoZoomButtons(menu);
 
         return super.onCreateOptionsMenu(menu);
     }
@@ -439,12 +425,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             menu.findItem(R.id.action_download_internal).setVisible(true);
         }
         menu.findItem(R.id.action_cancel_download).setVisible(false);
-    }
-
-    private void updateAutoZoomButtons(Menu menu) {
-        boolean currentlyEnabled = getAutoZoomFromSharedPrefs(this);
-        menu.findItem(R.id.action_auto_zoom_off).setVisible(currentlyEnabled);
-        menu.findItem(R.id.action_auto_zoom_on).setVisible(!currentlyEnabled);
     }
 
     private void updateDarkModeButtons(Menu menu) {
@@ -580,29 +560,13 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 getSharedPreferences().edit().putBoolean(NIGHT_MODE, newNightMode).apply();
                 recreate();
                 return true;
-            case R.id.action_auto_zoom_on:
-                setAutoZoomEnabled(true);
-                invalidateOptionsMenu();
-                return true;
-            case R.id.action_auto_zoom_off:
-                setAutoZoomEnabled(false);
-                invalidateOptionsMenu();
-                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
 
-    private void setAutoZoomEnabled(boolean newValue) {
-        getSharedPreferences().edit().putBoolean(AUTO_ZOOM, newValue).apply();
-    }
-
     private boolean getNightModeFromSharedPrefs() {
         return getSharedPreferences().getBoolean(NIGHT_MODE, false);
-    }
-
-    private static boolean getAutoZoomFromSharedPrefs(@NonNull Context context) {
-        return getSharedPreferences(context).getBoolean(AUTO_ZOOM, true);
     }
 
     private void updateNightMode() {
@@ -890,15 +854,17 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             public static final String EPISODE_ID = "episode";
             public static final String PAGE_NUMBER = "pageNumber";
             private static final String SCALE_X = "scale_x";
-            private static final String SCALE_Y = "scale_y";
             private static final float DELTA = 0.02f;
             private static final float SCALE_MIN = 1.00f;
-            private static final float SCALE_MAX_X = 1.20f;
-            private static final float SCALE_MAX_Y = 1.50f;
+            private static final int SCALE_MAX_X_INT = 2;
+            private static final float SCALE_MAX_X = SCALE_MAX_X_INT;
+            private static final int DEFAULT_ZOOM = 100;
             private static final float SPAN_THRESHOLD = 100f;
 
             private Bundle arguments;
             private Context context;
+            private WebView imageView;
+            private float scaleFactor;
 
             String episodeId;
             String filename;
@@ -906,8 +872,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             int pageNumber;
             MyLoadTask loadTask;
             ScaleGestureDetector mScaleDetector;
-            float mScaleX = 1.0f;
-            float mScaleY = 1.0f;
+            int originalZoom;
 
             // @Override
             public void onCreate(Bundle savedInstanceState) {
@@ -957,12 +922,15 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             public void onCreateView(MainActivity activity) {
                 if (BuildConfig.DEBUG) { LOG_V("onCreateView(" + filename + ")"); }
 
-                WebView imageView = activity.findViewById(R.id.original);
+                imageView = activity.findViewById(R.id.webview);
+                originalZoom = normalizeZoom(imageView.getSettings().getTextZoom());
 
                 // TODO: ovo u zavisnosti od orijentacije i da li prikazuje bukvalno ili prevod
-                activity.findViewById(R.id.bukvalno).setVisibility(View.GONE);
-                activity.findViewById(R.id.prevod).setVisibility(View.GONE);
+                // activity.findViewById(R.id.bukvalno).setVisibility(View.VISIBLE);
+                // ((WebView) activity.findViewById(R.id.bukvalno)).loadData("<html><head><title></title></head><body><p>1234</p></body></html>", "text/html", "UTF-8");
+                // activity.findViewById(R.id.prevod).setVisibility(View.GONE);
 
+                updateScaleFromPrefs(getContext(), imageView);
                 imageView.loadData("<html><head><title></title></head><body><p>...</p></body></html>", "text/html", "UTF-8");
                 ProgressBar progressBar = activity.findViewById(R.id.progressBar);
                 progressBar.setVisibility(View.VISIBLE);
@@ -973,13 +941,19 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 loadTask.execute();
             }
 
+            private static int normalizeZoom(int currentZoom) {
+                if (currentZoom < DEFAULT_ZOOM || currentZoom > DEFAULT_ZOOM * SCALE_MAX_X_INT) {
+                    Log.wtf(TAG, "Invalid scale: " + currentZoom);
+                    return DEFAULT_ZOOM;
+                } else {
+                    return currentZoom;
+                }
+            }
+
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
-                if (BuildConfig.DEBUG) { LOG_V("Scaling: onTouch"); }
-                if (!getAutoZoomFromSharedPrefs(getContext())) {
-                    mScaleDetector.onTouchEvent(motionEvent);
-                }
-                return true;
+                if (BuildConfig.DEBUG) { LOG_V("onTouch"); }
+                return mScaleDetector.onTouchEvent(motionEvent);
             }
 
             @Override
@@ -991,56 +965,59 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     return false;
                 }
 
-                if (loadTask == null) {
-                    return true;
-                }
-                View view = loadTask.getImageView();
-                if (view == null) {
-                    return true;
-                }
+                WebView view = imageView;
 
-                float scaleX = calculateScale(view.getScaleX(), scaleFactor, scaleGestureDetector.getCurrentSpanX(), SCALE_MAX_X);
-                float scaleY = calculateScale(view.getScaleY(), scaleFactor, scaleGestureDetector.getCurrentSpanY(), SCALE_MAX_Y);
-                if (Float.compare(scaleX, view.getScaleX()) == 0 && Float.compare(scaleY, view.getScaleY()) == 0) {
+                this.scaleFactor = calculateScale(this.scaleFactor, scaleFactor, scaleGestureDetector.getCurrentSpanY(), SCALE_MAX_X);
+                int intScaleX = Math.round(originalZoom * this.scaleFactor);
+                if (intScaleX == view.getSettings().getTextZoom()) {
                     return false;
                 }
 
                 Context context = getContext();
                 SharedPreferences preferences = getSharedPreferences(context);
                 preferences.edit()
-                        .putFloat(getScaleKey(SCALE_X), scaleX)
-                        .putFloat(getScaleKey(SCALE_Y), scaleY)
+                        .putInt(getScaleKey(SCALE_X), intScaleX)
                         .apply();
+                updateScaleFromPrefs(context, view);
 
                 return true;
             }
 
             private String getScaleKey(String axis) {
-                String key = episodeId + axis;
-                if (pageNumber == 0) {
-                    key = key + ".0";
-                }
+                // TODO: ovde dodati orijentaciju
+                String orientation = "portrait";
+                String key = axis + ".zoom." + orientation;
                 return key;
             }
 
+            private void updateScaleFromPrefs(Context context, @Nullable WebView imageView) {
+                if (imageView == null) {
+                    return;
+                }
+                SharedPreferences preferences = getSharedPreferences(context);
+                int scaleX = normalizeZoom(preferences.getInt(getScaleKey(SCALE_X), DEFAULT_ZOOM));
+                if (scaleX != imageView.getSettings().getTextZoom()) {
+                    if (BuildConfig.DEBUG) { LOG_V("updateScaleFromPrefs(" + scaleX + ")"); }
+                    imageView.getSettings().setTextZoom(scaleX);
+                    imageView.invalidate();
+                }
+            }
+
             private static float calculateScale(float scale, float scaleFactor, float currentSpan, float scaleMax) {
+                if (BuildConfig.DEBUG) { LOG_V("calculateScale(" + scale + "," + scaleFactor + "," + currentSpan + ")"); }
                 if (Float.compare(Math.abs(currentSpan), SPAN_THRESHOLD) < 0) {
+                    if (BuildConfig.DEBUG) { LOG_V("calculateScale(" + currentSpan + " < " + SPAN_THRESHOLD + ")"); }
                     return scale;
                 }
 
-                if (Float.compare(scaleFactor, 1.0f) < 0) {
-                    scale -= DELTA;
-                } else {
-                    scale += DELTA;
-                }
-
                 // Don't let the object get too small or too large.
-                return Math.max(SCALE_MIN, Math.min(scale, scaleMax));
+                return Math.max(SCALE_MIN, Math.min(scale * scaleFactor, scaleMax));
             }
 
             @Override
             public boolean onScaleBegin(ScaleGestureDetector scaleGestureDetector) {
                 if (BuildConfig.DEBUG) { LOG_V("Scaling: onScaleBegin"); }
+                scaleFactor = mScaleDetector.getScaleFactor();
                 return true;
             }
 
@@ -1136,20 +1113,20 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     }
                 }
 
-                private synchronized View getImageView() {
+                private synchronized WebView getImageView() {
                     return imageView.get();
                 }
 
                 @Override
                 protected void onPostExecute(Bitmap bitmap) {
-                    View view = getImageView();
+                    WebView view = getImageView();
                     ProgressBar progressBar = view != null ? (ProgressBar) view.getTag() : null;
                     try {
                         if (BuildConfig.DEBUG) { LOG_V("onPostExecute(" + imageFile + ")"); }
                         if (bitmap == null && !isCancelled()) {
                             Context context = contextRef.get();
                             if (view != null && context != null && internetNotAvailable(context)) {
-                                ((WebView) view).loadData("<html><head></head><body><p>Internet Problem</p></body></html>", "text/html", "UTF-8");
+                                view.loadData("<html><head></head><body><p>Internet Problem</p></body></html>", "text/html", "UTF-8");
                             }
                             return;
                         }
@@ -1157,7 +1134,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                             if (BuildConfig.DEBUG) { LOG_V("Loading into ImageView(" + imageFile + ")"); }
                             // view.setImageBitmap(bitmap);
                             // view.setBackgroundColor(Color.RED);
-                            ((WebView) view).loadData("<html><head></head><body><p>...<br>\n" +
+                            view.loadData("<html><head></head><body><p>...<br>\n" +
                                     "{UTF-8}<br>\n" +
                                     "abvgd đežzij klǉmnǌ oprstć ufh cčǆšab<br>\n" +
                                     "vgd đež zij klǉmnǌop rst ćufh <del>s</del>č,ǆ,š,abvg<br>\n" +
@@ -1180,8 +1157,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                                     "Llj Mnnjoprstć Ufhcč<br>\n" +
                                     "Džšab Vgd Đež Zijk<br>\n" +
                                     "Llj Mnnjopr Stćufhc...<br>\n", "text/html", "UTF-8");
-                            // TODO: da li ovo ugasi zoom?
-                            ((WebView) view).getSettings().setTextZoom(125);
                         }
                     } finally {
                         if (progressBar != null) {

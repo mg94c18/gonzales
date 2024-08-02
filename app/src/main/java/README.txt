@@ -60,3 +60,6 @@ Raspored za Španski:
 s3cmd setacl --acl-public --recursive s3://mg94c18.gonzales
 
 Dodati ćirilicu ako neko traži "a36yka"
+
+treba da stavim da bude samo jedan webview.
+Zoom treba da uzme u obzir dužinu najduže linije u toj pesmi, pa da stalni faktor bude broj slova u liniji za vertikalno i horizontalno (dakle dva faktora ukupno).
