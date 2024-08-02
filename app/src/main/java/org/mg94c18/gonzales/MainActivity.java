@@ -873,6 +873,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             MyLoadTask loadTask;
             ScaleGestureDetector mScaleDetector;
             int originalZoom;
+            private boolean scaleInProgress = false;
 
             // @Override
             public void onCreate(Bundle savedInstanceState) {
@@ -955,7 +956,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 if (BuildConfig.DEBUG) { LOG_V("onTouch"); }
-                return mScaleDetector.onTouchEvent(motionEvent);
+                return mScaleDetector.onTouchEvent(motionEvent) && scaleInProgress;
             }
 
             @Override
@@ -983,28 +984,19 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 }
             }
 
-            private static float calculateScale(float scale, float scaleFactor, float currentSpan, float scaleMax) {
-                if (BuildConfig.DEBUG) { LOG_V("calculateScale(" + scale + "," + scaleFactor + "," + currentSpan + ")"); }
-                if (Float.compare(Math.abs(currentSpan), SPAN_THRESHOLD) < 0) {
-                    if (BuildConfig.DEBUG) { LOG_V("calculateScale(" + currentSpan + " < " + SPAN_THRESHOLD + ")"); }
-                    return scale;
-                }
-
-                // Don't let the object get too small or too large.
-                return Math.max(SCALE_MIN, Math.min(scale * scaleFactor, scaleMax));
-            }
-
             @Override
             public boolean onScaleBegin(ScaleGestureDetector scaleGestureDetector) {
                 if (BuildConfig.DEBUG) { LOG_V("Scaling: onScaleBegin"); }
                 beginScaleFactor = mScaleDetector.getScaleFactor();
                 originalZoom = normalizeZoom(imageView.getSettings().getTextZoom());
+                scaleInProgress = true;
                 return true;
             }
 
             @Override
             public void onScaleEnd(ScaleGestureDetector scaleGestureDetector) {
                 if (BuildConfig.DEBUG) { LOG_V("Scaling: onScaleEnd"); }
+                scaleInProgress = false;
                 float endScaleFactor = mScaleDetector.getScaleFactor();
 
                 final int newZoom;
