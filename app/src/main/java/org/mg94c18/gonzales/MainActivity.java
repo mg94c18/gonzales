@@ -864,7 +864,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             private Bundle arguments;
             private Context context;
             private WebView imageView;
-            private float scaleFactor;
+            private float beginScaleFactor;
 
             String episodeId;
             String filename;
@@ -923,7 +923,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 if (BuildConfig.DEBUG) { LOG_V("onCreateView(" + filename + ")"); }
 
                 imageView = activity.findViewById(R.id.webview);
-                originalZoom = normalizeZoom(imageView.getSettings().getTextZoom());
 
                 // TODO: ovo u zavisnosti od orijentacije i da li prikazuje bukvalno ili prevod
                 // activity.findViewById(R.id.bukvalno).setVisibility(View.VISIBLE);
@@ -942,9 +941,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             }
 
             private static int normalizeZoom(int currentZoom) {
-                if (currentZoom < DEFAULT_ZOOM || currentZoom > DEFAULT_ZOOM * SCALE_MAX_X_INT) {
+                if (currentZoom < DEFAULT_ZOOM) {
                     Log.wtf(TAG, "Invalid scale: " + currentZoom);
                     return DEFAULT_ZOOM;
+                } else if (currentZoom > DEFAULT_ZOOM * SCALE_MAX_X_INT) {
+                    Log.wtf(TAG, "Invalid scale: " + currentZoom);
+                    return DEFAULT_ZOOM * SCALE_MAX_X_INT;
                 } else {
                     return currentZoom;
                 }
@@ -958,29 +960,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
             @Override
             public boolean onScale(ScaleGestureDetector scaleGestureDetector) {
-                if (BuildConfig.DEBUG) { LOG_V("Scaling: onScale"); }
-                float scaleFactor = scaleGestureDetector.getScaleFactor();
-                float change = Math.abs(scaleFactor - 1.0f);
-                if (Float.compare(change, DELTA) < 0) {
-                    return false;
-                }
-
-                WebView view = imageView;
-
-                this.scaleFactor = calculateScale(this.scaleFactor, scaleFactor, scaleGestureDetector.getCurrentSpanY(), SCALE_MAX_X);
-                int intScaleX = Math.round(originalZoom * this.scaleFactor);
-                if (intScaleX == view.getSettings().getTextZoom()) {
-                    return false;
-                }
-
-                Context context = getContext();
-                SharedPreferences preferences = getSharedPreferences(context);
-                preferences.edit()
-                        .putInt(getScaleKey(SCALE_X), intScaleX)
-                        .apply();
-                updateScaleFromPrefs(context, view);
-
-                return true;
+                return false;
             }
 
             private String getScaleKey(String axis) {
@@ -1017,13 +997,33 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             @Override
             public boolean onScaleBegin(ScaleGestureDetector scaleGestureDetector) {
                 if (BuildConfig.DEBUG) { LOG_V("Scaling: onScaleBegin"); }
-                scaleFactor = mScaleDetector.getScaleFactor();
+                beginScaleFactor = mScaleDetector.getScaleFactor();
+                originalZoom = normalizeZoom(imageView.getSettings().getTextZoom());
                 return true;
             }
 
             @Override
             public void onScaleEnd(ScaleGestureDetector scaleGestureDetector) {
                 if (BuildConfig.DEBUG) { LOG_V("Scaling: onScaleEnd"); }
+                float endScaleFactor = mScaleDetector.getScaleFactor();
+
+                final int newZoom;
+                int comparison = Float.compare(endScaleFactor, beginScaleFactor);
+                if (comparison == 0) {
+                    return;
+                }
+                if (comparison < 0) {
+                    newZoom = originalZoom - 10;
+                } else {
+                    newZoom = originalZoom + 10;
+                }
+
+                Context context = getContext();
+                SharedPreferences preferences = getSharedPreferences(context);
+                preferences.edit()
+                        .putInt(getScaleKey(SCALE_X), newZoom)
+                        .apply();
+                updateScaleFromPrefs(context, imageView);
             }
 
             private static class MyLoadTask extends AsyncTask<Void, Void, Bitmap> {
