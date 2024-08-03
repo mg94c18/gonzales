@@ -33,7 +33,7 @@ public final class AssetLoader {
     public static final String HIDDEN_NUMBERS = "hiddenNumbers";
     public static final String HIDDEN_MATCHES = "hiddenMatches";
 
-    private static final boolean USE_COMPRESSION = true;
+    private static final boolean USE_COMPRESSION = false;
 
     // Pokriva jedan strip, a ako je *4 onda pokriva sve epizode
     private static final int CAPACITY = 128;

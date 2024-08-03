@@ -1,0 +1,9 @@
+#!/bin/sh
+# Run from ../gonzales
+for d in 48 72 96 114 144 192 512; do /Applications/Inkscape.app//Contents/MacOS/inkscape -o $(pwd)/Icon$d.png -w 512 -h 512 $(pwd)/Icon.svg; done
+
+cp Icon144.png res/drawable-xxhdpi/ic_launcher.png
+cp Icon192.png res/drawable-xxxhdpi/ic_launcher.png
+cp Icon48.png res/drawable-mdpi/ic_launcher.png
+cp Icon72.png res/drawable-hdpi/ic_launcher.png
+cp Icon96.png res/drawable-xhdpi/ic_launcher.png

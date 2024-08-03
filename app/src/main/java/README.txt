@@ -57,9 +57,11 @@ Raspored za Španski:
 - Recordaras: za futur
 - No me importa nada: i još glagola
 
-s3cmd setacl --acl-public --recursive s3://mg94c18.gonzales
+s3cmd setacl --acl-public --recursive s3://mg94c18gonzales
 
 Dodati ćirilicu ako neko traži "a36yka"
 
 Zoom treba da uzme u obzir dužinu najduže linije u toj pesmi, pa da stalni faktor bude broj slova u liniji za vertikalno i horizontalno (dakle dva faktora ukupno).
 Sad zapravo ne znam šta sam mislio pod tim ^
+
+Onaj problem na emulatoru se dešava kad nema internet, onda gnjavi sa download u pozadini, ali ako se prebacim na drugu pesmu onda popuni WebView sa starom pesmom, a nova pesma pak još nije skinuta i tako ide unakrsno.
