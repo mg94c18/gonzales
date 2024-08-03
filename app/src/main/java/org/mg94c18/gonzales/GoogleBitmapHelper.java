@@ -44,25 +44,14 @@ class GoogleBitmapHelper {
      * @return the scaled bitmap from the input stream
      * @throws IOException in case reading from the stream or writing to file fails
      */
-    static Bitmap decodeSampledBitmapFromStream(InputStream inputStream, int reqWidth, int reqHeight, File tempFile) throws IOException {
+    static String decodeSampledBitmapFromStream(InputStream inputStream, int reqWidth, int reqHeight, File tempFile) throws IOException {
         FileOutputStream fileOutputStream = null;
 
         try {
             fileOutputStream = new FileOutputStream(tempFile);
             IOUtils.copy(inputStream, fileOutputStream);
             fileOutputStream.close();
-
-            // First decode with inJustDecodeBounds=true to check dimensions
-            final BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inJustDecodeBounds = true;
-            BitmapFactory.decodeFile(tempFile.getAbsolutePath(), options);
-
-            // Calculate inSampleSize
-            options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
-
-            // Decode bitmap with inSampleSize set
-            options.inJustDecodeBounds = false;
-            return BitmapFactory.decodeFile(tempFile.getAbsolutePath(), options);
+            return tempFile.getAbsolutePath();
         } finally {
             IOUtils.closeQuietly(fileOutputStream);
         }

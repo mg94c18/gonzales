@@ -38,11 +38,10 @@ import static org.mg94c18.gonzales.Logger.TAG;
 
 public class DownloadAndSave {
     private static final String TMP_SUFFIX = ".tmp";
-    private static final String PNG_SUFFIX = ".png";
 
-    static Bitmap downloadAndSave(String link, File imageFile, int width, int height, int attempts) {
+    static String downloadAndSave(String link, File imageFile, int width, int height, int attempts) {
         for (int i = 0; i < attempts; i++) {
-            Pair<Bitmap, Boolean> result = downloadAndSaveNoRetry(link, imageFile, width, height);
+            Pair<String, Boolean> result = downloadAndSaveNoRetry(link, imageFile, width, height);
             if (result.first != null || result.second) {
                 return result.first;
             }
@@ -133,7 +132,7 @@ public class DownloadAndSave {
         return (HttpURLConnection) connection;
     }
 
-    private static @NonNull Pair<Bitmap, Boolean> downloadAndSaveNoRetry(String link, File imageFile, int width, int height) {
+    private static @NonNull Pair<String, Boolean> downloadAndSaveNoRetry(String link, File imageFile, int width, int height) {
         HttpURLConnection connection = null;
         InputStream inputStream = null;
         FileOutputStream fileOutputStream = null;
@@ -143,7 +142,7 @@ public class DownloadAndSave {
             connection = openConnection(link);
             connection.connect();
             inputStream = connection.getInputStream();
-            Bitmap bitmap = GoogleBitmapHelper.decodeSampledBitmapFromStream(
+            String bitmap = GoogleBitmapHelper.decodeSampledBitmapFromStream(
                     inputStream,
                     width,
                     height,
@@ -151,17 +150,11 @@ public class DownloadAndSave {
             if (bitmap == null) {
                 return Pair.create(null, Boolean.FALSE);
             }
-            // TODO: nepotrebno konvertovanje? uglavnom pravi veće slike nego original
-            fileOutputStream = new FileOutputStream(tempFile);
-            Bitmap.CompressFormat compressFormat = link.endsWith(".png") ? Bitmap.CompressFormat.PNG : Bitmap.CompressFormat.JPEG;
-            bitmap.compress(compressFormat, 100, fileOutputStream);
-            fileOutputStream.close();
-
             if (!tempFile.renameTo(imageFile)) {
                 Log.wtf(TAG, "Can't rename " + tempFile + " to " + imageFile);
                 return Pair.create(null, Boolean.FALSE);
             }
-            return Pair.create(bitmap, Boolean.FALSE);
+            return Pair.create(imageFile.getAbsolutePath(), Boolean.FALSE);
         } catch (IOException e) {
             final Boolean interrupted;
             if (e instanceof java.io.InterruptedIOException) {
@@ -300,7 +293,7 @@ public class DownloadAndSave {
     }
 
     @NonNull static String fileNameFromLink(String link, String episodeId, int page) {
-        String extension = link.trim().endsWith(PNG_SUFFIX) ? "png" : "jpg";
+        String extension = "mp3";
         return String.format(Locale.US, "%s_%03d.%s", episodeId, page, extension);
     }
 

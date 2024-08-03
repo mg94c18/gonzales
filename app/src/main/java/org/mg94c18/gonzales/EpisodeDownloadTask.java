@@ -232,7 +232,7 @@ public class EpisodeDownloadTask {
         if (BuildConfig.DEBUG) { LOG_V("doInBackground"); }
         String filename;
         File file;
-        Bitmap bitmap;
+        String bitmap;
         File otherFile;
         boolean usedOtherFile;
 

@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
+import android.media.MediaPlayer;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -26,6 +27,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatDelegate;
 import android.util.Log;
+import android.util.Pair;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -838,7 +840,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
         // @Override
         public void getItem(int position) {
-            MyFragment f = new MyFragment();
+            MyFragment f = new MyFragment(links);
             Bundle args = new Bundle();
             args.putString(MyFragment.FILENAME, DownloadAndSave.fileNameFromLink(links.get(position), episode, position));
             args.putString(MyFragment.LINK, links.get(position));
@@ -858,7 +860,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             private static final float SCALE_MIN = 1.00f;
             private static final int SCALE_MAX_X_INT = 2;
             private static final float SCALE_MAX_X = SCALE_MAX_X_INT;
-            private static final int DEFAULT_ZOOM = 100;
+            private static final int MINIMUM_ZOOM = 100;
             private static final float SPAN_THRESHOLD = 100f;
 
             private Bundle arguments;
@@ -874,6 +876,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             ScaleGestureDetector mScaleDetector;
             int originalZoom;
             private boolean scaleInProgress = false;
+            List<String> links;
+            MediaPlayer mediaPlayer;
+
+            MyFragment(List<String> links) {
+                this.links = links;
+            }
 
             // @Override
             public void onCreate(Bundle savedInstanceState) {
@@ -934,20 +942,20 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 imageView.loadData("<html><head><title></title></head><body><p>...</p></body></html>", "text/html", "UTF-8");
                 ProgressBar progressBar = activity.findViewById(R.id.progressBar);
                 progressBar.setVisibility(View.VISIBLE);
-                imageView.setTag(progressBar);
+                imageView.setTag(new Pair<ProgressBar, String>(progressBar, null));
                 imageView.setOnTouchListener(this);
 
-                loadTask = new MyLoadTask(activity, episodeId, link, filename, imageView);
+                loadTask = new MyLoadTask(links, activity, episodeId, link, filename, imageView);
                 loadTask.execute();
             }
 
             private static int normalizeZoom(int currentZoom) {
-                if (currentZoom < DEFAULT_ZOOM) {
+                if (currentZoom < MINIMUM_ZOOM) {
                     Log.wtf(TAG, "Invalid scale: " + currentZoom);
-                    return DEFAULT_ZOOM;
-                } else if (currentZoom > DEFAULT_ZOOM * SCALE_MAX_X_INT) {
+                    return MINIMUM_ZOOM;
+                } else if (currentZoom > MINIMUM_ZOOM * SCALE_MAX_X_INT) {
                     Log.wtf(TAG, "Invalid scale: " + currentZoom);
-                    return DEFAULT_ZOOM * SCALE_MAX_X_INT;
+                    return MINIMUM_ZOOM * SCALE_MAX_X_INT;
                 } else {
                     return currentZoom;
                 }
@@ -956,6 +964,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 if (BuildConfig.DEBUG) { LOG_V("onTouch"); }
+                // TODO: ovde dodati da svira muziku!
                 return mScaleDetector.onTouchEvent(motionEvent) && scaleInProgress;
             }
 
@@ -976,7 +985,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     return;
                 }
                 SharedPreferences preferences = getSharedPreferences(context);
-                int scaleX = normalizeZoom(preferences.getInt(getScaleKey(SCALE_X), DEFAULT_ZOOM));
+                int scaleX = normalizeZoom(preferences.getInt(getScaleKey(SCALE_X), MINIMUM_ZOOM + 30));
                 if (scaleX != imageView.getSettings().getTextZoom()) {
                     if (BuildConfig.DEBUG) { LOG_V("updateScaleFromPrefs(" + scaleX + ")"); }
                     imageView.getSettings().setTextZoom(scaleX);
@@ -1018,7 +1027,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 updateScaleFromPrefs(context, imageView);
             }
 
-            private static class MyLoadTask extends AsyncTask<Void, Void, Bitmap> {
+            private static class MyLoadTask extends AsyncTask<Void, Void, String> {
                 String imageFile;
                 WeakReference<WebView> imageView;
                 String link;
@@ -1026,10 +1035,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 String episodeId;
                 int destinationViewWidth;
                 int destinationViewHeight;
+                List<String> links;
 
-                MyLoadTask(Context context, String episodeId, String link, String imageFile, WebView imageView) {
+                MyLoadTask(List<String> links, Context context, String episodeId, String link, String imageFile, WebView imageView) {
                     this.imageFile = imageFile;
                     this.link = link;
+                    this.links = links;
                     this.contextRef = new WeakReference<>(context);
                     this.imageView = new WeakReference<>(imageView);
                     this.episodeId = episodeId;
@@ -1056,14 +1067,18 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 }
 
                 @Override
-                protected Bitmap doInBackground(Void[] voids) {
+                protected String doInBackground(Void[] voids) {
                     if (BuildConfig.DEBUG) { LOG_V("doInBackground(" + imageFile + ")"); }
-                    Bitmap savedBitmap = null;
+                    String savedBitmap = null;
                     Context context = contextRef.get();
                     if (context == null) {
                         return null;
                     }
                     List<File> cacheDirs = new ArrayList<>();
+
+                    // TODO: ne znam zašto ovo već nisam imao.  Treba popraviti download ali zasad mogu da koristim ovo
+                    addDirAndEpisodeDir(cacheDirs, context.getCacheDir(), EpisodeDownloadTask.EPISODES_FOLDER, episodeId);
+
                     addDirAndEpisodeDir(cacheDirs, new File(context.getCacheDir(), INTERNAL_OFFLINE), EpisodeDownloadTask.EPISODES_FOLDER, episodeId);
                     addDirAndEpisodeDir(cacheDirs, ExternalStorageHelper.getExternalCacheDir(context), EpisodeDownloadTask.EPISODES_FOLDER, episodeId);
                     for (File cacheDir : cacheDirs) {
@@ -1074,13 +1089,14 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                             break;
                         }
                         File savedImage = new File(cacheDir, imageFile);
+                        if (BuildConfig.DEBUG) { LOG_V("Trying " + savedImage.getAbsolutePath()); }
                         if (savedImage.exists()) {
                             if (BuildConfig.DEBUG) { LOG_V("The file " + imageFile + " exists."); }
                             if (getImageView() == null || isCancelled()) {
                                 return null;
                             } else {
                                 if (BuildConfig.DEBUG) { LOG_V("Decoding image from " + imageFile); }
-                                savedBitmap = BitmapFactory.decodeFile(savedImage.getAbsolutePath());
+                                savedBitmap = mp3HelperVerifyFile(savedImage.getAbsolutePath());
                             }
                         }
                     }
@@ -1105,16 +1121,21 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     }
                 }
 
+                private String mp3HelperVerifyFile(String absolutePath) {
+                    // TODO: provera
+                    return absolutePath;
+                }
+
                 private synchronized WebView getImageView() {
                     return imageView.get();
                 }
 
                 @Override
-                protected void onPostExecute(Bitmap bitmap) {
+                protected void onPostExecute(String bitmap) {
                     WebView view = getImageView();
-                    ProgressBar progressBar = view != null ? (ProgressBar) view.getTag() : null;
+                    Pair<ProgressBar, String> progressBar = view != null ? (Pair<ProgressBar, String>) view.getTag() : null;
                     try {
-                        if (BuildConfig.DEBUG) { LOG_V("onPostExecute(" + imageFile + ")"); }
+                        if (BuildConfig.DEBUG) { LOG_V("onPostExecute(" + imageFile + "," + bitmap + ")"); }
                         if (bitmap == null && !isCancelled()) {
                             Context context = contextRef.get();
                             if (view != null && context != null && internetNotAvailable(context)) {
@@ -1124,41 +1145,31 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                         }
                         if (view != null) {
                             if (BuildConfig.DEBUG) { LOG_V("Loading into ImageView(" + imageFile + ")"); }
-                            // view.setImageBitmap(bitmap);
-                            // view.setBackgroundColor(Color.RED);
-                            view.loadData("<html><head></head><body><p>...<br>\n" +
-                                    "{UTF-8}<br>\n" +
-                                    "abvgd đežzij klǉmnǌ oprstć ufh cčǆšab<br>\n" +
-                                    "vgd đež zij klǉmnǌop rst ćufh <del>s</del>č,ǆ,š,abvg<br>\n" +
-                                    "dđežzijklǉ mnǌ oprs tćufhc čǆš<br>\n" +
-                                    "ab abvgdđežzijklǉ.<br>\n" +
-                                    "...<br>\n" +
-                                    "{UTF-8}<br>\n" +
-                                    "ABV GDĐ EŽZIJK<br>\n" +
-                                    "LǈMNǋ O PRSTĆU FH<br>\n" +
-                                    "CČ,ǅ,Š,ABV GDĐEŽZIJKLǈMNǋ!<br>\n" +
-                                    "...<br>\n" +
-                                    "Abvgd Đe<ins>z</ins>zij<br>\n" +
-                                    "Kl<em>lj</em>mn<em>nj</em>oprst<ins>c</ins>ufh<br>\n" +
-                                    "C<ins>c</ins><em>dž</em><ins>s</ins>ab Vgd <em>Dj</em>e<ins>z</ins>zijk<br>\n" +
-                                    "Abvgd<em>dj</em>ežzijkl<em>lj</em>.<br>\n" +
-                                    "...<br>\n" +
-                                    "Abvgd Đežzij<br>\n" +
-                                    "Klljmnnjoprstćufh<br>\n" +
-                                    "Cčdžšab Vgd Đežzijk<br>\n" +
-                                    "Llj Mnnjoprstć Ufhcč<br>\n" +
-                                    "Džšab Vgd Đež Zijk<br>\n" +
-                                    "Llj Mnnjopr Stćufhc...<br>\n", "text/html", "UTF-8");
+                            view.loadData(createHtml(links), "text/html", "UTF-8");
+                        }
+                        if (progressBar != null) {
+                            view.setTag(new Pair<>(progressBar.first, bitmap));
                         }
                     } finally {
-                        if (progressBar != null) {
-                            progressBar.setVisibility(View.GONE);
+                        if (progressBar != null && progressBar.first != null) {
+                            progressBar.first.setVisibility(View.GONE);
                         }
                     }
                 }
 
+                private static String createHtml(List<String> links) {
+                    StringBuilder builder = new StringBuilder();
+
+                    builder.append("<html><head><title></title></head><body><p>");
+                    for (int i = 3; i < links.size(); i++) {
+                        builder.append(links.get(i)).append("<br>");
+                    }
+                    builder.append("</body></head></html>");
+                    return builder.toString();
+                }
+
                 @Override
-                protected void onCancelled(Bitmap b) {
+                protected void onCancelled(String b) {
                     if (BuildConfig.DEBUG) { LOG_V("onCancelled(" + imageFile + ")"); }
                     onPostExecute(null);
                 }
@@ -1195,6 +1206,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     }
 
     public static void deleteFile(File file) {
+        if (BuildConfig.DEBUG) { LOG_V("deleteFile(" + file.getAbsolutePath() + ")"); }
         if (file.delete()) {
             if (BuildConfig.DEBUG) { LOG_V("Deleted " + file); }
         } else {
