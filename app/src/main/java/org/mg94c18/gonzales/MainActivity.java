@@ -6,8 +6,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
 import android.media.MediaPlayer;
 import android.net.ConnectivityManager;
@@ -55,10 +53,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
     private static final long MAX_DOWNLOADED_IMAGES_ONLINE = 20;
@@ -1145,7 +1146,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                         }
                         if (view != null) {
                             if (BuildConfig.DEBUG) { LOG_V("Loading into ImageView(" + imageFile + ")"); }
-                            view.loadData(createHtml(links), "text/html", "UTF-8");
+                            view.loadData(createHtml(links, true, false), "text/html", "UTF-8");
                         }
                         if (progressBar != null) {
                             view.setTag(new Pair<>(progressBar.first, bitmap));
@@ -1157,15 +1158,33 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     }
                 }
 
-                private static String createHtml(List<String> links) {
+                private static String createHtml(List<String> links, boolean hints, boolean a3byka) {
                     StringBuilder builder = new StringBuilder();
 
-                    builder.append("<html><head><title></title></head><body><p>");
-                    for (int i = 3; i < links.size(); i++) {
-                        builder.append(links.get(i)).append("<br>");
+                    builder.append("<html><head><title></title></head><body><p><br>");
+                    for (int i = 2; i < links.size(); i++) {
+                        builder.append(applyFilters(links.get(i), hints, a3byka)).append("<br>");
                     }
                     builder.append("</body></head></html>");
                     return builder.toString();
+                }
+
+                private static final String hintsChars = "\\\\";
+                private static final Pattern nuggetsPattern = Pattern.compile(hintsChars + "(r|ás|as|o|ó|go|ste|iendo)");
+                private static final Pattern hintsPattern = Pattern.compile(hintsChars);
+                private static String applyFilters(String line, boolean hints, boolean a3byka) {
+                    if (hints) {
+                        line = nuggetsPattern.matcher(line).replaceAll("<ins>$1</ins>");
+                        if (BuildConfig.DEBUG) {
+                            String oldLine = line;
+                            line = hintsPattern.matcher(oldLine).replaceAll("");
+                            if (oldLine.compareTo(line) != 0) {
+                                Log.wtf(TAG, "There was a remaining hint: old=" + oldLine + ", " + "new=" + line);
+                            }
+                        }
+                    }
+                    line = hintsPattern.matcher(line).replaceAll("");
+                    return line;
                 }
 
                 @Override

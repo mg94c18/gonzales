@@ -33,6 +33,8 @@ public final class AssetLoader {
     public static final String HIDDEN_NUMBERS = "hiddenNumbers";
     public static final String HIDDEN_MATCHES = "hiddenMatches";
 
+    private static final boolean USE_COMPRESSION = true;
+
     // Pokriva jedan strip, a ako je *4 onda pokriva sve epizode
     private static final int CAPACITY = 128;
 
@@ -212,8 +214,13 @@ public final class AssetLoader {
         try {
             ArrayList<String> list = new ArrayList<>(CAPACITY);
             inputStream = streamCreator.createStream();
-            gzipInputStream = new GZIPInputStream(inputStream);
-            scanner = new Scanner(gzipInputStream);
+
+            if (USE_COMPRESSION) {
+                gzipInputStream = new GZIPInputStream(inputStream);
+                scanner = new Scanner(gzipInputStream);
+            } else {
+                scanner = new Scanner(inputStream);
+            }
 
             while (scanner.hasNextLine()) {
                 list.add(scanner.nextLine());
@@ -221,7 +228,9 @@ public final class AssetLoader {
 
             scanner.close();
             scanner = null;
-            gzipInputStream.close();
+            if (USE_COMPRESSION) {
+                gzipInputStream.close();
+            }
             inputStream.close();
 
             return list;

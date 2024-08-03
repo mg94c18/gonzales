@@ -53,8 +53,8 @@ Pesme sa delom prevoda
 - Ostariću, neću znati (možda)
 
 Raspored za Španski:
+- El Rey: "Pesma za sva vremena", podvući: svako r za infinitiv, svako as za futur, ste
 - Recordaras: za futur
-- El Rey: za infinitiv i ostale glagole
 - No me importa nada: i još glagola
 
 s3cmd setacl --acl-public --recursive s3://mg94c18.gonzales
