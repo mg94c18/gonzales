@@ -42,6 +42,8 @@
             android:exported="false"
             android:permission="${applicationId}.search" />
 
+        <service android:name=".PlaybackService"
+            android:exported="false"/>
     </application>
 
 </manifest>

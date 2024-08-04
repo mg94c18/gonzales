@@ -4,7 +4,7 @@ android {
     compileSdkVersion 33
     defaultConfig {
         applicationId 'org.mg94c18'
-        minSdkVersion 15
+        minSdkVersion 22
         targetSdkVersion 33
         versionCode 314159266 // izgleda da je 32-bit integer pa ne ne dopušta više decimala
         versionName "3.14159266" // Kada menjam ovo, treba da promenim i apk_assets_time!

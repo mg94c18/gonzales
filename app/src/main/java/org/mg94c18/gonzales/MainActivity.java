@@ -53,12 +53,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
@@ -948,6 +946,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
                 loadTask = new MyLoadTask(links, activity, episodeId, link, filename, imageView);
                 loadTask.execute();
+                potentialClick = false;
             }
 
             private static int normalizeZoom(int currentZoom) {
@@ -962,9 +961,30 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 }
             }
 
+            private boolean potentialClick;
+            private long lastDownMs = 0;
+            private long CLICK_SPEED_MS = 200;
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
-                if (BuildConfig.DEBUG) { LOG_V("onTouch"); }
+                int action = motionEvent.getAction();
+                if (BuildConfig.DEBUG) { LOG_V("onTouch(" + action + ")"); }
+                switch (action) {
+                    case MotionEvent.ACTION_DOWN:
+                        potentialClick = true;
+                        lastDownMs = System.currentTimeMillis();
+                        break;
+                    case MotionEvent.ACTION_UP: {
+                        long currentMs = System.currentTimeMillis();
+                        if (currentMs > lastDownMs && currentMs - lastDownMs < CLICK_SPEED_MS) {
+                            // TODO: start the service
+                            Intent intent = new Intent(context, PlaybackService.class);
+                            intent.setAction(PlaybackService.ACTION_PLAY);
+                            context.startService(intent);
+                        }
+                        break;
+                    }
+
+                }
                 // TODO: ovde dodati da svira muziku!
                 return mScaleDetector.onTouchEvent(motionEvent) && scaleInProgress;
             }

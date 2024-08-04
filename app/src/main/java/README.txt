@@ -3,6 +3,7 @@ Tokom OOBE, staviti da imena u meniju budu neokrivena/posebna, tako da skoro gar
     - na primer ime "* [1-9] *"
 
 Ko kaže da ti ne možeš razumeti srpski?  Slušaj ove pesme, treniraj tvoje uvo, i ti ćeš razumeti.  Možda takođe pričati.
+With the caveat that poetry and music, like other art, is subjective, these songs are translated correctly.
 
 Azbuka: prebaciti na ovu staru: https://www.youtube.com/watch?v=jWDlaXrJOI4
 
@@ -38,14 +39,16 @@ Raspored za srpski:
 10) Kab bi jelen imo krila (Conditionals) sa podvučenim "bi" svuda
 11) Medvedova ženidba (Aorist) sa naglaskom na prvom slogu svuda
 12) Šta da ti pričam kad sve znaš: https://www.youtube.com/watch?v=vTW7_cg10ws
+13) Jesi li sama večeras: za učenje "li"
+14) Luče moje (Da li mirno spavaš), slično
 
-Neke pesme (ima dosta kandidata u Gonzales-SR.txt)
-Tri na kraju:
+Neke lakše i kraće pesme bez mnogo učenja ali za razonodu (ima dosta kandidata u Gonzales-SR.txt)
+Na kraju:
 GRU: Za tebe uvek biću tu
-Sa originalom i sa prevodom: https://www.youtube.com/watch?v=FR2HyUurVCc
-Bez prevoda: prednosti i mane grada: https://www.youtube.com/watch?v=zNHbw9vWNTk ali odseći ove ruse na kraju
+Novak sa originalom i sa prevodom: https://www.youtube.com/watch?v=FR2HyUurVCc
+Bez prevoda: prednosti i mane grada: https://www.youtube.com/watch?v=zNHbw9vWNTk ali odseći ove ruse na kraju jer nisu Crnogorci
 Svađa u studiju: https://www.youtube.com/watch?v=J0Guz3gVDV4
-Boža zvani Pub.
+(Sa peharom) Boža zvani Pub.
 
 Pesme sa delom prevoda
 - Crni leptir: "nekad sam leteo ... krila mi spržila"
@@ -53,9 +56,9 @@ Pesme sa delom prevoda
 - Ostariću, neću znati (možda)
 
 Raspored za Španski:
-- El Rey: "Pesma za sva vremena", podvući: svako r za infinitiv, svako as za futur, ste
-- Recordaras: za futur
-- No me importa nada: i još glagola
+- El Rey: "Pesma za sva vremena", podvući: svako ir/ar/er za infinitiv, svako as za futur
+- No me importa nada: "Pesma za sve glagole"
+- Recordaras
 
 s3cmd setacl --acl-public --recursive s3://mg94c18gonzales
 
@@ -65,3 +68,5 @@ Zoom treba da uzme u obzir dužinu najduže linije u toj pesmi, pa da stalni fak
 Sad zapravo ne znam šta sam mislio pod tim ^
 
 Onaj problem na emulatoru se dešava kad nema internet, onda gnjavi sa download u pozadini, ali ako se prebacim na drugu pesmu onda popuni WebView sa starom pesmom, a nova pesma pak još nije skinuta i tako ide unakrsno.
+
+Treba da koristim WorkManager, ili pak JobScheduler sa Foreground Service
