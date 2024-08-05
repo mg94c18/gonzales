@@ -3,7 +3,7 @@ Tokom OOBE, staviti da imena u meniju budu neokrivena/posebna, tako da skoro gar
     - na primer ime "* [1-9] *"
 
 Ko kaže da ti ne možeš razumeti srpski?  Slušaj ove pesme, treniraj tvoje uvo, i ti ćeš razumeti.  Možda takođe pričati.
-With the caveat that poetry and music, like other art, is subjective, these songs are translated correctly.
+These songs are translated correctly, with caveats that poetry and music, like other art, is subjective, and that I am native Serbian and not English.
 
 Azbuka: prebaciti na ovu staru: https://www.youtube.com/watch?v=jWDlaXrJOI4
 
@@ -31,6 +31,9 @@ Raspored za srpski:
 2) U dva će čistači odneti đubre (Verb forms; endings matter) - podvučeno m,š, i futur,infinitiv
 3) Daj, ne pitaj (Endings matter; nouns also change) podvučeni m,š, i dana,dane,dani
 4) Zlatibore pitaj Taru () podvučena poslednja slova svaki put kad je Zlatibor i Tara
+4a) ? Ove noći nećeš spavati (Make past from present)
+13) Jesi li sama večeras: za učenje "li"
+14) Luče moje (Da li mirno spavaš), slično
 5) Kad zamirišu jorgovani (Verb declination for male/female) - podvučeno
 6) Daj, ne pitaj (Aca Lukas)
 7) Ljubav je, kad se neko voli
@@ -39,13 +42,12 @@ Raspored za srpski:
 10) Kab bi jelen imo krila (Conditionals) sa podvučenim "bi" svuda
 11) Medvedova ženidba (Aorist) sa naglaskom na prvom slogu svuda
 12) Šta da ti pričam kad sve znaš: https://www.youtube.com/watch?v=vTW7_cg10ws
-13) Jesi li sama večeras: za učenje "li"
-14) Luče moje (Da li mirno spavaš), slično
 
-Neke lakše i kraće pesme bez mnogo učenja ali za razonodu (ima dosta kandidata u Gonzales-SR.txt)
+Neke lakše i kraće pesme bez mnogo učenja ali za vežbu (ima dosta kandidata u Gonzales-SR.txt)
 Na kraju:
 GRU: Za tebe uvek biću tu
 Novak sa originalom i sa prevodom: https://www.youtube.com/watch?v=FR2HyUurVCc
+Tjelo Hristovo
 Bez prevoda: prednosti i mane grada: https://www.youtube.com/watch?v=zNHbw9vWNTk ali odseći ove ruse na kraju jer nisu Crnogorci
 Svađa u studiju: https://www.youtube.com/watch?v=J0Guz3gVDV4
 (Sa peharom) Boža zvani Pub.

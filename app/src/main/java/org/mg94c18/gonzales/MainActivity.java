@@ -15,6 +15,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Parcelable;
+import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentManager;
@@ -966,15 +967,16 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             private long CLICK_SPEED_MS = 200;
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
+                // TODO: ovde dodati da svira muziku!
                 int action = motionEvent.getAction();
                 if (BuildConfig.DEBUG) { LOG_V("onTouch(" + action + ")"); }
                 switch (action) {
                     case MotionEvent.ACTION_DOWN:
                         potentialClick = true;
-                        lastDownMs = System.currentTimeMillis();
+                        lastDownMs = SystemClock.uptimeMillis();
                         break;
                     case MotionEvent.ACTION_UP: {
-                        long currentMs = System.currentTimeMillis();
+                        long currentMs = SystemClock.uptimeMillis();
                         if (currentMs > lastDownMs && currentMs - lastDownMs < CLICK_SPEED_MS) {
                             // TODO: start the service
                             Intent intent = new Intent(context, PlaybackService.class);
@@ -983,9 +985,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                         }
                         break;
                     }
-
                 }
-                // TODO: ovde dodati da svira muziku!
                 return mScaleDetector.onTouchEvent(motionEvent) && scaleInProgress;
             }
 
