@@ -28,7 +28,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-public class PlaybackService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener {
+public class PlaybackService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener {
     public static final String ACTION_PLAY = "play";
     public static final String ACTION_PAUSE = "pause";
     public static final String ACTION_STOP = "stop";
@@ -59,6 +59,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
             entry.getValue().release();
         }
         players.clear();
+        stopForeground();
     }
 
     @Override
@@ -115,6 +116,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
 
         player.setOnPreparedListener(this);
         player.setOnCompletionListener(this);
+        player.setOnErrorListener(this);
         try {
             player.setDataSource(file);
             player.prepareAsync();
@@ -139,6 +141,14 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
                 .setContentIntent(pendingIntent)
                 .build();
         startForeground(1, notification);
+    }
+
+    private void stopForeground() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_REMOVE);
+        } else {
+            stopForeground(true);
+        }
     }
 
     private void createNotificationChannel() {
@@ -193,8 +203,15 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
                 } else {
                     players.remove(file);
                 }
+                stopForeground();
                 return null;
             }
         }));
+    }
+
+    @Override
+    public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
+        stopForeground();
+        return false;
     }
 }

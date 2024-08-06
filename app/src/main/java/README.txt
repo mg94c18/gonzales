@@ -71,4 +71,12 @@ Sad zapravo ne znam šta sam mislio pod tim ^
 
 Onaj problem na emulatoru se dešava kad nema internet, onda gnjavi sa download u pozadini, ali ako se prebacim na drugu pesmu onda popuni WebView sa starom pesmom, a nova pesma pak još nije skinuta i tako ide unakrsno.
 
-Treba da koristim WorkManager, ili pak JobScheduler sa Foreground Service
+Treba dodati sledeće:
+- integraciju sa dugmetom sa slušalica, tako da može da se pauzira i nastavi
+- obaveštenje da može da se skloni (i da samim tim ugasi muziku)
+- da može da se pauzira i nastavi bez da se otključa ekran (obaveštenje se nalazi na lock screen)
+
+Takođe nastavlja da svira ako odšetam na neku drugu aplikaciju.
+Ovo je diskutabilno, pa treba da dodam neki sistem koji će da uradi to što korisnik hoće u zavisnosti od pattern-a korišćenja.
+
+Izgleda da ne moram da koristim CPU lock, jer na primer na mom telefonu radi i svira.  Treba da ga testiram na duže distance.
