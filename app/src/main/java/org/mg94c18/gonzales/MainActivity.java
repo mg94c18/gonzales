@@ -981,6 +981,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                             // TODO: start the service
                             Intent intent = new Intent(context, PlaybackService.class);
                             intent.setAction(PlaybackService.ACTION_PLAY);
+                            Pair<ProgressBar, String> tag = (Pair<ProgressBar, String>) view.getTag();
+                            intent.putExtra(PlaybackService.EXTRA_FILE, tag.second);
                             context.startService(intent);
                         }
                         break;
