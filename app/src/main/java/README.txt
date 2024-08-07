@@ -80,3 +80,5 @@ Takođe nastavlja da svira ako odšetam na neku drugu aplikaciju.
 Ovo je diskutabilno, pa treba da dodam neki sistem koji će da uradi to što korisnik hoće u zavisnosti od pattern-a korišćenja.
 
 Izgleda da ne moram da koristim CPU lock, jer na primer na mom telefonu radi i svira.  Treba da ga testiram na duže distance.
+
+Verovatno je bolje da za obično slušanje stavim da svira iz WebView, a da svoj MediaPlayer koristim za playlist.

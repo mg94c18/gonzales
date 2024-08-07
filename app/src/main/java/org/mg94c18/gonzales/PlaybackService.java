@@ -32,12 +32,30 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
     public static final String ACTION_PLAY = "play";
     public static final String ACTION_PAUSE = "pause";
     public static final String ACTION_STOP = "stop";
+    public static final String ACTION_NOTIFICATION = "notification";
     public static final String EXTRA_FILE = "file";
     private static final String CHANNEL_ID = "022f94de-8383-44e8-b52e-be67a2307044";
+    private static final int NOTIFICATION_ID = 42;
 
     private Map<String, MediaPlayer> players;
-    private ExecutorService executorService = Executors.newSingleThreadExecutor();
-    private Set<Future<Boolean>> activeFutures = new HashSet<>();
+    private ExecutorService executorService;
+    private Set<Future<Boolean>> activeFutures;
+
+    // https://developer.android.com/static/images/mediaplayer_state_diagram.gif
+    enum State {
+        IDLE,
+        INITIALIZED,
+        PREPARING,
+        PREPARED,
+        STARTED,
+        PAUSED,
+        STOPPED,
+        PLAYBACK_COMPLETED,
+        ERROR,
+        END
+    }
+    // TODO: state za "svaki" MediaPlayer
+    State state;
 
     @Nullable
     @Override
@@ -50,6 +68,8 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         if (BuildConfig.DEBUG) { LOG_V("onCreate()"); }
         createNotificationChannel();
         players = new HashMap<>();
+        executorService = Executors.newSingleThreadExecutor();
+        activeFutures = new HashSet<>();
     }
 
     @Override
@@ -59,7 +79,15 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
             entry.getValue().release();
         }
         players.clear();
-        stopForeground();
+        myStopForeground(true);
+        executorService.shutdown();
+        for (Future<Boolean> future : activeFutures) {
+            if (!future.isCancelled()) {
+                future.cancel(true);
+            }
+        }
+        // Abandoning the service instead of trying to wait for cancelation
+        executorService = null;
     }
 
     @Override
@@ -69,25 +97,63 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
             return START_NOT_STICKY;
         }
 
-        if (BuildConfig.DEBUG) { LOG_V("onStartCommand(" + flags + "," + startId + ")"); }
+        if (BuildConfig.DEBUG) { LOG_V("onStartCommand(" + flags + "," + startId + "," + intent.getAction() + ")"); }
 
         if (ACTION_PLAY.equals(intent.getAction())) {
             onPlayRequested(intent);
-            startForeground();
         } else if (ACTION_PAUSE.equals(intent.getAction())) {
             onPauseRequested(intent);
         } else if (ACTION_STOP.equals(intent.getAction())) {
             onStopRequested(intent);
+        } else if (ACTION_NOTIFICATION.equals(intent.getAction())) {
+            onNotification(intent);
+        } else {
+            Log.wtf(TAG, "Unknown action: " + intent.getAction());
         }
         return START_NOT_STICKY;
     }
 
-    private void onStopRequested(Intent intent) {
-        String file = intent.getStringExtra(EXTRA_FILE);
-        MediaPlayer player = players.get(file);
-        if (player == null) {
-            Log.wtf(TAG, "Can't find the player to stop");
+    private void onNotification(Intent intent) {
+        if (players.size() > 1) {
+            Log.wtf(TAG, "Unexpected state: releasing all " + players.size() + " players");
+            for (Map.Entry<String, MediaPlayer> entry : players.entrySet()) {
+                entry.getValue().release();
+            }
+            players.clear();
         }
+        if (players.size() == 0) {
+            Log.wtf(TAG, "Unexpected state: no players");
+            return;
+        }
+
+        Map.Entry<String, MediaPlayer> elvis = players.entrySet().iterator().next();
+        if (state == State.STARTED) {
+            elvis.getValue().pause();
+            state = State.PAUSED;
+            startForeground("Resume", true);
+            myStopForeground(false);
+        } else if (state == State.PAUSED) {
+            elvis.getValue().start();
+            state = State.STARTED;
+            startForeground("Pause", false);
+        } else {
+            Log.wtf(TAG, "Unexpected state: " + state);
+        }
+    }
+
+    private void onStopRequested(Intent intent) {
+        activeFutures.add(executorService.submit(new Callable<Boolean>() {
+            @Override
+            public Boolean call() throws Exception {
+                String file = intent.getStringExtra(EXTRA_FILE);
+                MediaPlayer player = players.get(file);
+                if (player == null) {
+                    Log.wtf(TAG, "Can't find the player to stop");
+                    return null;
+                }
+                return true;
+            }
+        }));
     }
 
     private void onPauseRequested(Intent intent) {
@@ -107,6 +173,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
             return;
         }
         player = new MediaPlayer();
+        state = State.IDLE;
         player.setAudioAttributes(
                 new AudioAttributes.Builder()
                         .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
@@ -119,35 +186,50 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         player.setOnErrorListener(this);
         try {
             player.setDataSource(file);
+            state = State.INITIALIZED;
             player.prepareAsync();
+            state = State.PREPARING;
+            players.put(file, player);
         } catch (IOException e) {
             Log.wtf(TAG, "Can't setDataSource(" + file + ")");
-            return;
         }
-        players.put(file, player);
     }
 
-    private void startForeground() {
-        Intent activityIntent = new Intent(this, PlaybackService.class);
+    private void startForeground(String actionText, boolean update) {
+        Intent activityIntent = new Intent(this, MainActivity.class);
+        activityIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
         TaskStackBuilder builder = TaskStackBuilder.create(this);
-        builder.addNextIntent(activityIntent);
-        PendingIntent pendingIntent = builder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+        builder.addNextIntentWithParentStack(activityIntent); // even though there is no parent in this app
+        PendingIntent activityPendingIntent = builder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        Intent serviceIntent = new Intent(this, PlaybackService.class);
+        serviceIntent.setAction(ACTION_NOTIFICATION);
+        PendingIntent servicePendingIntent = PendingIntent.getService(this, 0, serviceIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("Title")
                 .setContentText("content text")
                 .setSmallIcon(R.drawable.ic_launcher)
                 .setAutoCancel(false)
-                .setContentIntent(pendingIntent)
+                .setOnlyAlertOnce(true)
+                .setContentIntent(activityPendingIntent)
+                .addAction(R.drawable.ic_launcher, actionText, servicePendingIntent)
                 .build();
-        startForeground(1, notification);
+
+        if (update) {
+            NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            manager.notify(NOTIFICATION_ID, notification);
+        } else {
+            startForeground(NOTIFICATION_ID, notification);
+        }
     }
 
-    private void stopForeground() {
+    private void myStopForeground(boolean remove) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            stopForeground(STOP_FOREGROUND_REMOVE);
+            stopForeground(remove ? STOP_FOREGROUND_REMOVE : STOP_FOREGROUND_DETACH);
         } else {
-            stopForeground(true);
+            stopForeground(remove);
         }
     }
 
@@ -168,13 +250,16 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
     }
 
     @Override
-    public void onPrepared(final MediaPlayer mediaPlayer) {
+    public void onPrepared(MediaPlayer mediaPlayer) {
         Log.i(TAG, "onPrepared()");
+        state = State.PREPARED;
         activeFutures.add(executorService.submit(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
                 if (BuildConfig.DEBUG) { LOG_V("play()"); }
                 mediaPlayer.start();
+                state = State.STARTED;
+                startForeground("Pause", false);
                 return null;
             }
         }));
@@ -192,26 +277,39 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
     @Override
     public void onCompletion(final MediaPlayer mediaPlayer) {
         Log.i(TAG, "onCompletion");
+        state = State.PLAYBACK_COMPLETED;
         activeFutures.add(executorService.submit(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
-                if (BuildConfig.DEBUG) { LOG_V("release()"); }
-                mediaPlayer.release();
-                String file = findFileByPlayer(mediaPlayer);
-                if (file == null) {
-                    Log.wtf(TAG, "Already removed");
-                } else {
-                    players.remove(file);
-                }
-                stopForeground();
+                releasePlayer(mediaPlayer);
+                myStopForeground(true);
                 return null;
             }
         }));
     }
 
+    private void releasePlayer(MediaPlayer mediaPlayer) {
+        if (BuildConfig.DEBUG) { LOG_V("release()"); }
+        mediaPlayer.release();
+        String file = findFileByPlayer(mediaPlayer);
+        if (file == null) {
+            Log.wtf(TAG, "Already released");
+        } else {
+            players.remove(file);
+        }
+    }
+
     @Override
     public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
-        stopForeground();
+        state = State.ERROR;
+        activeFutures.add(executorService.submit(new Callable<Boolean>() {
+            @Override
+            public Boolean call() throws Exception {
+                releasePlayer(mediaPlayer);
+                myStopForeground(true);
+                return null;
+            }
+        }));
         return false;
     }
 }
