@@ -850,7 +850,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             fragment = f;
         }
 
-        public static class MyFragment implements View.OnTouchListener, ScaleGestureDetector.OnScaleGestureListener {
+        public static class MyFragment implements View.OnTouchListener, ScaleGestureDetector.OnScaleGestureListener, View.OnClickListener {
             public static final String FILENAME = "filename";
             public static final String LINK = "link";
             public static final String EPISODE_ID = "episode";
@@ -932,6 +932,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 if (BuildConfig.DEBUG) { LOG_V("onCreateView(" + filename + ")"); }
 
                 imageView = activity.findViewById(R.id.webview);
+                Button button = activity.findViewById(R.id.button);
+                button.setOnClickListener(this);
 
                 // TODO: ovo u zavisnosti od orijentacije i da li prikazuje bukvalno ili prevod
                 // activity.findViewById(R.id.bukvalno).setVisibility(View.VISIBLE);
@@ -947,7 +949,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
                 loadTask = new MyLoadTask(links, activity, episodeId, link, filename, imageView);
                 loadTask.execute();
-                potentialClick = false;
             }
 
             private static int normalizeZoom(int currentZoom) {
@@ -962,32 +963,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 }
             }
 
-            private boolean potentialClick;
-            private long lastDownMs = 0;
-            private long CLICK_SPEED_MS = 200;
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
-                // TODO: ovde dodati da svira muziku!
                 int action = motionEvent.getAction();
                 if (BuildConfig.DEBUG) { LOG_V("onTouch(" + action + ")"); }
-                switch (action) {
-                    case MotionEvent.ACTION_DOWN:
-                        potentialClick = true;
-                        lastDownMs = SystemClock.uptimeMillis();
-                        break;
-                    case MotionEvent.ACTION_UP: {
-                        long currentMs = SystemClock.uptimeMillis();
-                        if (currentMs > lastDownMs && currentMs - lastDownMs < CLICK_SPEED_MS) {
-                            // TODO: start the service
-                            Intent intent = new Intent(context, PlaybackService.class);
-                            intent.setAction(PlaybackService.ACTION_PLAY);
-                            Pair<ProgressBar, String> tag = (Pair<ProgressBar, String>) view.getTag();
-                            intent.putExtra(PlaybackService.EXTRA_FILE, tag.second);
-                            context.startService(intent);
-                        }
-                        break;
-                    }
-                }
                 return mScaleDetector.onTouchEvent(motionEvent) && scaleInProgress;
             }
 
@@ -1048,6 +1027,24 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                         .putInt(getScaleKey(SCALE_X), newZoom)
                         .apply();
                 updateScaleFromPrefs(context, imageView);
+            }
+
+            private boolean previouslyClicked = false;
+            @Override
+            public void onClick(View view) {
+                Log.i(TAG, "onClick");
+                if (!previouslyClicked) {
+                    Intent intent = new Intent(context, PlaybackService.class);
+                    intent.setAction(PlaybackService.ACTION_PLAY);
+                    Pair<ProgressBar, String> tag = (Pair<ProgressBar, String>) imageView.getTag();
+                    intent.putExtra(PlaybackService.EXTRA_FILE, tag.second);
+                    context.startService(intent);
+                    previouslyClicked = true;
+                } else {
+                    Intent intent = new Intent(context, PlaybackService.class);
+                    intent.setAction(PlaybackService.ACTION_NOTIFICATION);
+                    context.startService(intent);
+                }
             }
 
             private static class MyLoadTask extends AsyncTask<Void, Void, String> {
