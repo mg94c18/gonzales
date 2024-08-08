@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     static final String INTERNAL_OFFLINE = "offline";
     private static final long BYTES_PER_MB = 1024 * 1024;
 
-    MyPagerAdapter pagerAdapter;
+    PageAdapter pageAdapter;
     DrawerLayout drawerLayout;
     ListView drawerList;
     List<String> titles;
@@ -87,7 +87,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     String selectedEpisodeTitle;
     String selectedEpisodeNumber;
     EpisodeDownloadTask downloadTask;
-    AlertDialog pagePickerDialog;
     AlertDialog configureDownloadDialog;
     AlertDialog quoteDialog;
     static final long syncIndex = -1;
@@ -99,39 +98,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private String progressString;
     private static boolean nightModeAllowed = Build.VERSION.SDK_INT >= 29;
 
-    private static int normalizePageIndex(int i, int max) {
-        if (i < 0) {
-            return 0;
-        }
-
-        if (max <= 2) {
-            return -1;
-        }
-
-        if (i >= max) {
-            return max - 1;
-        }
-
-        if (i == 1) {
-            return 0;
-        }
-
-        if (i == 2) {
-            i = 3;
-        }
-
-        return i - 2;
-    }
-
     public SharedPreferences getSharedPreferences() {
         return getSharedPreferences(getApplicationContext());
     }
 
     public static SharedPreferences getSharedPreferences(@NonNull Context context) {
-        SharedPreferences prefs = context.getSharedPreferences(SHARED_PREFS_NAME, MODE_PRIVATE);
-        if (!prefs.contains(MIGRATION_ID)) {
-        }
-        return prefs;
+        return context.getSharedPreferences(SHARED_PREFS_NAME, MODE_PRIVATE);
     }
 
     /**
@@ -276,7 +248,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                         AssetLoader.loadFromAssetOrUpdate(this, AssetLoader.HIDDEN_MATCHES, syncIndex));
                 selectEpisode(episodeInfo.index);
             } else {
-                startAssetLoadingThread(this);
+                AssetLoader.startAssetLoadingThread(this);
                 selectEpisode(episodeInfo.index, episodeInfo.title, episodeInfo.number);
             }
         }
@@ -290,64 +262,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 if (BuildConfig.DEBUG) { LOG_V("Can't restore drawer instance state"); }
             }
         }
-        pagerAdapter.getItem(0);
-        pagerAdapter.fragment.onCreate(savedInstanceState);
-        pagerAdapter.fragment.onCreateView(this);
     }
 
-    private static void startAssetLoadingThread(MainActivity mainActivity) {
-        final WeakReference<MainActivity> mainActivityRef = new WeakReference<>(mainActivity);
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                final List<String> titles;
-                final List<String> numbers;
-                final List<String> dates;
-                Context context = mainActivityRef.get();
-                if (context == null) {
-                    if (BuildConfig.DEBUG) { LOG_V("Not loading, context went away"); }
-                    return;
-                }
-                if (BuildConfig.DEBUG) { LOG_V("Begin loading: " + System.currentTimeMillis()); }
-                titles = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.TITLES, syncIndex);
-                numbers = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.NUMBERS, syncIndex);
-                dates = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.DATES, syncIndex);
-                if (BuildConfig.DEBUG) { LOG_V("End loading: " + System.currentTimeMillis()); }
-
-                int count = titles.size();
-                if (numbers.size() != count || dates.size() != count) {
-                    Log.wtf(TAG, "Episode list mismatch: titles=" + titles.size() + ", numbers=" + numbers.size() + ", dates=" + dates.size());
-                    return;
-                }
-
-                final List<String> hiddenTitles = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.HIDDEN_TITLES, syncIndex);
-                final List<String> hiddenNumbers = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.HIDDEN_NUMBERS, syncIndex);
-                final List<String> hiddenDates = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.HIDDEN_MATCHES, syncIndex);
-                count = hiddenTitles.size();
-                if (hiddenNumbers.size() != count || hiddenDates.size() != count) {
-                    Log.wtf(TAG, "Hidden list mismatch: titles=" + hiddenTitles.size() + ", numbers=" + hiddenNumbers.size() + ", dates=" + hiddenDates.size());
-                    hiddenTitles.clear();
-                    hiddenNumbers.clear();
-                    hiddenDates.clear();
-                }
-
-                final MainActivity activity = mainActivityRef.get();
-                if (activity == null) {
-                    if (BuildConfig.DEBUG) { LOG_V("Not loading, activity went away"); }
-                    return;
-                }
-
-                activity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        activity.updateAssets(titles, numbers, dates, hiddenTitles, hiddenNumbers, hiddenDates);
-                    }
-                });
-            }
-        }).start();
-    }
-
-    private void updateAssets(@NonNull List<String> titles, @NonNull List<String> numbers, @NonNull List<String> dates, List<String> hiddenTitles, List<String> hiddenNumbers, List<String> hiddenMatches) {
+    public void updateAssets(@NonNull List<String> titles, @NonNull List<String> numbers, @NonNull List<String> dates, List<String> hiddenTitles, List<String> hiddenNumbers, List<String> hiddenMatches) {
         SearchProvider.TITLES = this.titles = titles;
         SearchProvider.NUMBERS = this.numbers = numbers;
         SearchProvider.DATES = this.dates = dates;
@@ -376,21 +293,24 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             downloadTask = null;
         }
         dismissAlertDialogs();
-        if (pagerAdapter != null) {
-            pagerAdapter.fragment.onDestroy();
-            pagerAdapter = null;
+        destroyPageAdapter();
+    }
+
+    private void destroyPageAdapter() {
+        if (pageAdapter != null) {
+            pageAdapter.destroy();
+            pageAdapter = null;
         }
     }
 
     private void dismissAlertDialogs() {
-        AlertDialog[] dialogs = {pagePickerDialog, configureDownloadDialog, quoteDialog};
+        AlertDialog[] dialogs = {configureDownloadDialog, quoteDialog};
         for (AlertDialog dialog : dialogs) {
             if (dialog != null) {
                 dialog.cancel();
                 dialog.dismiss();
             }
         }
-        pagePickerDialog = null;
         configureDownloadDialog = null;
         quoteDialog = null;
     }
@@ -509,42 +429,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 emailIntent.putExtra(Intent.EXTRA_SUBJECT, getResources().getString(R.string.app_name) + " App");
                 if (emailIntent.resolveActivity(getPackageManager()) != null) {
                     startActivity(emailIntent);
-                }
-                return true;
-            case R.id.action_download:
-                final String errorMessage;
-                String storageState = Environment.getExternalStorageState();
-                if (internetNotAvailable(this)) {
-                    errorMessage = INTERNET_PROBLEM;
-                } else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(storageState)) {
-                    errorMessage = "Memorijska kartica je ubačena, ali je read-only";
-                } else if (!Environment.MEDIA_MOUNTED.equals(storageState)
-                        || ExternalStorageHelper.getExternalCacheDir(this) == null) {
-                    errorMessage = "Ne vidim memorijsku karticu";
-                } else {
-                    errorMessage = null;
-                }
-                if (errorMessage != null) {
-                    Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show();
-                    return true;
-                }
-                if (BuildConfig.DEBUG) { LOG_V(">>configureDownload"); }
-                configureDownload(pagerAdapter.episode, EpisodeDownloadTask.Destination.SD_CARD);
-                if (BuildConfig.DEBUG) { LOG_V("<<configureDownload"); }
-                return true;
-            case R.id.action_download_internal:
-                if (internetNotAvailable(this)) {
-                    Toast.makeText(this, INTERNET_PROBLEM, Toast.LENGTH_LONG).show();
-                    return true;
-                }
-                configureDownload(pagerAdapter.episode, EpisodeDownloadTask.Destination.INTERNAL_MEMORY);
-                return true;
-            case R.id.action_cancel_download:
-                if (downloadTask == null) {
-                    Log.wtf(TAG, "Nothing to cancel");
-                } else {
-                    downloadTask.cancel();
-                    downloadTask = null;
                 }
                 return true;
             case R.id.action_review:
@@ -714,12 +598,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         instanceState.putParcelable(DRAWER, drawerList.onSaveInstanceState());
 
         super.onSaveInstanceState(instanceState);
-        if (pagerAdapter != null) {
-            pagerAdapter.fragment.onSaveInstanceState(instanceState);
-        }
     }
 
-    static boolean internetNotAvailable(@NonNull Context context) {
+    public static boolean internetNotAvailable(@NonNull Context context) {
         ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(CONNECTIVITY_SERVICE);
         if (connectivityManager == null) {
             if (BuildConfig.DEBUG) { LOG_V("Can't get connectivityManager"); }
@@ -806,15 +687,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             selectedEpisodeNumber = number;
         }
         mySetActionBarTitle(getMyActionBar(), title);
-        if (pagerAdapter != null) {
-            pagerAdapter.fragment.onDestroy();
-            pagerAdapter = null;
-        }
-
-        pagerAdapter = new MyPagerAdapter(this, getSupportFragmentManager(), number);
-        pagerAdapter.getItem(0);
-        pagerAdapter.fragment.onCreate(null);
-        pagerAdapter.fragment.onCreateView(this);
+        destroyPageAdapter();
+        pageAdapter = new PageAdapter(this, number);
         if (position >= 0) {
             selectedEpisode = position;
             if (BuildConfig.DEBUG) { LOG_V("Saving episode " + selectedEpisode); }
@@ -826,394 +700,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
     }
 
-    public static class MyPagerAdapter {
-        List<String> links;
-        String episode;
-        Context context;
-        public MyFragment fragment;
-
-        MyPagerAdapter(Context context, FragmentManager fm, String episode) {
-            links = AssetLoader.loadFromAssetOrUpdate(context, episode, syncIndex);
-            this.episode = episode;
-            this.context = context;
-        }
-
-        // @Override
-        public void getItem(int position) {
-            MyFragment f = new MyFragment(links);
-            Bundle args = new Bundle();
-            args.putString(MyFragment.FILENAME, DownloadAndSave.fileNameFromLink(links.get(position), episode, position));
-            args.putString(MyFragment.LINK, links.get(position));
-            args.putString(MyFragment.EPISODE_ID, episode);
-            args.putInt(MyFragment.PAGE_NUMBER, position);
-            f.setArguments(args, context);
-            fragment = f;
-        }
-
-        public static class MyFragment implements View.OnTouchListener, ScaleGestureDetector.OnScaleGestureListener, View.OnClickListener {
-            public static final String FILENAME = "filename";
-            public static final String LINK = "link";
-            public static final String EPISODE_ID = "episode";
-            public static final String PAGE_NUMBER = "pageNumber";
-            private static final String SCALE_X = "scale_x";
-            private static final float DELTA = 0.02f;
-            private static final float SCALE_MIN = 1.00f;
-            private static final int SCALE_MAX_X_INT = 2;
-            private static final float SCALE_MAX_X = SCALE_MAX_X_INT;
-            private static final int MINIMUM_ZOOM = 100;
-            private static final float SPAN_THRESHOLD = 100f;
-
-            private Bundle arguments;
-            private Context context;
-            private WebView imageView;
-            private float beginScaleFactor;
-
-            String episodeId;
-            String filename;
-            String link;
-            int pageNumber;
-            MyLoadTask loadTask;
-            ScaleGestureDetector mScaleDetector;
-            int originalZoom;
-            private boolean scaleInProgress = false;
-            List<String> links;
-            MediaPlayer mediaPlayer;
-
-            MyFragment(List<String> links) {
-                this.links = links;
-            }
-
-            // @Override
-            public void onCreate(Bundle savedInstanceState) {
-                mScaleDetector = new ScaleGestureDetector(getContext(), this);
-                restore();
-            }
-
-            public void onDestroy() {
-                if (BuildConfig.DEBUG) { LOG_V("onDestroy(" + filename + ")"); }
-                if (loadTask != null) {
-                    loadTask.cancel(true);
-                }
-            }
-
-            private void restore() {
-                Bundle args = getArguments();
-                if (args != null) {
-                    filename = args.getString(FILENAME);
-                    link = args.getString(LINK);
-                    episodeId = args.getString(EPISODE_ID);
-                    pageNumber = args.getInt(PAGE_NUMBER);
-                }
-            }
-
-            public void setArguments(Bundle arguments, Context context) {
-                this.arguments = arguments;
-                this.context = context;
-            }
-
-            private Bundle getArguments() {
-                return arguments;
-            }
-
-            private Context getContext() {
-                return context;
-            }
-
-            public void onSaveInstanceState(Bundle outState) {
-                if (outState == null) {
-                    return;
-                }
-                outState.putString(FILENAME, filename);
-                outState.putString(LINK, link);
-            }
-
-            // @Override
-            public void onCreateView(MainActivity activity) {
-                if (BuildConfig.DEBUG) { LOG_V("onCreateView(" + filename + ")"); }
-
-                imageView = activity.findViewById(R.id.webview);
-                Button button = activity.findViewById(R.id.button);
-                button.setOnClickListener(this);
-
-                // TODO: ovo u zavisnosti od orijentacije i da li prikazuje bukvalno ili prevod
-                // activity.findViewById(R.id.bukvalno).setVisibility(View.VISIBLE);
-                // ((WebView) activity.findViewById(R.id.bukvalno)).loadData("<html><head><title></title></head><body><p>1234</p></body></html>", "text/html", "UTF-8");
-                // activity.findViewById(R.id.prevod).setVisibility(View.GONE);
-
-                updateScaleFromPrefs(getContext(), imageView);
-                imageView.loadData("<html><head><title></title></head><body><p>...</p></body></html>", "text/html", "UTF-8");
-                ProgressBar progressBar = activity.findViewById(R.id.progressBar);
-                progressBar.setVisibility(View.VISIBLE);
-                imageView.setTag(new Pair<ProgressBar, String>(progressBar, null));
-                imageView.setOnTouchListener(this);
-
-                loadTask = new MyLoadTask(links, activity, episodeId, link, filename, imageView);
-                loadTask.execute();
-            }
-
-            private static int normalizeZoom(int currentZoom) {
-                if (currentZoom < MINIMUM_ZOOM) {
-                    Log.wtf(TAG, "Invalid scale: " + currentZoom);
-                    return MINIMUM_ZOOM;
-                } else if (currentZoom > MINIMUM_ZOOM * SCALE_MAX_X_INT) {
-                    Log.wtf(TAG, "Invalid scale: " + currentZoom);
-                    return MINIMUM_ZOOM * SCALE_MAX_X_INT;
-                } else {
-                    return currentZoom;
-                }
-            }
-
-            @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
-                int action = motionEvent.getAction();
-                if (BuildConfig.DEBUG) { LOG_V("onTouch(" + action + ")"); }
-                return mScaleDetector.onTouchEvent(motionEvent) && scaleInProgress;
-            }
-
-            @Override
-            public boolean onScale(ScaleGestureDetector scaleGestureDetector) {
-                return false;
-            }
-
-            private String getScaleKey(String axis) {
-                // TODO: ovde dodati orijentaciju
-                String orientation = "portrait";
-                String key = axis + ".zoom." + orientation;
-                return key;
-            }
-
-            private void updateScaleFromPrefs(Context context, @Nullable WebView imageView) {
-                if (imageView == null) {
-                    return;
-                }
-                SharedPreferences preferences = getSharedPreferences(context);
-                int scaleX = normalizeZoom(preferences.getInt(getScaleKey(SCALE_X), MINIMUM_ZOOM + 30));
-                if (scaleX != imageView.getSettings().getTextZoom()) {
-                    if (BuildConfig.DEBUG) { LOG_V("updateScaleFromPrefs(" + scaleX + ")"); }
-                    imageView.getSettings().setTextZoom(scaleX);
-                    imageView.invalidate();
-                }
-            }
-
-            @Override
-            public boolean onScaleBegin(ScaleGestureDetector scaleGestureDetector) {
-                if (BuildConfig.DEBUG) { LOG_V("Scaling: onScaleBegin"); }
-                beginScaleFactor = mScaleDetector.getScaleFactor();
-                originalZoom = normalizeZoom(imageView.getSettings().getTextZoom());
-                scaleInProgress = true;
-                return true;
-            }
-
-            @Override
-            public void onScaleEnd(ScaleGestureDetector scaleGestureDetector) {
-                if (BuildConfig.DEBUG) { LOG_V("Scaling: onScaleEnd"); }
-                scaleInProgress = false;
-                float endScaleFactor = mScaleDetector.getScaleFactor();
-
-                final int newZoom;
-                int comparison = Float.compare(endScaleFactor, beginScaleFactor);
-                if (comparison == 0) {
-                    return;
-                }
-                if (comparison < 0) {
-                    newZoom = originalZoom - 10;
-                } else {
-                    newZoom = originalZoom + 10;
-                }
-
-                Context context = getContext();
-                SharedPreferences preferences = getSharedPreferences(context);
-                preferences.edit()
-                        .putInt(getScaleKey(SCALE_X), newZoom)
-                        .apply();
-                updateScaleFromPrefs(context, imageView);
-            }
-
-            private boolean previouslyClicked = false;
-            @Override
-            public void onClick(View view) {
-                Log.i(TAG, "onClick");
-                if (!previouslyClicked) {
-                    Intent intent = new Intent(context, PlaybackService.class);
-                    intent.setAction(PlaybackService.ACTION_PLAY);
-                    Pair<ProgressBar, String> tag = (Pair<ProgressBar, String>) imageView.getTag();
-                    intent.putExtra(PlaybackService.EXTRA_FILE, tag.second);
-                    context.startService(intent);
-                    previouslyClicked = true;
-                } else {
-                    Intent intent = new Intent(context, PlaybackService.class);
-                    intent.setAction(PlaybackService.ACTION_NOTIFICATION);
-                    context.startService(intent);
-                }
-            }
-
-            private static class MyLoadTask extends AsyncTask<Void, Void, String> {
-                String imageFile;
-                WeakReference<WebView> imageView;
-                String link;
-                WeakReference<Context> contextRef;
-                String episodeId;
-                int destinationViewWidth;
-                int destinationViewHeight;
-                List<String> links;
-
-                MyLoadTask(List<String> links, Context context, String episodeId, String link, String imageFile, WebView imageView) {
-                    this.imageFile = imageFile;
-                    this.link = link;
-                    this.links = links;
-                    this.contextRef = new WeakReference<>(context);
-                    this.imageView = new WeakReference<>(imageView);
-                    this.episodeId = episodeId;
-                    this.destinationViewHeight = imageView.getHeight();
-                    this.destinationViewWidth = imageView.getWidth();
-                }
-
-                private static void addDirAndEpisodeDir(List<File> cacheDirs, File dir, String subdirName, String episodeId) {
-                    if (dir == null) {
-                        return;
-                    }
-                    cacheDirs.add(dir);
-                    File subdir = new File(dir, subdirName);
-                    if (!subdir.exists()) {
-                        return;
-                    }
-
-                    File episodeDir = new File(subdir, episodeId);
-                    if (!episodeDir.exists()) {
-                        return;
-                    }
-
-                    cacheDirs.add(episodeDir);
-                }
-
-                @Override
-                protected String doInBackground(Void[] voids) {
-                    if (BuildConfig.DEBUG) { LOG_V("doInBackground(" + imageFile + ")"); }
-                    String savedBitmap = null;
-                    Context context = contextRef.get();
-                    if (context == null) {
-                        return null;
-                    }
-                    List<File> cacheDirs = new ArrayList<>();
-
-                    // TODO: ne znam zašto ovo već nisam imao.  Treba popraviti download ali zasad mogu da koristim ovo
-                    addDirAndEpisodeDir(cacheDirs, context.getCacheDir(), EpisodeDownloadTask.EPISODES_FOLDER, episodeId);
-
-                    addDirAndEpisodeDir(cacheDirs, new File(context.getCacheDir(), INTERNAL_OFFLINE), EpisodeDownloadTask.EPISODES_FOLDER, episodeId);
-                    addDirAndEpisodeDir(cacheDirs, ExternalStorageHelper.getExternalCacheDir(context), EpisodeDownloadTask.EPISODES_FOLDER, episodeId);
-                    for (File cacheDir : cacheDirs) {
-                        if (cacheDir == null) {
-                            continue;
-                        }
-                        if (savedBitmap != null) {
-                            break;
-                        }
-                        File savedImage = new File(cacheDir, imageFile);
-                        if (BuildConfig.DEBUG) { LOG_V("Trying " + savedImage.getAbsolutePath()); }
-                        if (savedImage.exists()) {
-                            if (BuildConfig.DEBUG) { LOG_V("The file " + imageFile + " exists."); }
-                            if (getImageView() == null || isCancelled()) {
-                                return null;
-                            } else {
-                                if (BuildConfig.DEBUG) { LOG_V("Decoding image from " + imageFile); }
-                                savedBitmap = mp3HelperVerifyFile(savedImage.getAbsolutePath());
-                            }
-                        }
-                    }
-                    if (savedBitmap != null) {
-                        return savedBitmap;
-                    }
-
-                    View destinationView = imageView.get();
-                    if (destinationView == null) {
-                        return null;
-                    }
-                    if (internetNotAvailable(context)) {
-                        return null;
-                    }
-
-                    File imageToDownload = new File(context.getCacheDir(), imageFile);
-                    if (isCancelled()) {
-                        return null;
-                    } else {
-                        deleteOldSavedFiles(imageToDownload.getParentFile(), MAX_DOWNLOADED_IMAGES_ONLINE);
-                        return DownloadAndSave.downloadAndSave(link, imageToDownload, destinationViewWidth, destinationViewHeight, 3);
-                    }
-                }
-
-                private String mp3HelperVerifyFile(String absolutePath) {
-                    // TODO: provera
-                    return absolutePath;
-                }
-
-                private synchronized WebView getImageView() {
-                    return imageView.get();
-                }
-
-                @Override
-                protected void onPostExecute(String bitmap) {
-                    WebView view = getImageView();
-                    Pair<ProgressBar, String> progressBar = view != null ? (Pair<ProgressBar, String>) view.getTag() : null;
-                    try {
-                        if (BuildConfig.DEBUG) { LOG_V("onPostExecute(" + imageFile + "," + bitmap + ")"); }
-                        if (bitmap == null && !isCancelled()) {
-                            Context context = contextRef.get();
-                            if (view != null && context != null && internetNotAvailable(context)) {
-                                view.loadData("<html><head></head><body><p>Internet Problem</p></body></html>", "text/html", "UTF-8");
-                            }
-                            return;
-                        }
-                        if (view != null) {
-                            if (BuildConfig.DEBUG) { LOG_V("Loading into ImageView(" + imageFile + ")"); }
-                            view.loadData(createHtml(links, true, false), "text/html", "UTF-8");
-                        }
-                        if (progressBar != null) {
-                            view.setTag(new Pair<>(progressBar.first, bitmap));
-                        }
-                    } finally {
-                        if (progressBar != null && progressBar.first != null) {
-                            progressBar.first.setVisibility(View.GONE);
-                        }
-                    }
-                }
-
-                private static String createHtml(List<String> links, boolean hints, boolean a3byka) {
-                    StringBuilder builder = new StringBuilder();
-
-                    builder.append("<html><head><title></title></head><body><p><br>");
-                    for (int i = 2; i < links.size(); i++) {
-                        builder.append(applyFilters(links.get(i), hints, a3byka)).append("<br>");
-                    }
-                    builder.append("</body></head></html>");
-                    return builder.toString();
-                }
-
-                private static final String hintsChars = "\\\\";
-                private static final Pattern nuggetsPattern = Pattern.compile(hintsChars + "(r|ás|as|o|ó|go|ste|iendo)");
-                private static final Pattern hintsPattern = Pattern.compile(hintsChars);
-                private static String applyFilters(String line, boolean hints, boolean a3byka) {
-                    if (hints) {
-                        line = nuggetsPattern.matcher(line).replaceAll("<ins>$1</ins>");
-                        if (BuildConfig.DEBUG) {
-                            String oldLine = line;
-                            line = hintsPattern.matcher(oldLine).replaceAll("");
-                            if (oldLine.compareTo(line) != 0) {
-                                Log.wtf(TAG, "There was a remaining hint: old=" + oldLine + ", " + "new=" + line);
-                            }
-                        }
-                    }
-                    line = hintsPattern.matcher(line).replaceAll("");
-                    return line;
-                }
-
-                @Override
-                protected void onCancelled(String b) {
-                    if (BuildConfig.DEBUG) { LOG_V("onCancelled(" + imageFile + ")"); }
-                    onPostExecute(null);
-                }
-            }
-        }
-    }
 
     public static synchronized void deleteOldSavedFiles(@Nullable File dir, long maxImages) {
         if (dir == null) {

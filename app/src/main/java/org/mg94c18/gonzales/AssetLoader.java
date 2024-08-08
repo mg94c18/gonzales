@@ -12,6 +12,7 @@ import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,6 +25,7 @@ import java.util.zip.GZIPInputStream;
 
 import static org.mg94c18.gonzales.Logger.LOG_V;
 import static org.mg94c18.gonzales.Logger.TAG;
+import static org.mg94c18.gonzales.MainActivity.syncIndex;
 
 public final class AssetLoader {
     public static final String TITLES = "titles";
@@ -247,5 +249,57 @@ public final class AssetLoader {
             }
         }
         return null;
+    }
+
+    public static void startAssetLoadingThread(MainActivity mainActivity) {
+        final WeakReference<MainActivity> mainActivityRef = new WeakReference<>(mainActivity);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                final List<String> titles;
+                final List<String> numbers;
+                final List<String> dates;
+                Context context = mainActivityRef.get();
+                if (context == null) {
+                    if (BuildConfig.DEBUG) { LOG_V("Not loading, context went away"); }
+                    return;
+                }
+                if (BuildConfig.DEBUG) { LOG_V("Begin loading: " + System.currentTimeMillis()); }
+                titles = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.TITLES, syncIndex);
+                numbers = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.NUMBERS, syncIndex);
+                dates = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.DATES, syncIndex);
+                if (BuildConfig.DEBUG) { LOG_V("End loading: " + System.currentTimeMillis()); }
+
+                int count = titles.size();
+                if (numbers.size() != count || dates.size() != count) {
+                    Log.wtf(TAG, "Episode list mismatch: titles=" + titles.size() + ", numbers=" + numbers.size() + ", dates=" + dates.size());
+                    return;
+                }
+
+                final List<String> hiddenTitles = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.HIDDEN_TITLES, syncIndex);
+                final List<String> hiddenNumbers = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.HIDDEN_NUMBERS, syncIndex);
+                final List<String> hiddenDates = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.HIDDEN_MATCHES, syncIndex);
+                count = hiddenTitles.size();
+                if (hiddenNumbers.size() != count || hiddenDates.size() != count) {
+                    Log.wtf(TAG, "Hidden list mismatch: titles=" + hiddenTitles.size() + ", numbers=" + hiddenNumbers.size() + ", dates=" + hiddenDates.size());
+                    hiddenTitles.clear();
+                    hiddenNumbers.clear();
+                    hiddenDates.clear();
+                }
+
+                final MainActivity activity = mainActivityRef.get();
+                if (activity == null) {
+                    if (BuildConfig.DEBUG) { LOG_V("Not loading, activity went away"); }
+                    return;
+                }
+
+                activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        activity.updateAssets(titles, numbers, dates, hiddenTitles, hiddenNumbers, hiddenDates);
+                    }
+                });
+            }
+        }).start();
     }
 }
