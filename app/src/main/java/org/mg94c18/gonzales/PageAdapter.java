@@ -6,6 +6,7 @@ import static org.mg94c18.gonzales.Logger.TAG;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.media.AudioAttributes;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.support.annotation.Nullable;
@@ -18,19 +19,26 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Pattern;
 
-public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.OnScaleGestureListener, View.OnClickListener {
+public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.OnScaleGestureListener, View.OnClickListener,
+    MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener {
     List<String> links;
     String episode;
-    String filename;
-
+    String localFilePath;
     Context context;
     Button button;
     private WebView webView;
+    MyLoadTask loadTask;
+
+    private static final ExecutorService cleanupService = Executors.newSingleThreadExecutor();
 
     private static final int SCALE_MAX_X_INT = 2;
     private static final int MINIMUM_ZOOM = 100;
@@ -39,8 +47,58 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
     ScaleGestureDetector mScaleDetector;
     private boolean scaleInProgress = false;
 
+    // https://developer.android.com/static/images/mediaplayer_state_diagram.gif
+    enum State {
+        IDLE,
+        INITIALIZED,
+        PREPARING,
+        PREPARED,
+        STARTED,
+        PAUSED,
+        STOPPED,
+        PLAYBACK_COMPLETED,
+        ERROR,
+        END
+    }
     MediaPlayer mediaPlayer;
-    MyLoadTask loadTask;
+    State playerState;
+    private static final String PLAY_START = "Play";
+
+    @Override
+    public void onCompletion(MediaPlayer mediaPlayer) {
+        Log.i(TAG, "onCompletion()");
+        if (mediaPlayer == null) {
+            Log.w(TAG, "Got a callback (soon?) after destroying or error");
+            return;
+        }
+        playerState = State.PLAYBACK_COMPLETED;
+        button.setText(PLAY_START);
+    }
+
+    @Override
+    public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
+        Log.i(TAG, "onError()");
+        playerState = State.ERROR;
+        if (mediaPlayer == null) {
+            Log.w(TAG, "Got a callback (soon?) after destroying");
+            return false;
+        }
+        mediaPlayer.release();
+        mediaPlayer = null;
+        button.setEnabled(false);
+        return true;
+    }
+
+    @Override
+    public void onPrepared(MediaPlayer mediaPlayer) {
+        Log.i(TAG, "onPrepared()");
+        if (mediaPlayer == null) {
+            Log.w(TAG, "Got a callback (soon?) after destroying");
+            return;
+        }
+        playerState = State.PREPARED;
+        button.setEnabled(true);
+    }
 
     PageAdapter(MainActivity activity, String episode) {
         if (BuildConfig.DEBUG) { LOG_V("PageAdapter(" + episode + ")"); }
@@ -48,7 +106,6 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         this.context = activity;
         this.episode = episode;
         links = AssetLoader.loadFromAssetOrUpdate(context, episode, MainActivity.syncIndex);
-        this.filename = DownloadAndSave.fileNameFromLink(links.get(0), episode, 0);
 
         mScaleDetector = new ScaleGestureDetector(context, this);
 
@@ -60,20 +117,35 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
 
         updateScaleFromPrefs(context, webView);
 
-        webView.loadData(createHtml(links, true, false), "text/html", "UTF-8");
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                webView.loadData(createHtml(links, true, false), "text/html", "UTF-8");
+            }
+        });
+
         ProgressBar progressBar = activity.findViewById(R.id.progressBar);
         progressBar.setVisibility(View.VISIBLE);
         webView.setTag(progressBar);
         webView.setOnTouchListener(this);
 
-        loadTask = new MyLoadTask(links, this, filename);
+        loadTask = new MyLoadTask(links, this, DownloadAndSave.fileNameFromLink(links.get(0), episode, 0));
         loadTask.execute();
     }
 
     public void destroy() {
-        if (BuildConfig.DEBUG) { LOG_V("destroy(" + filename + ")"); }
+        if (BuildConfig.DEBUG) { LOG_V("destroy(" + episode + ")"); }
         loadTask.cancel(true);
         loadTask.parentRef.clear();
+        if (mediaPlayer != null) {
+            cleanupService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    mediaPlayer.release();
+                }
+            });
+        }
+        button.setEnabled(false);
     }
 
     private static String createHtml(List<String> links, boolean hints, boolean a3byka) {
@@ -182,20 +254,24 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         updateScaleFromPrefs(context, webView);
     }
 
-    private boolean previouslyClicked = false;
     @Override
     public void onClick(View view) {
         Log.i(TAG, "onClick");
-        if (!previouslyClicked) {
-            Intent intent = new Intent(context, PlaybackService.class);
-            intent.setAction(PlaybackService.ACTION_PLAY);
-            intent.putExtra(PlaybackService.EXTRA_FILE, "TODO:file");
-            context.startService(intent);
-            previouslyClicked = true;
+        if (localFilePath == null) {
+            Log.wtf(TAG, "Should never happen");
+            return;
+        }
+
+        if (playerState == State.STARTED) {
+            mediaPlayer.pause();
+            playerState = State.PAUSED;
+            button.setText("Resume");
+        } else if (playerState == State.PAUSED || playerState == State.PREPARED) {
+            mediaPlayer.start();
+            playerState = State.STARTED;
+            button.setText("Pause");
         } else {
-            Intent intent = new Intent(context, PlaybackService.class);
-            intent.setAction(PlaybackService.ACTION_NOTIFICATION);
-            context.startService(intent);
+            Log.wtf(TAG, "Unexpected state: " + playerState);
         }
     }
 
@@ -274,7 +350,12 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
                 if (localFile == null && !isCancelled()) {
                     return;
                 }
-                parent.button.setEnabled(true);
+                if (localFile == null) {
+                    Log.e(TAG, "localFile=null, likely a download problem");
+                    parent.button.setEnabled(false);
+                    return;
+                }
+                parent.onDownloaded(localFile);
             } finally {
                 if (progressBar != null) {
                     progressBar.setVisibility(View.GONE);
@@ -286,6 +367,33 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         protected void onCancelled(String b) {
             if (BuildConfig.DEBUG) { LOG_V("onCancelled(" + imageFile + ")"); }
             onPostExecute(null);
+        }
+    }
+
+    private void onDownloaded(String localFile) {
+        if (mediaPlayer != null) {
+            Log.wtf(TAG, "Unexpected, we already have mediaPlayer");
+            return;
+        }
+        localFilePath = localFile;
+        mediaPlayer = new MediaPlayer();
+        playerState = State.IDLE;
+        mediaPlayer.setAudioAttributes(
+                new AudioAttributes.Builder()
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .build()
+        );
+        mediaPlayer.setOnPreparedListener(this);
+        mediaPlayer.setOnCompletionListener(this);
+        mediaPlayer.setOnErrorListener(this);
+        try {
+            mediaPlayer.setDataSource(localFilePath);
+            playerState = State.INITIALIZED;
+            mediaPlayer.prepareAsync();
+            playerState = State.PREPARING;
+        } catch (IOException e) {
+            Log.wtf(TAG, "Can't setDataSource(" + localFilePath + ")");
         }
     }
 }
