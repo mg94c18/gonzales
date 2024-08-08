@@ -39,9 +39,9 @@ import static org.mg94c18.gonzales.Logger.TAG;
 public class DownloadAndSave {
     private static final String TMP_SUFFIX = ".tmp";
 
-    static String downloadAndSave(String link, File imageFile, int width, int height, int attempts) {
+    static String downloadAndSave(String link, File imageFile, int attempts) {
         for (int i = 0; i < attempts; i++) {
-            Pair<String, Boolean> result = downloadAndSaveNoRetry(link, imageFile, width, height);
+            Pair<String, Boolean> result = downloadAndSaveNoRetry(link, imageFile);
             if (result.first != null || result.second) {
                 return result.first;
             }
@@ -132,7 +132,7 @@ public class DownloadAndSave {
         return (HttpURLConnection) connection;
     }
 
-    private static @NonNull Pair<String, Boolean> downloadAndSaveNoRetry(String link, File imageFile, int width, int height) {
+    private static @NonNull Pair<String, Boolean> downloadAndSaveNoRetry(String link, File imageFile) {
         HttpURLConnection connection = null;
         InputStream inputStream = null;
         FileOutputStream fileOutputStream = null;
@@ -144,8 +144,6 @@ public class DownloadAndSave {
             inputStream = connection.getInputStream();
             String bitmap = GoogleBitmapHelper.decodeSampledBitmapFromStream(
                     inputStream,
-                    width,
-                    height,
                     tempFile);
             if (bitmap == null) {
                 return Pair.create(null, Boolean.FALSE);

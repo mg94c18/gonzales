@@ -26,20 +26,15 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatDelegate;
 import android.util.Log;
-import android.util.Pair;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
-import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.WebView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
-import android.widget.ProgressBar;
 import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -71,7 +66,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private static final String NIGHT_MODE = "night_mode";
     private static final String CONTACT_EMAIL = "yckopo@gmail.com";
     private static final String MY_ACTION_VIEW = BuildConfig.APPLICATION_ID + ".VIEW";
-    private static final String INTERNET_PROBLEM = "Internet Problem";
     static final String INTERNAL_OFFLINE = "offline";
     private static final long BYTES_PER_MB = 1024 * 1024;
 

@@ -38,13 +38,11 @@ class GoogleBitmapHelper {
     /**
      * Creates sampled bitmap from input stream, using given file for temp storage.
      * @param inputStream the stream to read from and consume; we don't call .close on the stream
-     * @param reqWidth width for the destination view, or 0 if not available
-     * @param reqHeight height for the destination view, or 0 if not available
      * @param tempFile the caller is responsible for deleting the file
      * @return the scaled bitmap from the input stream
      * @throws IOException in case reading from the stream or writing to file fails
      */
-    static String decodeSampledBitmapFromStream(InputStream inputStream, int reqWidth, int reqHeight, File tempFile) throws IOException {
+    static String decodeSampledBitmapFromStream(InputStream inputStream, File tempFile) throws IOException {
         FileOutputStream fileOutputStream = null;
 
         try {

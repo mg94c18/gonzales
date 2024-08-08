@@ -55,23 +55,54 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         webView = activity.findViewById(R.id.webview);
         button = activity.findViewById(R.id.button);
         button.setOnClickListener(this);
+        button.setText("Play");
+        button.setEnabled(false);
 
         updateScaleFromPrefs(context, webView);
 
-        // TODO: možda ovo ugasi ProgressBar da se ne vidi?
-        //webView.loadData("<html><head><title></title></head><body><p>...</p></body></html>", "text/html", "UTF-8");
+        webView.loadData(createHtml(links, true, false), "text/html", "UTF-8");
         ProgressBar progressBar = activity.findViewById(R.id.progressBar);
         progressBar.setVisibility(View.VISIBLE);
         webView.setTag(progressBar);
         webView.setOnTouchListener(this);
 
-        loadTask = new MyLoadTask(links, context, episode, links.get(0), filename, webView);
+        loadTask = new MyLoadTask(links, this, filename);
         loadTask.execute();
     }
 
     public void destroy() {
         if (BuildConfig.DEBUG) { LOG_V("destroy(" + filename + ")"); }
         loadTask.cancel(true);
+        loadTask.parentRef.clear();
+    }
+
+    private static String createHtml(List<String> links, boolean hints, boolean a3byka) {
+        StringBuilder builder = new StringBuilder();
+
+        builder.append("<html><head><title></title></head><body><p><br>");
+        for (int i = 2; i < links.size(); i++) {
+            builder.append(applyFilters(links.get(i), hints, a3byka)).append("<br>");
+        }
+        builder.append("</body></head></html>");
+        return builder.toString();
+    }
+
+    private static final String hintsChars = "\\\\";
+    private static final Pattern nuggetsPattern = Pattern.compile(hintsChars + "(r|ás|as|o|ó|go|ste|iendo)");
+    private static final Pattern hintsPattern = Pattern.compile(hintsChars);
+    private static String applyFilters(String line, boolean hints, boolean a3byka) {
+        if (hints) {
+            line = nuggetsPattern.matcher(line).replaceAll("<ins>$1</ins>");
+            if (BuildConfig.DEBUG) {
+                String oldLine = line;
+                line = hintsPattern.matcher(oldLine).replaceAll("");
+                if (oldLine.compareTo(line) != 0) {
+                    Log.wtf(TAG, "There was a remaining hint: old=" + oldLine + ", " + "new=" + line);
+                }
+            }
+        }
+        line = hintsPattern.matcher(line).replaceAll("");
+        return line;
     }
 
     private static int normalizeZoom(int currentZoom) {
@@ -170,37 +201,27 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
 
     private static class MyLoadTask extends AsyncTask<Void, Void, String> {
         String imageFile;
-        WeakReference<WebView> webView;
-        String link;
-        WeakReference<Context> contextRef;
-        String episodeId;
-        int destinationViewWidth;
-        int destinationViewHeight;
+        WeakReference<PageAdapter> parentRef;
         List<String> links;
 
-        MyLoadTask(List<String> links, Context context, String episodeId, String link, String imageFile, WebView webView) {
+        MyLoadTask(List<String> links, PageAdapter parent, String imageFile) {
             this.imageFile = imageFile;
-            this.link = link;
             this.links = links;
-            this.contextRef = new WeakReference<>(context);
-            this.webView = new WeakReference<>(webView);
-            this.episodeId = episodeId;
-            this.destinationViewHeight = webView.getHeight();
-            this.destinationViewWidth = webView.getWidth();
+            this.parentRef = new WeakReference<>(parent);
         }
 
         @Override
         protected String doInBackground(Void[] voids) {
             if (BuildConfig.DEBUG) { LOG_V("doInBackground(" + imageFile + ")"); }
             String savedBitmap = null;
-            Context context = contextRef.get();
-            if (context == null) {
+            PageAdapter parent = parentRef.get();
+            if (parent == null) {
                 return null;
             }
             List<File> cacheDirs = new ArrayList<>();
 
             // TODO: ne znam zašto ovo već nisam imao.  Treba popraviti download ali zasad mogu da koristim ovo
-            cacheDirs.add(context.getCacheDir());
+            cacheDirs.add(parent.context.getCacheDir());
             for (File cacheDir : cacheDirs) {
                 if (cacheDir == null) {
                     continue;
@@ -212,7 +233,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
                 if (BuildConfig.DEBUG) { LOG_V("Trying " + savedImage.getAbsolutePath()); }
                 if (savedImage.exists()) {
                     if (BuildConfig.DEBUG) { LOG_V("The file " + imageFile + " exists."); }
-                    if (getWebView() == null || isCancelled()) {
+                    if (isCancelled()) {
                         return null;
                     } else {
                         if (BuildConfig.DEBUG) { LOG_V("Decoding image from " + imageFile); }
@@ -224,19 +245,15 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
                 return savedBitmap;
             }
 
-            View destinationView = webView.get();
-            if (destinationView == null) {
-                return null;
-            }
-            if (MainActivity.internetNotAvailable(context)) {
+            if (MainActivity.internetNotAvailable(parent.context)) {
                 return null;
             }
 
-            File imageToDownload = new File(context.getCacheDir(), imageFile);
+            File imageToDownload = new File(parent.context.getCacheDir(), imageFile);
             if (isCancelled()) {
                 return null;
             } else {
-                return DownloadAndSave.downloadAndSave(link, imageToDownload, destinationViewWidth, destinationViewHeight, 3);
+                return DownloadAndSave.downloadAndSave(links.get(0), imageToDownload, 3);
             }
         }
 
@@ -245,61 +262,24 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
             return absolutePath;
         }
 
-        private synchronized WebView getWebView() {
-            return webView.get();
-        }
-
         @Override
-        protected void onPostExecute(String bitmap) {
-            WebView view = getWebView();
-            ProgressBar progressBar = view != null ? (ProgressBar) view.getTag() : null;
+        protected void onPostExecute(String localFile) {
+            PageAdapter parent = parentRef.get();
+            if (parent == null) {
+                return;
+            }
+            ProgressBar progressBar = (ProgressBar) parent.webView.getTag();
             try {
-                if (BuildConfig.DEBUG) { LOG_V("onPostExecute(" + imageFile + "," + bitmap + ")"); }
-                if (bitmap == null && !isCancelled()) {
-                    Context context = contextRef.get();
-                    if (view != null && context != null && MainActivity.internetNotAvailable(context)) {
-                        view.loadData("<html><head></head><body><p>Internet Problem</p></body></html>", "text/html", "UTF-8");
-                    }
+                if (BuildConfig.DEBUG) { LOG_V("onPostExecute(" + imageFile + "," + localFile + ")"); }
+                if (localFile == null && !isCancelled()) {
                     return;
                 }
-                if (view != null) {
-                    if (BuildConfig.DEBUG) { LOG_V("Loading into WebView(" + imageFile + ")"); }
-                    view.loadData(createHtml(links, true, false), "text/html", "UTF-8");
-                }
+                parent.button.setEnabled(true);
             } finally {
                 if (progressBar != null) {
                     progressBar.setVisibility(View.GONE);
                 }
             }
-        }
-
-        private static String createHtml(List<String> links, boolean hints, boolean a3byka) {
-            StringBuilder builder = new StringBuilder();
-
-            builder.append("<html><head><title></title></head><body><p><br>");
-            for (int i = 2; i < links.size(); i++) {
-                builder.append(applyFilters(links.get(i), hints, a3byka)).append("<br>");
-            }
-            builder.append("</body></head></html>");
-            return builder.toString();
-        }
-
-        private static final String hintsChars = "\\\\";
-        private static final Pattern nuggetsPattern = Pattern.compile(hintsChars + "(r|ás|as|o|ó|go|ste|iendo)");
-        private static final Pattern hintsPattern = Pattern.compile(hintsChars);
-        private static String applyFilters(String line, boolean hints, boolean a3byka) {
-            if (hints) {
-                line = nuggetsPattern.matcher(line).replaceAll("<ins>$1</ins>");
-                if (BuildConfig.DEBUG) {
-                    String oldLine = line;
-                    line = hintsPattern.matcher(oldLine).replaceAll("");
-                    if (oldLine.compareTo(line) != 0) {
-                        Log.wtf(TAG, "There was a remaining hint: old=" + oldLine + ", " + "new=" + line);
-                    }
-                }
-            }
-            line = hintsPattern.matcher(line).replaceAll("");
-            return line;
         }
 
         @Override

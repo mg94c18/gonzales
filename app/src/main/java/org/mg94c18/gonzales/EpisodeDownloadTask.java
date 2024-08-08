@@ -264,7 +264,7 @@ public class EpisodeDownloadTask {
 
             if (!usedOtherFile) {
                 if (BuildConfig.DEBUG) { LOG_V("Downloading " + filename); }
-                bitmap = DownloadAndSave.downloadAndSave(link, file, 0, 0, 5);
+                bitmap = DownloadAndSave.downloadAndSave(link, file, 5);
                 if (bitmap == null) {
                     return Boolean.FALSE;
                 }
