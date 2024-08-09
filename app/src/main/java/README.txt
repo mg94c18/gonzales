@@ -58,9 +58,15 @@ Pesme sa delom prevoda
 - Ostariću, neću znati (možda)
 
 Raspored za Španski:
-- El Rey: "Pesma za sva vremena", podvući: svako ir/ar/er za infinitiv, svako as za futur
-- No me importa nada: "Pesma za sve glagole"
-- Recordaras
+- Vale mucho
+- No me importa nada (ovo kao da se nastavlja na prethodnu)
+- El rey: "Pesma za sva vremena", podvući: svako ir/ar/er za infinitiv, svako as za futur
+- La Llorona (kao da se nastavlja na prethodnu)
+- Un ano de amor
+- Un libro viejo (kao da se nastavlja na prethodnu)
+
+- nešto od Hulija Iglesiasa
+- ostale iz ~/Espanol, ima oko 20, samo izbaciti par komada is PSM
 
 s3cmd setacl --acl-public --recursive s3://mg94c18gonzales
 
@@ -81,4 +87,16 @@ Ovo je diskutabilno, pa treba da dodam neki sistem koji će da uradi to što kor
 
 Izgleda da ne moram da koristim CPU lock, jer na primer na mom telefonu radi i svira.  Treba da ga testiram na duže distance.
 
-Verovatno je bolje da za obično slušanje stavim da svira iz WebView, a da svoj MediaPlayer koristim za playlist.
+WebView je poznat po tome da local playback ne radi.  Zato za obično slušanje koristim MediaPlayer, a za playlist MediaSession.
+https://developer.android.com/training/tv/playback/media-session
+https://developer.android.com/media/optimize/audio-focus
+https://developer.android.com/reference/android/media/session/PlaybackState
+https://developer.android.com/reference/android/media/session/MediaSession
+
+Hm ovo je super: https://developer.android.com/media/legacy/audio/mediabrowserservice#mediastyle-notifications
+"Using MediaStyle notifications with a foreground service"
+
+requestFocus() passing in your OnAudioFocusChangeListener.
+Always call requestFocus() first, proceed only if focus is granted.
+
+Luz Casal pesme su preglasne u poređenju sa drugima...

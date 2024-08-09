@@ -257,6 +257,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     public void onRestart() {
         super.onRestart();
         Log.i(TAG, "onRestart");
+        if (selectedEpisode >= 0) {
+            selectEpisode(selectedEpisode);
+        }
     }
 
     @Override

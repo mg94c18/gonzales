@@ -34,7 +34,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
     public static final String ACTION_STOP = "stop";
     public static final String ACTION_NOTIFICATION = "notification";
     public static final String EXTRA_FILE = "file";
-    private static final String CHANNEL_ID = "022f94de-8383-44e8-b52e-be67a2307044";
+    private static final String CHANNEL_ID = "8082e7d3-aa37-482c-8ce5-6004e2709cd7";
     private static final int NOTIFICATION_ID = 42;
 
     private Map<String, MediaPlayer> players;
@@ -239,7 +239,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             CharSequence name = getString(R.string.channel_name);
             String description = getString(R.string.channel_description);
-            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            int importance = NotificationManager.IMPORTANCE_LOW;
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
             channel.setDescription(description);
             // Register the channel with the system. You can't change the importance
