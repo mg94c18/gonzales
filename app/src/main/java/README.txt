@@ -63,10 +63,22 @@ Raspored za Španski:
 - El rey: "Pesma za sva vremena", podvući: svako ir/ar/er za infinitiv, svako as za futur
 - La Llorona (kao da se nastavlja na prethodnu)
 - Un ano de amor
-- Un libro viejo (kao da se nastavlja na prethodnu)
+- Un libro viejo (da se nastavlja na prethodnu)
+- Quizas, quizas, quizas
+- Ya no me interesas (da se nastavlja na prethodnu)
+- Uno mas uno: https://www.youtube.com/watch?v=TnKyvgoO_VI sa 3x više teksta
+- Yo soy su mujer: https://www.youtube.com/watch?v=0BTUOQFC66c (nastavak jer je i ovo iz serije)
+- Besame mucho, ali bez prevoda
 
-- nešto od Hulija Iglesiasa
-- ostale iz ~/Espanol, ima oko 20, samo izbaciti par komada is PSM
+- nešto od Hulija Iglesiasa?
+- Cielo Rojo, Flor Silvestre
+- Tu Sangre en Mi Cuerpo, Ana Bertha Castellanos
+- La Basurita, Flor Silvestre
+- boleros cubanos clasicos pogledati oko sat i po
+- Entre mis recuerdos?
+
+- neki rep u smislu komplikovanije, brže, al to može i kasnije
+- Larry Rada Apache - En defensa propia?
 
 s3cmd setacl --acl-public --recursive s3://mg94c18gonzales
 
