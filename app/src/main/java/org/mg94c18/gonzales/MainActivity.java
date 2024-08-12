@@ -58,6 +58,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private static final String SHARED_PREFS_NAME = "config";
     private static final String EPISODE_TITLE = "episode_title";
     private static final String EPISODE_NUMBER = "episode_number";
+    private static final String EPISODE_AUTHOR = "episode_author";
     private static final String EPISODE_INDEX = "episode";
     private static final String DRAWER = "drawer";
     private static final String NIGHT_MODE = "night_mode";
@@ -238,7 +239,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 selectEpisode(episodeInfo.index);
             } else {
                 AssetLoader.startAssetLoadingThread(this);
-                selectEpisode(episodeInfo.index, episodeInfo.title, episodeInfo.number);
+                selectEpisode(episodeInfo.index, episodeInfo.title, episodeInfo.number, episodeInfo.author);
             }
         }
 
@@ -594,6 +595,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         instanceState.putInt(EPISODE_INDEX, selectedEpisode);
         instanceState.putString(EPISODE_TITLE, selectedEpisodeTitle);
         instanceState.putString(EPISODE_NUMBER, selectedEpisodeNumber);
+        instanceState.putString(EPISODE_AUTHOR, dates.get(selectedEpisode));
         instanceState.putParcelable(DRAWER, drawerList.onSaveInstanceState());
 
         super.onSaveInstanceState(instanceState);
@@ -621,6 +623,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     static class EpisodeInfo {
         String title;
         String number;
+        String author;
         int index;
         boolean migration; // whether we're in migration from older release where just index was available but no title or number
 
@@ -633,25 +636,29 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private @NonNull EpisodeInfo findSavedEpisode(Bundle state) {
         EpisodeInfo episodeInfo = new EpisodeInfo();
 
-        if (state != null && state.containsKey(EPISODE_INDEX) && state.containsKey(EPISODE_TITLE) && state.containsKey(EPISODE_NUMBER)) {
+        if (state != null && state.containsKey(EPISODE_INDEX) && state.containsKey(EPISODE_TITLE) && state.containsKey(EPISODE_NUMBER) && state.containsKey(EPISODE_AUTHOR)) {
             episodeInfo.index = state.getInt(EPISODE_INDEX);
             episodeInfo.title = state.getString(EPISODE_TITLE);
             episodeInfo.number = state.getString(EPISODE_NUMBER);
+            episodeInfo.author = state.getString(EPISODE_AUTHOR);
             if (BuildConfig.DEBUG) { LOG_V("Loaded episode from bundle: " + episodeInfo); }
         } else {
             SharedPreferences preferences = getSharedPreferences();
             episodeInfo.migration = false;
             String defaultTitle = getResources().getString(R.string.default_episode_title);
             String defaultNumber = getResources().getString(R.string.default_episode_number);
+            String defaultAuthor = getResources().getString(R.string.default_episode_author);
             if (preferences.contains(EPISODE_TITLE) && preferences.contains(EPISODE_NUMBER)) {
                 episodeInfo.title = preferences.getString(EPISODE_TITLE, defaultTitle);
                 episodeInfo.number = preferences.getString(EPISODE_NUMBER, defaultNumber);
+                episodeInfo.author = preferences.getString(EPISODE_AUTHOR, defaultAuthor);
             } else {
                 if (preferences.contains(EPISODE_INDEX)) {
                     episodeInfo.migration = true;
                 } else {
                     episodeInfo.title = defaultTitle;
                     episodeInfo.number = defaultNumber;
+                    episodeInfo.author = defaultAuthor;
                 }
             }
             episodeInfo.index = preferences.getInt(EPISODE_INDEX, getResources().getInteger(R.integer.default_episode_index));
@@ -669,7 +676,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     }
 
     private void selectEpisode(int position) {
-        selectEpisode(position, titles.get(position), numbers.get(position));
+        selectEpisode(position, titles.get(position), numbers.get(position), dates.get(position));
     }
 
     private @NonNull ActionBar getMyActionBar() {
@@ -680,20 +687,21 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         return actionBar;
     }
 
-    private void selectEpisode(int position, String title, String number) {
+    private void selectEpisode(int position, String title, String number, String author) {
         if (position >= 0) {
             selectedEpisodeTitle = title;
             selectedEpisodeNumber = number;
         }
         mySetActionBarTitle(getMyActionBar(), title);
         destroyPageAdapter();
-        pageAdapter = new PageAdapter(this, number);
+        pageAdapter = new PageAdapter(this, number, author);
         if (position >= 0) {
             selectedEpisode = position;
             if (BuildConfig.DEBUG) { LOG_V("Saving episode " + selectedEpisode); }
             getSharedPreferences().edit()
                     .putInt(EPISODE_INDEX, selectedEpisode)
                     .putString(EPISODE_TITLE, title)
+                    .putString(EPISODE_AUTHOR, author)
                     .putString(EPISODE_NUMBER, number)
                     .apply();
         }

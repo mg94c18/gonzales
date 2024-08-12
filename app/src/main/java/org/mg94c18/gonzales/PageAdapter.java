@@ -100,7 +100,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         button.setEnabled(true);
     }
 
-    PageAdapter(MainActivity activity, String episode) {
+    PageAdapter(MainActivity activity, String episode, String author) {
         if (BuildConfig.DEBUG) { LOG_V("PageAdapter(" + episode + ")"); }
 
         this.context = activity;
@@ -120,7 +120,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                webView.loadData(createHtml(links, true, false), "text/html", "UTF-8");
+                webView.loadData(createHtml(links, author, true, false), "text/html", "UTF-8");
             }
         });
 
@@ -148,10 +148,10 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         button.setEnabled(false);
     }
 
-    private static String createHtml(List<String> links, boolean hints, boolean a3byka) {
+    private static String createHtml(List<String> links, String author, boolean hints, boolean a3byka) {
         StringBuilder builder = new StringBuilder();
 
-        builder.append("<html><head><title></title></head><body><p><br>");
+        builder.append("<html><head><title></title></head><body><p>(" + author + ")<br><br>");
         for (int i = 2; i < links.size(); i++) {
             builder.append(applyFilters(links.get(i), hints, a3byka)).append("<br>");
         }

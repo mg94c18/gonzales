@@ -41,9 +41,8 @@ Raspored za srpski:
 9) Rekla je - negde pri vrhu, za učenje "da", podvući ono "da" kod rekla je da nije važno, i prevod onog "šta da joj kažem" jer tu znači "to".  U bukvalnom insisitrati da "da nije važno" a ne da "nije bilo važno"
 10) Kab bi jelen imo krila (Conditionals) sa podvučenim "bi" svuda
 11) Medvedova ženidba (Aorist) sa naglaskom na prvom slogu svuda
-12) Šta da ti pričam kad sve znaš: https://www.youtube.com/watch?v=vTW7_cg10ws
-
-Neke lakše i kraće pesme bez mnogo učenja ali za vežbu (ima dosta kandidata u Gonzales-SR.txt)
+12) Šta da ti pričam kad sve znaš (za negatives i double negatives): https://www.youtube.com/watch?v=vTW7_cg10ws
+13) još dosta kandidata iz Gonzles-SR.txt, mada treba ostaviti mesta za želje slušalaca ako su pogodne za obrazovanje
 
 Pri kraju, možda i posle GRU:
     Neće vatra kraj slame: https://www.youtube.com/watch?v=nTvO_9LsjS0
@@ -91,19 +90,18 @@ Raspored za Španski:
 - Larry Rada Apache - En defensa propia?
 - Volver razgovor oko 5 minuta
 
+Ime aplikacije za španski: A ja ribam ja ribam? (dok ti sereš)
+
 s3cmd setacl --acl-public --recursive s3://mg94c18gonzales
 
-Dodati ćirilicu ako neko traži "a36yka"
+Dodati ћирилицу ako neko traži "a36yka", nemam nigde "injekcije" ili "konjukcije" ili "Bedžihe", pa bi trebalo da može da se prebaci lako
+
+Da ne koristim strings direktno za UI nego uvek preko assets...
 
 Zoom treba da uzme u obzir dužinu najduže linije u toj pesmi, pa da stalni faktor bude broj slova u liniji za vertikalno i horizontalno (dakle dva faktora ukupno).
 Sad zapravo ne znam šta sam mislio pod tim ^
 
 Onaj problem na emulatoru se dešava kad nema internet, onda gnjavi sa download u pozadini, ali ako se prebacim na drugu pesmu onda popuni WebView sa starom pesmom, a nova pesma pak još nije skinuta i tako ide unakrsno.
-
-Treba dodati sledeće:
-- integraciju sa dugmetom sa slušalica, tako da može da se pauzira i nastavi
-- obaveštenje da može da se skloni (i da samim tim ugasi muziku)
-- da može da se pauzira i nastavi bez da se otključa ekran (obaveštenje se nalazi na lock screen)
 
 Takođe nastavlja da svira ako odšetam na neku drugu aplikaciju.
 Ovo je diskutabilno, pa treba da dodam neki sistem koji će da uradi to što korisnik hoće u zavisnosti od pattern-a korišćenja.
@@ -121,9 +119,16 @@ Hm ovo je super: https://developer.android.com/media/legacy/audio/mediabrowserse
 
 requestFocus() passing in your OnAudioFocusChangeListener.
 Always call requestFocus() first, proceed only if focus is granted.
+Slično tome, ako ima playback a onda zvoni alarm, ne pauzira
+
+Treba dodati media button, za integraciju sa slušalicama
+Slično tome treba da pauzira ako neko izvadi slušalice dok muzika svira
 
 Luz Casal pesme su preglasne u poređenju sa drugima...
+La Basurita prevod je pogrešan na nekoliko mesta
 
 Treba da nastavi da svira kad se upali/ugasi Dark mode
+Kod playlist da bude "I promise" poruka (ako ima više pesama u listi) koja se menja na nekoliko raznih načina i bez koje ne može da se pusti Play, dok se načini ne potroše
+Da playlist po default ima prethodnu listu čekiranu, čak i ako je bio cancel
 
 for f in gonzales dijaspora; do rm -f app/src/$f/assets/links && for n in $(cat app/src/$f/assets/numbers); do cat app/src/$f/assets/$n | head -n 1 >> app/src/$f/assets/links; done; done

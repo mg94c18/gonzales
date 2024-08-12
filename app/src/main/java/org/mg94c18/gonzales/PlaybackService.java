@@ -160,7 +160,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         }
         player.start();
         state = State.STARTED;
-        myStartForeground(true, true);
+        myStartForeground(true, false); // TODO: argumenti su sad uvek suprotno jedan drugom, možda mi ne trabaju oba
     }
 
     private void onStopRequested() {
@@ -222,7 +222,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
                 .setContentText("content text")
                 .setSmallIcon(R.drawable.ic_launcher)
                 .setAutoCancel(false)
-                .setOnlyAlertOnce(true)
+                .setOnlyAlertOnce(false) // izgleda da ako je ovo true onda se nekad ne vidi u top bar mada je i dalje tu ako se izvuče
                 .setContentIntent(activityPendingIntent)
                 .setDeleteIntent(myBuildServiceIntent(ACTION_STOP))
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
