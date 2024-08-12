@@ -129,7 +129,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         webView.setTag(progressBar);
         webView.setOnTouchListener(this);
 
-        loadTask = new MyLoadTask(links, this, DownloadAndSave.fileNameFromLink(links.get(0), episode, 0));
+        loadTask = new MyLoadTask(links, this, DownloadAndSave.fileNameFromLink(links.get(0)));
         loadTask.execute();
     }
 

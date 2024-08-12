@@ -31,6 +31,7 @@ public final class AssetLoader {
     public static final String TITLES = "titles";
     public static final String NUMBERS = "numbers";
     public static final String DATES = "dates";
+    public static final String MP3LINKS = "links";
     public static final String HIDDEN_TITLES = "hiddenTitles";
     public static final String HIDDEN_NUMBERS = "hiddenNumbers";
     public static final String HIDDEN_MATCHES = "hiddenMatches";
@@ -259,6 +260,7 @@ public final class AssetLoader {
                 final List<String> titles;
                 final List<String> numbers;
                 final List<String> dates;
+                final List<String> mp3Links;
                 Context context = mainActivityRef.get();
                 if (context == null) {
                     if (BuildConfig.DEBUG) { LOG_V("Not loading, context went away"); }
@@ -268,6 +270,7 @@ public final class AssetLoader {
                 titles = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.TITLES, syncIndex);
                 numbers = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.NUMBERS, syncIndex);
                 dates = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.DATES, syncIndex);
+                mp3Links = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.MP3LINKS, syncIndex);
                 if (BuildConfig.DEBUG) { LOG_V("End loading: " + System.currentTimeMillis()); }
 
                 int count = titles.size();
@@ -296,7 +299,7 @@ public final class AssetLoader {
                 activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        activity.updateAssets(titles, numbers, dates, hiddenTitles, hiddenNumbers, hiddenDates);
+                        activity.updateAssets(titles, numbers, dates, mp3Links, hiddenTitles, hiddenNumbers, hiddenDates);
                     }
                 });
             }

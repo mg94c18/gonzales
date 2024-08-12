@@ -26,6 +26,8 @@ import java.security.SecureRandom;
 import java.util.List;
 import java.util.Locale;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.GZIPOutputStream;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -290,9 +292,15 @@ public class DownloadAndSave {
         }
     }
 
-    @NonNull static String fileNameFromLink(String link, String episodeId, int page) {
-        String extension = "mp3";
-        return String.format(Locale.US, "%s_%03d.%s", episodeId, page, extension);
+    private static final Pattern urlPattern = Pattern.compile("https://.*/([^/]+.mp3)");
+    @NonNull static String fileNameFromLink(String link) {
+        Matcher matcher = urlPattern.matcher(link);
+        String name = matcher.matches() ? matcher.group(1) : null;
+        if (name == null) {
+            Log.wtf(TAG, "Could not match: " + link);
+            return "default.mp3";
+        }
+        return name;
     }
 
     public static boolean saveUrlDiffToFile(String url, List<String> currentContent, File destination) {

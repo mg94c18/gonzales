@@ -13,7 +13,7 @@
         app:showAsAction="never"
         android:visible="false"/>
     <item android:id="@+id/action_download_internal"
-        android:title="Sačuvaj za offline"
+        android:title="Playlist"
         app:showAsAction="never"
         android:visible="false"/>
     <item android:id="@+id/action_cancel_download"

@@ -44,11 +44,19 @@ Raspored za srpski:
 12) Šta da ti pričam kad sve znaš: https://www.youtube.com/watch?v=vTW7_cg10ws
 
 Neke lakše i kraće pesme bez mnogo učenja ali za vežbu (ima dosta kandidata u Gonzales-SR.txt)
+
+Pri kraju, možda i posle GRU:
+    Neće vatra kraj slame: https://www.youtube.com/watch?v=nTvO_9LsjS0
+    Nijedna zora ne svane: https://www.youtube.com/watch?v=kXL6Ulyphe8
+
+Filmovi:
+    Kengur i molitva za Istvič ali i za Romu
+
 Na kraju:
 GRU: Za tebe uvek biću tu
 Novak sa originalom i sa prevodom: https://www.youtube.com/watch?v=FR2HyUurVCc
 Tjelo Hristovo
-Bez prevoda: prednosti i mane grada: https://www.youtube.com/watch?v=zNHbw9vWNTk ali odseći ove ruse na kraju jer nisu Crnogorci
+Prednosti i mane grada: https://www.youtube.com/watch?v=zNHbw9vWNTk ali odseći ove ruse na kraju jer nisu Crnogorci
 Svađa u studiju: https://www.youtube.com/watch?v=J0Guz3gVDV4
 (Sa peharom) Boža zvani Pub.
 
@@ -68,17 +76,20 @@ Raspored za Španski:
 - Ya no me interesas (da se nastavlja na prethodnu)
 - Uno mas uno: https://www.youtube.com/watch?v=TnKyvgoO_VI sa 3x više teksta
 - Yo soy su mujer: https://www.youtube.com/watch?v=0BTUOQFC66c (nastavak jer je i ovo iz serije)
-- Besame mucho, ali bez prevoda
+- Besame mucho, ali bez prevoda?
 
 - nešto od Hulija Iglesiasa?
 - Cielo Rojo, Flor Silvestre
 - Tu Sangre en Mi Cuerpo, Ana Bertha Castellanos
 - La Basurita, Flor Silvestre
-- boleros cubanos clasicos pogledati oko sat i po
+- boleros cubanos clasicos pogledati, ima oko sat i po
 - Entre mis recuerdos?
+- Hasta Siempre
+- Chupa la cana nena
 
 - neki rep u smislu komplikovanije, brže, al to može i kasnije
 - Larry Rada Apache - En defensa propia?
+- Volver razgovor oko 5 minuta
 
 s3cmd setacl --acl-public --recursive s3://mg94c18gonzales
 
@@ -112,3 +123,7 @@ requestFocus() passing in your OnAudioFocusChangeListener.
 Always call requestFocus() first, proceed only if focus is granted.
 
 Luz Casal pesme su preglasne u poređenju sa drugima...
+
+Treba da nastavi da svira kad se upali/ugasi Dark mode
+
+for f in gonzales dijaspora; do rm -f app/src/$f/assets/links && for n in $(cat app/src/$f/assets/numbers); do cat app/src/$f/assets/$n | head -n 1 >> app/src/$f/assets/links; done; done

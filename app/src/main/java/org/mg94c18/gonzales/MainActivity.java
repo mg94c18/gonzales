@@ -39,30 +39,31 @@ import static org.mg94c18.gonzales.Logger.TAG;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FilenameFilter;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
-    private static final long MAX_DOWNLOADED_IMAGES_ONLINE = 20;
     private static final String SHARED_PREFS_NAME = "config";
     private static final String EPISODE_TITLE = "episode_title";
     private static final String EPISODE_NUMBER = "episode_number";
     private static final String EPISODE_INDEX = "episode";
-    private static final String MIGRATION_ID = "migration_id";
     private static final String DRAWER = "drawer";
     private static final String NIGHT_MODE = "night_mode";
     private static final String CONTACT_EMAIL = "yckopo@gmail.com";
     private static final String MY_ACTION_VIEW = BuildConfig.APPLICATION_ID + ".VIEW";
     static final String INTERNAL_OFFLINE = "offline";
-    private static final long BYTES_PER_MB = 1024 * 1024;
 
     PageAdapter pageAdapter;
     DrawerLayout drawerLayout;
@@ -71,18 +72,16 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     List<String> numbers;
     List<String> dates;
     List<String> numberAndTitle;
+    List<String> mp3Links;
     boolean assetsLoaded = false;
     int selectedEpisode = 0;
     String selectedEpisodeTitle;
     String selectedEpisodeNumber;
-    EpisodeDownloadTask downloadTask;
     AlertDialog configureDownloadDialog;
     AlertDialog quoteDialog;
     static final long syncIndex = -1;
     ActionBarDrawerToggle drawerToggle;
-    Toast warningToast;
-    private static final String DOWNLOAD_DIALOG_TITLE = "Download";
-    private boolean sdCardReady;
+    private static final String DOWNLOAD_DIALOG_TITLE = "Playlist";
     private String previousProgressString;
     private String progressString;
     private static boolean nightModeAllowed = Build.VERSION.SDK_INT >= 29;
@@ -209,11 +208,11 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
         if (BuildConfig.DEBUG) { LOG_V("onCreate"); }
         super.onCreate(savedInstanceState);
-        downloadTask = null;
         setContentView(R.layout.activity_main);
 
         titles = Collections.emptyList();
         numbers = Collections.emptyList();
+        mp3Links = Collections.emptyList();
         dates = Collections.emptyList();
         numberAndTitle = Collections.emptyList();
 
@@ -232,6 +231,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                         AssetLoader.loadFromAssetOrUpdate(this, AssetLoader.TITLES, syncIndex),
                         AssetLoader.loadFromAssetOrUpdate(this, AssetLoader.NUMBERS, syncIndex),
                         AssetLoader.loadFromAssetOrUpdate(this, AssetLoader.DATES, syncIndex),
+                        AssetLoader.loadFromAssetOrUpdate(this, AssetLoader.MP3LINKS, syncIndex),
                         AssetLoader.loadFromAssetOrUpdate(this, AssetLoader.HIDDEN_TITLES, syncIndex),
                         AssetLoader.loadFromAssetOrUpdate(this, AssetLoader.HIDDEN_NUMBERS, syncIndex),
                         AssetLoader.loadFromAssetOrUpdate(this, AssetLoader.HIDDEN_MATCHES, syncIndex));
@@ -274,9 +274,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         Log.i(TAG, "onResume");
     }
 
-    public void updateAssets(@NonNull List<String> titles, @NonNull List<String> numbers, @NonNull List<String> dates, List<String> hiddenTitles, List<String> hiddenNumbers, List<String> hiddenMatches) {
+    public void updateAssets(@NonNull List<String> titles, @NonNull List<String> numbers, @NonNull List<String> dates, List<String> mp3Links, List<String> hiddenTitles, List<String> hiddenNumbers, List<String> hiddenMatches) {
         SearchProvider.TITLES = this.titles = titles;
         SearchProvider.NUMBERS = this.numbers = numbers;
+        this.mp3Links = mp3Links;
         SearchProvider.DATES = this.dates = dates;
         SearchProvider.HIDDEN_TITLES = hiddenTitles;
         SearchProvider.HIDDEN_NUMBERS = hiddenNumbers;
@@ -298,10 +299,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     public void onStop() {
         if (BuildConfig.DEBUG) { LOG_V("onStop"); }
         super.onStop();
-        if (downloadTask != null) {
-            downloadTask.cancel();
-            downloadTask = null;
-        }
         dismissAlertDialogs();
         destroyPageAdapter();
     }
@@ -343,7 +340,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     searchManager.getSearchableInfo(getComponentName()));
         }
 
-        sdCardReady = (ExternalStorageHelper.getExternalCacheDir(this) != null);
         updateDownloadButtons(menu);
         updateDarkModeButtons(menu);
 
@@ -351,11 +347,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     }
 
     private void updateDownloadButtons(Menu menu) {
-        if (sdCardReady) {
-            menu.findItem(R.id.action_download).setVisible(true);
-        } else {
-            menu.findItem(R.id.action_download_internal).setVisible(true);
-        }
+        menu.findItem(R.id.action_download_internal).setVisible(true);
         menu.findItem(R.id.action_cancel_download).setVisible(false);
     }
 
@@ -399,11 +391,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             drawerToggle.syncState();
         }
 
-        if (downloadTask != null && downloadTask.completed()) {
-            downloadTask = null;
-        }
-
-        if (downloadTask != null) {
+        if (PlaybackService.inForeground) {
             menu.findItem(R.id.action_download).setVisible(false);
             menu.findItem(R.id.action_download_internal).setVisible(false);
             menu.findItem(R.id.action_cancel_download).setVisible(true);
@@ -451,6 +439,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 if (BuildConfig.DEBUG) { LOG_V("Search requested"); }
                 onSearchRequested();
                 return true;
+            case R.id.action_download_internal:
+                configureDownload(selectedEpisodeNumber);
+                return true;
             case R.id.action_dark_mode:
                 boolean newNightMode = !getNightModeFromSharedPrefs();
                 getSharedPreferences().edit().putBoolean(NIGHT_MODE, newNightMode).apply();
@@ -472,29 +463,18 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         AppCompatDelegate.setDefaultNightMode(mode);
     }
 
-    private void configureDownload(String episode, final EpisodeDownloadTask.Destination destination) {
+    private void configureDownload(String episode) {
         dismissAlertDialogs();
         final MainActivity activity = this;
-        final File destinationDir;
-        final int maxEpisodesToOffer;
-        final long spaceBufferMb;
+        final File destinationDir = getCacheDir();
         final List<String> episodesToDelete = new ArrayList<>();
 
-        if (destination == EpisodeDownloadTask.Destination.INTERNAL_MEMORY) {
-            destinationDir = ExternalStorageHelper.getInternalOfflineDir(activity);
-            maxEpisodesToOffer = 10;
-            spaceBufferMb = 350;
-        } else {
-            destinationDir = ExternalStorageHelper.getExternalCacheDir(activity);
-            maxEpisodesToOffer = 25;
-            spaceBufferMb = 0;
-        }
         if (destinationDir == null) {
             Log.wtf(TAG, "Destination is null");
             return;
         }
 
-        final LinkedHashMap<String, Long> completelyDownloadedEpisodes = EpisodeDownloadTask.getCompletelyDownloadedEpisodes(destinationDir);
+        final Set<String> completelyDownloadedEpisodes = getCompletelyDownloadedEpisodes(destinationDir, mp3Links, numbers);
         final List<Integer> episodesToDownload = new ArrayList<>();
         final List<String> namesToShow = new ArrayList<>();
         final List<Integer> indexesOfNamesToShow = new ArrayList<>();
@@ -503,22 +483,18 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             if (numbers.get(i).equals(episode)) {
                 indexToScrollTo = indexesOfNamesToShow.size();
             }
-            if (completelyDownloadedEpisodes.containsKey(numbers.get(i))) {
+            if (!completelyDownloadedEpisodes.contains(numbers.get(i))) {
                 continue;
             }
             namesToShow.add(numberAndTitle.get(i));
             indexesOfNamesToShow.add(i);
         }
-        long freeSpaceAtDir = ExternalStorageHelper.getFreeSpaceAtDir(destinationDir);
-        final long freeSpaceMb = (freeSpaceAtDir != -1 ? freeSpaceAtDir : Long.MAX_VALUE) / BYTES_PER_MB;
         final long averageMbPerEpisode = getResources().getInteger(R.integer.average_episode_size_mb);
-        warningToast = null;
-        // boolean[] checkedItems = new boolean[namesToShow.size()];
-        // for (int i = 0; i < checkedItems.length; i++) {
-        //     checkedItems[i] = true;
-        //     episodesToDownload.add(indexesOfNamesToShow.get(i));
-        // }
-        boolean[] checkedItems = null;
+        boolean[] checkedItems = new boolean[namesToShow.size()];
+        for (int i = 0; i < checkedItems.length; i++) {
+            checkedItems[i] = true;
+            episodesToDownload.add(indexesOfNamesToShow.get(i));
+        }
         configureDownloadDialog = new AlertDialog.Builder(this)
                 .setCancelable(true)
                 .setTitle(DOWNLOAD_DIALOG_TITLE)
@@ -532,62 +508,75 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                             episodesToDownload.remove(actualIndex);
                         }
                         Button positiveButton = configureDownloadDialog.getButton(DialogInterface.BUTTON_POSITIVE);
-                        if (episodesToDownload.size() > maxEpisodesToOffer) {
-                            positiveButton.setEnabled(false);
+                        long downloadMb = episodesToDownload.size() * averageMbPerEpisode;
+                        if (episodesToDownload.size() > 0) {
+                            positiveButton.setEnabled(true);
                         } else {
-                            long downloadMb = episodesToDownload.size() * averageMbPerEpisode;
-                            if (downloadMb + spaceBufferMb > freeSpaceMb) {
-                                if ((episodesToDownload.size() - completelyDownloadedEpisodes.size()) * averageMbPerEpisode + spaceBufferMb < freeSpaceMb) {
-                                    if (BuildConfig.DEBUG) { LOG_V("Will delete old episodes"); }
-                                    if (warningToast != null) {
-                                        warningToast.cancel();
-                                    }
-                                    warningToast = Toast.makeText(activity,"Stare epizode će biti obrisane", Toast.LENGTH_SHORT);
-                                    warningToast.show();
-                                    positiveButton.setEnabled(true);
-                                    updateDownloadDialogTitle(configureDownloadDialog, downloadMb);
-                                } else {
-                                    if (BuildConfig.DEBUG) { LOG_V("Too much to download"); }
-                                    positiveButton.setEnabled(false);
-                                }
-                            } else {
-                                if (BuildConfig.DEBUG) { LOG_V("We can fit the download"); }
-                                if (warningToast != null) {
-                                    warningToast.cancel();
-                                    warningToast = null;
-                                }
-                                positiveButton.setEnabled(true);
-                                updateDownloadDialogTitle(configureDownloadDialog, downloadMb);
-                            }
+                            positiveButton.setEnabled(false);
                         }
+                        updateDownloadDialogTitle(configureDownloadDialog, downloadMb);
                     }
                 })
                 .setNegativeButton(android.R.string.cancel, null)
-                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                .setPositiveButton("Play", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int which) {
                         if (episodesToDownload.isEmpty()) {
                             return;
                         }
-                        if (episodesToDownload.size() * averageMbPerEpisode + spaceBufferMb > freeSpaceMb) {
-                            for (Map.Entry<String, Long> entry : completelyDownloadedEpisodes.entrySet()) {
-                                episodesToDelete.add(entry.getKey());
-                                if ((episodesToDownload.size() - episodesToDelete.size()) * averageMbPerEpisode + spaceBufferMb < freeSpaceMb) {
-                                    break;
-                                }
-                            }
+                        // TODO: trebalo bi da ima utility za ovo negde
+                        int[] episodeIds = new int[episodesToDownload.size()];
+                        for (int i = 0; i < episodesToDownload.size(); i++) {
+                            episodeIds[i] = episodesToDownload.get(i);
                         }
-                        downloadTask = new EpisodeDownloadTask(episodesToDelete, activity, episodesToDownload, destinationDir);
-                        onDownloadProgress(-1, -1);
-                        downloadTask.execute();
+                        Intent intent = new Intent(MainActivity.this, PlaybackService.class);
+                        intent.setAction(PlaybackService.ACTION_PLAY);
+                        intent.putExtra(PlaybackService.EXTRA_IDS, episodeIds);
+                        MainActivity.this.startService(intent);
                     }
                 })
                 .create();
         configureDownloadDialog.show();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (episodesToDownload.isEmpty()) {
+                    configureDownloadDialog.getButton(DialogInterface.BUTTON_POSITIVE).setEnabled(false);
+                }
+            }
+        });
         ListView listView = configureDownloadDialog.getListView();
         if (listView != null && indexToScrollTo != -1) {
             listView.setSelection(indexToScrollTo);
         }
+    }
+
+    private static Set<String> getCompletelyDownloadedEpisodes(File cacheDir, List<String> mp3Links, List<String> numbers) {
+        Map<String, String> mp3FileForNumber = new HashMap<>();
+        for (int i = 0; i < mp3Links.size(); i++) {
+            mp3FileForNumber.put(DownloadAndSave.fileNameFromLink(mp3Links.get(i)), numbers.get(i));
+        }
+        File[] files = cacheDir.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File file, String s) {
+                return s != null && s.endsWith(".mp3");
+            }
+        });
+        if (files == null) {
+            return Collections.emptySet();
+        }
+        Set<String> downloadedEpisodes = new HashSet<>();
+        for (File file : files) {
+            if (file == null) {
+                continue;
+            }
+            String number = mp3FileForNumber.get(file.getName());
+            if (number == null) {
+                continue;
+            }
+            downloadedEpisodes.add(number);
+        }
+        return downloadedEpisodes;
     }
 
     private static void updateDownloadDialogTitle(AlertDialog configureDownloadDialog, long downloadMb) {
