@@ -21,16 +21,9 @@ import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 public class PlaybackService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener {
     public static final String ACTION_PLAY = "play";
@@ -66,6 +59,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
     int[] episodeIdsToPlay = EMPTY_ARRAY;
     int nextIndexToPlay;
     List<String> mp3Links;
+    List<String> titles;
 
     @Nullable
     @Override
@@ -83,6 +77,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         episodeIdsToPlay = EMPTY_ARRAY;
         nextIndexToPlay = 0;
         mp3Links = AssetLoader.loadFromAssetOrUpdate(this, AssetLoader.MP3LINKS, syncIndex);
+        titles = AssetLoader.loadFromAssetOrUpdate(this, AssetLoader.TITLES, syncIndex);
     }
 
     @Override
@@ -218,8 +213,8 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
 
         int iconId = currentlyPlaying ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play;
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("Title")
-                .setContentText("content text")
+                .setContentTitle(getCurrentTitle())
+                .setContentText("" + nextIndexToPlay + "/" + episodeIdsToPlay.length)
                 .setSmallIcon(R.drawable.ic_launcher)
                 .setAutoCancel(false)
                 .setOnlyAlertOnce(false) // izgleda da ako je ovo true onda se nekad ne vidi u top bar mada je i dalje tu ako se izvuče
@@ -245,6 +240,16 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
 
         if (!currentlyPlaying) {
             myStopForeground(false);
+        }
+    }
+
+    private String getCurrentTitle() {
+        int i = nextIndexToPlay - 1;
+        if (i >= 0 && i < episodeIdsToPlay.length) {
+            return titles.get(episodeIdsToPlay[i]);
+        } else {
+            Log.wtf(TAG, "Can't figure out the title: " + nextIndexToPlay + "/" + episodeIdsToPlay.length);
+            return "Title";
         }
     }
 
@@ -292,6 +297,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
     public void onCompletion(final MediaPlayer mediaPlayer) {
         Log.i(TAG, "onCompletion");
         if (mediaPlayer != player) {
+            // TODO: ovde verovatno dođe ako u onError vratim false, probati ovo
             Log.wtf(TAG, "Mismatched players, ignoring");
             return;
         }
