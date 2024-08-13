@@ -32,17 +32,19 @@ Raspored za srpski:
 3) Daj, ne pitaj (Endings matter; nouns also change) podvučeni m,š, i dana,dane,dani
 4) Zlatibore pitaj Taru () podvučena poslednja slova svaki put kad je Zlatibor i Tara
 4a) ? Ove noći nećeš spavati (Make past from present)
-13) Jesi li sama večeras: za učenje "li"
-14) Luče moje (Da li mirno spavaš), slično
+13) Jesi li sama večeras: za učenje "li", i njega prevesti kao obrnuti upitnik
 5) Kad zamirišu jorgovani (Verb declination for male/female) - podvučeno
 6) Daj, ne pitaj (Aca Lukas)
 7) Ljubav je, kad se neko voli
 8) Zajedno - podvučeno "mo" svuda
-9) Rekla je - negde pri vrhu, za učenje "da", podvući ono "da" kod rekla je da nije važno, i prevod onog "šta da joj kažem" jer tu znači "to".  U bukvalnom insisitrati da "da nije važno" a ne da "nije bilo važno"
-10) Kab bi jelen imo krila (Conditionals) sa podvučenim "bi" svuda
+9) Rekla je - ali neku razumljivu verziju, original se teško razaznaje, možda neka koncertna
+10) Kad bi jelen imo krila (Conditionals) sa podvučenim "bi" svuda
 11) Medvedova ženidba (Aorist) sa naglaskom na prvom slogu svuda
-12) Šta da ti pričam kad sve znaš (za negatives i double negatives): https://www.youtube.com/watch?v=vTW7_cg10ws
 13) još dosta kandidata iz Gonzles-SR.txt, mada treba ostaviti mesta za želje slušalaca ako su pogodne za obrazovanje
+
+Ima li negde neželjeni miks u pozadni?  Pozdravi je ima ženski prateći vokal u refrenu, jel to treba?  Ove noći ima neke čudne glasove?
+Računajte na nas ima tanke glasiće
+Jedan dan života je zbunjujuć jer i ženski i muški glas pevaju "poklonio" ili se pak ne čuje dobro
 
 Pri kraju, možda i posle GRU:
     Neće vatra kraj slame: https://www.youtube.com/watch?v=nTvO_9LsjS0
