@@ -3,6 +3,19 @@ Tokom OOBE, staviti da imena u meniju budu neokrivena/posebna, tako da skoro gar
     - na primer ime "* [1-9] *"
 
 Ko kaže da ti ne možeš razumeti srpski?  Slušaj ove pesme, treniraj tvoje uvo, i ti ćeš razumeti.  Možda takođe pričati.
+
+Maybe they told you that Serbian is impossible to learn...
+But why waste time listening to naysayers when you can spend it wisely listening to music?
+Use the world of music to explore difficult concepts that native speakers take for granted but can't bother to explain.
+Create playlists to listen in the background, train your ear by listening repeatedly, more than XYZ minutes of music.
+Use landscape mode to explore the translation, with literal (wrong) translation available for many songs.
+The grammar rules for Serbian, Croatian, Bosnian, Montenegrin are all the same, so you will acquire knowledge relevant for languages spoken by 15 million people in the area.
+This app will NOT teach you to speak Serbian, but it is sure to help you on your journey.
+
+^ Bla, bla, bla.  Trebalo bi da ilustrujem slikama a ne rečima.
+
+You pay less than you would for a pie.
+
 These songs are translated correctly, with caveats that poetry and music, like other art, is subjective, and that I am native Serbian and not English.
 
 Azbuka: prebaciti na ovu staru: https://www.youtube.com/watch?v=jWDlaXrJOI4
@@ -37,12 +50,26 @@ Raspored za srpski:
 6) Daj, ne pitaj (Aca Lukas)
 7) Ljubav je, kad se neko voli
 8) Zajedno - podvučeno "mo" svuda
+Hajde da se volimo
 9) Rekla je - ali neku razumljivu verziju, original se teško razaznaje, možda neka koncertna
+    - https://www.youtube.com/watch?v=67JSWqaKzuM
 10) Kad bi jelen imo krila (Conditionals) sa podvučenim "bi" svuda
-11) Medvedova ženidba (Aorist) sa naglaskom na prvom slogu svuda
-13) još dosta kandidata iz Gonzles-SR.txt, mada treba ostaviti mesta za želje slušalaca ako su pogodne za obrazovanje
+11) Medvedova ženidba (Aorist) sa naglaskom na prvom slogu svuda ili pak podvučenim aorist rečima
 
-Ima li negde neželjeni miks u pozadni?  Pozdravi je ima ženski prateći vokal u refrenu, jel to treba?  Ove noći ima neke čudne glasove?
+Ostariću: više prema vrhu posle čistača
+Leti eroplan: doći će? - preteško, bolje ne
+
+Rekla je, Opristi mi pape (rekli su mi), Ljubav je... (tata|mama mi je rekao|rekla) da budu posle Viktorije
+Buba Erdeljan umesto Računajte na nas: bolje je jer sadrži bolje izraze tipa "šta ti je trebalo to"
+
+Kad bi bio bijelo dugme
+Kad umrem, kada odem kad me ne bude
+Ti si me čekala: možda malo repetitive ako se koncept pokriva drugim pesmama
+Nikad te niko neće voljet ko ja: https://www.youtube.com/watch?v=iT9cPJ6-_W0
+
+Ako u pesmi nemam šta da naglasim, možda je suvišna?  Mada, vežbe su OK, pogotovu za playlist.
+
+Ima li negde neželjeni miks u pozadni?  Pozdravi je ima ženski prateći vokal u refrenu, jel to treba?  Ove noći ima neke čudne glasove?  Bacila je sve niz rijeku ima više zvukova/instrumenata nego što treba
 Računajte na nas ima tanke glasiće
 Jedan dan života je zbunjujuć jer i ženski i muški glas pevaju "poklonio" ili se pak ne čuje dobro
 
@@ -51,7 +78,6 @@ Pri kraju, možda i posle GRU:
     Nijedna zora ne svane: https://www.youtube.com/watch?v=kXL6Ulyphe8
 
 Filmovi:
-    Kengur i molitva za Istvič ali i za Romu
 
 Na kraju:
 GRU: Za tebe uvek biću tu
@@ -59,6 +85,7 @@ Novak sa originalom i sa prevodom: https://www.youtube.com/watch?v=FR2HyUurVCc
 Tjelo Hristovo
 Prednosti i mane grada: https://www.youtube.com/watch?v=zNHbw9vWNTk ali odseći ove ruse na kraju jer nisu Crnogorci
 Svađa u studiju: https://www.youtube.com/watch?v=J0Guz3gVDV4
+Kengur i molitva za Istvič ali i za Romu: 0:10-2:04, ~2:52-3:26
 (Sa peharom) Boža zvani Pub.
 
 Pesme sa delom prevoda

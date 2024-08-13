@@ -103,6 +103,10 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
     PageAdapter(MainActivity activity, String episode, String author) {
         if (BuildConfig.DEBUG) { LOG_V("PageAdapter(" + episode + ")"); }
 
+        if (nuggetsPattern == null) {
+            nuggetsPattern = Pattern.compile(hintsChars + activity.getResources().getString(R.string.nuggets));
+        }
+
         this.context = activity;
         this.episode = episode;
         links = AssetLoader.loadFromAssetOrUpdate(context, episode, MainActivity.syncIndex);
@@ -160,11 +164,11 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
     }
 
     private static final String hintsChars = "\\\\";
-    private static final Pattern nuggetsPattern = Pattern.compile(hintsChars + "(r|ás|as|o|ó|go|ste|iendo)");
+    private static Pattern nuggetsPattern = null;
     private static final Pattern hintsPattern = Pattern.compile(hintsChars);
     private static String applyFilters(String line, boolean hints, boolean a3byka) {
         if (hints) {
-            line = nuggetsPattern.matcher(line).replaceAll("<ins>$1</ins>");
+            line = nuggetsPattern.matcher(line).replaceAll("<em>$1</em>");
             if (BuildConfig.DEBUG) {
                 String oldLine = line;
                 line = hintsPattern.matcher(oldLine).replaceAll("");
