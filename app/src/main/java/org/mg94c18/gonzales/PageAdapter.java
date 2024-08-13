@@ -4,7 +4,6 @@ import static org.mg94c18.gonzales.Logger.LOG_V;
 import static org.mg94c18.gonzales.Logger.TAG;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.AudioAttributes;
 import android.media.MediaPlayer;
@@ -23,7 +22,6 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Pattern;
@@ -133,7 +131,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         webView.setTag(progressBar);
         webView.setOnTouchListener(this);
 
-        loadTask = new MyLoadTask(links, this, DownloadAndSave.fileNameFromLink(links.get(0)));
+        loadTask = new MyLoadTask(links, this, DownloadAndSave.fileNameFromNumber(episode));
         loadTask.execute();
     }
 

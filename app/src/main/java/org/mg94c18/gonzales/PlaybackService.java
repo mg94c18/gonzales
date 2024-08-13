@@ -58,7 +58,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
     int[] EMPTY_ARRAY = new int[0];
     int[] episodeIdsToPlay = EMPTY_ARRAY;
     int nextIndexToPlay;
-    List<String> mp3Links;
+    List<String> numbers;
     List<String> titles;
 
     @Nullable
@@ -76,7 +76,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         state = State.IDLE;
         episodeIdsToPlay = EMPTY_ARRAY;
         nextIndexToPlay = 0;
-        mp3Links = AssetLoader.loadFromAssetOrUpdate(this, AssetLoader.MP3LINKS, syncIndex);
+        numbers = AssetLoader.loadFromAssetOrUpdate(this, AssetLoader.NUMBERS, syncIndex);
         titles = AssetLoader.loadFromAssetOrUpdate(this, AssetLoader.TITLES, syncIndex);
     }
 
@@ -184,7 +184,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         player.setOnPreparedListener(this);
         player.setOnCompletionListener(this);
         player.setOnErrorListener(this);
-        String file = new File(getCacheDir(), DownloadAndSave.fileNameFromLink(mp3Links.get(episodeIdsToPlay[nextIndexToPlay]))).getAbsolutePath();
+        String file = new File(getCacheDir(), DownloadAndSave.fileNameFromNumber(numbers.get(episodeIdsToPlay[nextIndexToPlay]))).getAbsolutePath();
         try {
             player.setDataSource(file);
             state = State.INITIALIZED;

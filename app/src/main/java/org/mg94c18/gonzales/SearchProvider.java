@@ -25,8 +25,6 @@ public class SearchProvider extends ContentProvider {
     public static List<String> NUMBERS = Collections.emptyList();
     public static List<String> DATES = Collections.emptyList();
     public static List<String> HIDDEN_TITLES = Collections.emptyList();
-    public static List<String> HIDDEN_NUMBERS = Collections.emptyList();
-    public static List<String> HIDDEN_MATCHES = Collections.emptyList();
 
     public static final boolean ALLOW_MANUAL_SYNC = BuildConfig.DEBUG || "Amazon".equals(Build.MANUFACTURER);
 
@@ -91,6 +89,7 @@ public class SearchProvider extends ContentProvider {
                 MatrixCursor.RowBuilder builder = cursor.newRow();
                 builder.add(i); // BaseColumns._ID
                 builder.add(TITLES.get(i)); // SearchManager.SUGGEST_COLUMN_TEXT_1
+                // TODO: ovo sad otrkiva interno preslikavanje ali će i tako da se promeni kad promenim search
                 builder.add("broj " + NUMBERS.get(i) + ", " + DATES.get(i)); // SearchManager.SUGGEST_COLUMN_TEXT_2
                 builder.add(Integer.toString(i)); // SearchManager.SUGGEST_COLUMN_INTENT_EXTRA_DATA
             }
@@ -119,10 +118,10 @@ public class SearchProvider extends ContentProvider {
             return;
         }
 
-        for (int i = 0; i < HIDDEN_MATCHES.size(); i++) {
+        for (int i = 0; i < HIDDEN_TITLES.size(); i++) {
             boolean addThis = false;
             for (String query : querySet) {
-                if (HIDDEN_MATCHES.get(i).contains(":" + query + ":")) {
+                if (HIDDEN_TITLES.get(i).equals(query)) {
                     addThis = true;
                     break;
                 }
@@ -131,7 +130,7 @@ public class SearchProvider extends ContentProvider {
                 MatrixCursor.RowBuilder builder = cursor.newRow();
                 builder.add(i); // BaseColumns._ID
                 builder.add(HIDDEN_TITLES.get(i)); // SearchManager.SUGGEST_COLUMN_TEXT_1
-                builder.add(HIDDEN_NUMBERS.get(i)); // SearchManager.SUGGEST_COLUMN_TEXT_2
+                builder.add(""); // SearchManager.SUGGEST_COLUMN_TEXT_2
                 builder.add(Integer.toString(-1 * (i + 1))); // SearchManager.SUGGEST_COLUMN_INTENT_EXTRA_DATA
             }
         }

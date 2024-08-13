@@ -161,3 +161,6 @@ Kod playlist da bude "I promise" poruka (ako ima više pesama u listi) koja se m
 Da playlist po default ima prethodnu listu čekiranu, čak i ako je bio cancel
 
 for f in gonzales dijaspora; do rm -f app/src/$f/assets/links && for n in $(cat app/src/$f/assets/numbers); do cat app/src/$f/assets/$n | head -n 1 >> app/src/$f/assets/links; done; done
+
+for i in {1..36}; do git mv app/src/dijaspora/assets/$i app/src/dijaspora/assets/$(cat app/src/dijaspora/assets/links | head -n $i | tail -n 1); done
+for i in {1..10}; do git mv app/src/gonzales/assets/$i app/src/gonzales/assets/$(cat app/src/gonzales/assets/links | head -n $i | tail -n 1); done

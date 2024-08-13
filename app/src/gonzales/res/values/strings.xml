@@ -7,7 +7,7 @@
     <string name="sync_content_authority">org.mg94c18.gonzales.sync.StubProvider</string>
 
     <string name="default_episode_title">Para siempre</string>
-    <string name="default_episode_number">1</string>
+    <string name="default_episode_number">elrey</string>
     <string name="default_episode_author">Vicente Fernandez</string>
 
     <string name="nuggets">(r|ás|as|o|ó|go|ste|iendo)</string>

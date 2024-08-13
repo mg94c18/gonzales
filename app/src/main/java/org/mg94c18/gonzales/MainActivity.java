@@ -32,7 +32,6 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.SearchView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import static org.mg94c18.gonzales.Logger.LOG_V;
 import static org.mg94c18.gonzales.Logger.TAG;
@@ -40,19 +39,16 @@ import static org.mg94c18.gonzales.Logger.TAG;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FilenameFilter;
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
     private static final String SHARED_PREFS_NAME = "config";
@@ -73,7 +69,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     List<String> numbers;
     List<String> dates;
     List<String> numberAndTitle;
-    List<String> mp3Links;
     boolean assetsLoaded = false;
     int selectedEpisode = 0;
     String selectedEpisodeTitle;
@@ -150,13 +145,13 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
 
         dismissAlertDialogs();
-        String number = SearchProvider.HIDDEN_NUMBERS.get(episode);
-        List<String> quotes = AssetLoader.loadFromAssetOrUpdate(this, number, syncIndex);
+        // TODO: ovde dodati za a3byky
+        String[] quotes = {SearchProvider.HIDDEN_TITLES.get(episode)};
         quoteDialog = new AlertDialog.Builder(this)
                 .setTitle(SearchProvider.HIDDEN_TITLES.get(episode))
                 .setNegativeButton(android.R.string.cancel, null)
                 .setPositiveButton(android.R.string.ok, null)
-                .setItems(quotes.toArray(new String[0]), null)
+                .setItems(quotes, null)
                 .create();
         quoteDialog.setCanceledOnTouchOutside(false);
         quoteDialog.show();
@@ -213,7 +208,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
         titles = Collections.emptyList();
         numbers = Collections.emptyList();
-        mp3Links = Collections.emptyList();
         dates = Collections.emptyList();
         numberAndTitle = Collections.emptyList();
 
@@ -226,21 +220,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         if (!handleNewIntent(getIntent())) {
             EpisodeInfo episodeInfo = findSavedEpisode(savedInstanceState);
 
-            if (episodeInfo.migration) {
-                selectedEpisode = episodeInfo.index;
-                updateAssets(
-                        AssetLoader.loadFromAssetOrUpdate(this, AssetLoader.TITLES, syncIndex),
-                        AssetLoader.loadFromAssetOrUpdate(this, AssetLoader.NUMBERS, syncIndex),
-                        AssetLoader.loadFromAssetOrUpdate(this, AssetLoader.DATES, syncIndex),
-                        AssetLoader.loadFromAssetOrUpdate(this, AssetLoader.MP3LINKS, syncIndex),
-                        AssetLoader.loadFromAssetOrUpdate(this, AssetLoader.HIDDEN_TITLES, syncIndex),
-                        AssetLoader.loadFromAssetOrUpdate(this, AssetLoader.HIDDEN_NUMBERS, syncIndex),
-                        AssetLoader.loadFromAssetOrUpdate(this, AssetLoader.HIDDEN_MATCHES, syncIndex));
-                selectEpisode(episodeInfo.index);
-            } else {
-                AssetLoader.startAssetLoadingThread(this);
-                selectEpisode(episodeInfo.index, episodeInfo.title, episodeInfo.number, episodeInfo.author);
-            }
+            AssetLoader.startAssetLoadingThread(this);
+            selectEpisode(episodeInfo.index, episodeInfo.title, episodeInfo.number, episodeInfo.author);
         }
 
         if (savedInstanceState != null && savedInstanceState.containsKey(DRAWER)) {
@@ -275,18 +256,15 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         Log.i(TAG, "onResume");
     }
 
-    public void updateAssets(@NonNull List<String> titles, @NonNull List<String> numbers, @NonNull List<String> dates, List<String> mp3Links, List<String> hiddenTitles, List<String> hiddenNumbers, List<String> hiddenMatches) {
+    public void updateAssets(@NonNull List<String> titles, @NonNull List<String> numbers, @NonNull List<String> dates, List<String> hiddenTitles) {
         SearchProvider.TITLES = this.titles = titles;
         SearchProvider.NUMBERS = this.numbers = numbers;
-        this.mp3Links = mp3Links;
         SearchProvider.DATES = this.dates = dates;
         SearchProvider.HIDDEN_TITLES = hiddenTitles;
-        SearchProvider.HIDDEN_NUMBERS = hiddenNumbers;
-        SearchProvider.HIDDEN_MATCHES = hiddenMatches;
 
         numberAndTitle = new ArrayList<>(numbers.size());
         for (int i = 0; i < numbers.size(); i++) {
-            numberAndTitle.add(numbers.get(i) + ". " + titles.get(i));
+            numberAndTitle.add("" + (i + 1) + ". " + titles.get(i));
         }
 
         assetsLoaded = true;
@@ -381,9 +359,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 @Override
                 public void onDrawerOpened(View view) {
                     super.onDrawerOpened(view);
-                    String actionBarTitle = "Epizode";
+                    String actionBarTitle = "Epizode"; // TODO: resources
                     if (numbers != null && numbers.size() > 0) {
-                        actionBarTitle = actionBarTitle + " " + numbers.get(0) + "-" + numbers.get(numbers.size() - 1);
+                        actionBarTitle = actionBarTitle + " " + 1 + "-" + numbers.size();
                     }
                     mySetActionBarTitle(actionBar, actionBarTitle);
                 }
@@ -475,7 +453,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             return;
         }
 
-        final Set<String> completelyDownloadedEpisodes = getCompletelyDownloadedEpisodes(destinationDir, mp3Links, numbers);
+        final Set<String> completelyDownloadedEpisodes = getCompletelyDownloadedEpisodes(destinationDir, numbers);
         final List<Integer> episodesToDownload = new ArrayList<>();
         final List<String> namesToShow = new ArrayList<>();
         final List<Integer> indexesOfNamesToShow = new ArrayList<>();
@@ -552,10 +530,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
     }
 
-    private static Set<String> getCompletelyDownloadedEpisodes(File cacheDir, List<String> mp3Links, List<String> numbers) {
+    private static Set<String> getCompletelyDownloadedEpisodes(File cacheDir, List<String> numbers) {
         Map<String, String> mp3FileForNumber = new HashMap<>();
-        for (int i = 0; i < mp3Links.size(); i++) {
-            mp3FileForNumber.put(DownloadAndSave.fileNameFromLink(mp3Links.get(i)), numbers.get(i));
+        for (int i = 0; i < numbers.size(); i++) {
+            mp3FileForNumber.put(DownloadAndSave.fileNameFromNumber(numbers.get(i)), numbers.get(i));
         }
         File[] files = cacheDir.listFiles(new FilenameFilter() {
             @Override
@@ -625,7 +603,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         String number;
         String author;
         int index;
-        boolean migration; // whether we're in migration from older release where just index was available but no title or number
 
         @Override
         public String toString() {
@@ -644,27 +621,33 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             if (BuildConfig.DEBUG) { LOG_V("Loaded episode from bundle: " + episodeInfo); }
         } else {
             SharedPreferences preferences = getSharedPreferences();
-            episodeInfo.migration = false;
             String defaultTitle = getResources().getString(R.string.default_episode_title);
             String defaultNumber = getResources().getString(R.string.default_episode_number);
             String defaultAuthor = getResources().getString(R.string.default_episode_author);
-            if (preferences.contains(EPISODE_TITLE) && preferences.contains(EPISODE_NUMBER)) {
+            if (preferences.contains(EPISODE_TITLE) && preferences.contains(EPISODE_NUMBER) && preferences.contains(EPISODE_AUTHOR) && numberExists(preferences.getString(EPISODE_NUMBER, null))) {
                 episodeInfo.title = preferences.getString(EPISODE_TITLE, defaultTitle);
                 episodeInfo.number = preferences.getString(EPISODE_NUMBER, defaultNumber);
                 episodeInfo.author = preferences.getString(EPISODE_AUTHOR, defaultAuthor);
             } else {
-                if (preferences.contains(EPISODE_INDEX)) {
-                    episodeInfo.migration = true;
-                } else {
-                    episodeInfo.title = defaultTitle;
-                    episodeInfo.number = defaultNumber;
-                    episodeInfo.author = defaultAuthor;
-                }
+                episodeInfo.title = defaultTitle;
+                episodeInfo.number = defaultNumber;
+                episodeInfo.author = defaultAuthor;
             }
             episodeInfo.index = preferences.getInt(EPISODE_INDEX, getResources().getInteger(R.integer.default_episode_index));
             if (BuildConfig.DEBUG) { LOG_V("Loaded episode from shared prefs: " + episodeInfo); }
         }
         return episodeInfo;
+    }
+
+    private boolean numberExists(String number) {
+        if (number == null) {
+            return false;
+        }
+        if (number.equals("1") || number.equals("36")) {
+            return false;
+        }
+        // TODO: dodati ovde obrisane brojeve pa da ga baci na default
+        return true;
     }
 
     @Override
