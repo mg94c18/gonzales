@@ -56,6 +56,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private static final String EPISODE_NUMBER = "episode_number";
     private static final String EPISODE_AUTHOR = "episode_author";
     private static final String EPISODE_INDEX = "episode";
+    private static final String PLAYLIST_EPISODES = "playlist_episodes";
     private static final String DRAWER = "drawer";
     private static final String NIGHT_MODE = "night_mode";
     private static final String CONTACT_EMAIL = "yckopo@gmail.com";
@@ -454,7 +455,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
 
         final Set<String> completelyDownloadedEpisodes = getCompletelyDownloadedEpisodes(destinationDir, numbers);
-        final List<Integer> episodesToDownload = new ArrayList<>();
+        final Set<Integer> episodesToDownload = new HashSet<>();
         final List<String> namesToShow = new ArrayList<>();
         final List<Integer> indexesOfNamesToShow = new ArrayList<>();
         int indexToScrollTo = -1;
@@ -470,10 +471,17 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
         final long averageMbPerEpisode = getResources().getInteger(R.integer.average_episode_size_mb);
         boolean[] checkedItems = new boolean[namesToShow.size()];
+        SharedPreferences preferences = getSharedPreferences();
+        String previousPlaylist = getSharedPreferences().getString(PLAYLIST_EPISODES, "");
+        if (BuildConfig.DEBUG) { LOG_V("Previous list: " + previousPlaylist); }
         for (int i = 0; i < checkedItems.length; i++) {
-            checkedItems[i] = true;
-            episodesToDownload.add(indexesOfNamesToShow.get(i));
+            int episodeId = indexesOfNamesToShow.get(i);
+            checkedItems[i] = previousPlaylist.contains("," + numbers.get(episodeId) + ",");
+            if (checkedItems[i]) {
+                episodesToDownload.add(episodeId);
+            }
         }
+        if (BuildConfig.DEBUG) { LOG_V("episodesToDownload: " + episodesToDownload); }
         configureDownloadDialog = new AlertDialog.Builder(this)
                 .setCancelable(true)
                 .setTitle(DOWNLOAD_DIALOG_TITLE)
@@ -483,8 +491,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                         Integer actualIndex = indexesOfNamesToShow.get(i);
                         if (checked) {
                             episodesToDownload.add(actualIndex);
+                            if (BuildConfig.DEBUG) { LOG_V("Added " + actualIndex); }
                         } else {
                             episodesToDownload.remove(actualIndex);
+                            if (BuildConfig.DEBUG) { LOG_V("Removed " + actualIndex); }
                         }
                         Button positiveButton = configureDownloadDialog.getButton(DialogInterface.BUTTON_POSITIVE);
                         long downloadMb = episodesToDownload.size() * averageMbPerEpisode;
@@ -503,15 +513,23 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                         if (episodesToDownload.isEmpty()) {
                             return;
                         }
-                        // TODO: trebalo bi da ima utility za ovo negde
+                        if (BuildConfig.DEBUG) { LOG_V("episodesToDownload: " + episodesToDownload); }
+                        StringBuilder builder = new StringBuilder();
+                        builder.append(',');
                         int[] episodeIds = new int[episodesToDownload.size()];
-                        for (int i = 0; i < episodesToDownload.size(); i++) {
-                            episodeIds[i] = episodesToDownload.get(i);
+                        int i = 0;
+                        for (Integer episodeToDownload : episodesToDownload) {
+                            episodeIds[i] = episodeToDownload;
+                            builder.append(numbers.get(episodeIds[i])).append(',');
+                            i++;
                         }
+                        Arrays.sort(episodeIds); // onClick može da promeni redosled
                         Intent intent = new Intent(MainActivity.this, PlaybackService.class);
                         intent.setAction(PlaybackService.ACTION_PLAY);
                         intent.putExtra(PlaybackService.EXTRA_IDS, episodeIds);
                         MainActivity.this.startService(intent);
+                        if (BuildConfig.DEBUG) { LOG_V("Saving the list: " + builder); }
+                        preferences.edit().putString(PLAYLIST_EPISODES, builder.toString()).apply();
                     }
                 })
                 .create();

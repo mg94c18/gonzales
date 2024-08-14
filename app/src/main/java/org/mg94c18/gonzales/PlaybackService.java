@@ -205,6 +205,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
 
     private void myStartForeground(boolean currentlyPlaying, boolean update) {
         Intent activityIntent = new Intent(this, MainActivity.class);
+        // TODO: staviti možda da intent ode na tu epizodu
         activityIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
         TaskStackBuilder builder = TaskStackBuilder.create(this);

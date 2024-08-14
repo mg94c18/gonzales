@@ -29,6 +29,7 @@ Koja je težina/vrednost pesme?
 Tozovac možda predugačak: https://www.youtube.com/watch?v=bPKLTSNZc1w
 Srce je moje: možda takođe predugačko.
 Možda pronaći negde raznorazne pesme od tih izvođača, pa staviti u algoritam da se vidi koja je korisna.
+Severina & dodaj mi jastuče / ostani kod kuće, možda da uzmem verziju bez koncerta
 
 Obojiti reči drugom bojom, ili pak drugim fontom/monospace?  Uglavnom imenice (bold), glagole (italic), možda i zamenice (podvučene).
 <p>Tambien <ins>me</ins> <em>dijo</em> un <tt>arriero</tt></p>
@@ -47,51 +48,16 @@ Raspored za srpski:
 4a) ? Ove noći nećeš spavati (Make past from present)
 13) Jesi li sama večeras: za učenje "li", i njega prevesti kao obrnuti upitnik
 5) Kad zamirišu jorgovani (Verb declination for male/female) - podvučeno
-6) Daj, ne pitaj (Aca Lukas)
-7) Ljubav je, kad se neko voli
-8) Zajedno - podvučeno "mo" svuda
-Hajde da se volimo
-9) Rekla je - ali neku razumljivu verziju, original se teško razaznaje, možda neka koncertna
-    - https://www.youtube.com/watch?v=67JSWqaKzuM
-10) Kad bi jelen imo krila (Conditionals) sa podvučenim "bi" svuda
 11) Medvedova ženidba (Aorist) sa naglaskom na prvom slogu svuda ili pak podvučenim aorist rečima
 
-Ostariću: više prema vrhu posle čistača
-Leti eroplan: doći će? - preteško, bolje ne
-
-Rekla je, Opristi mi pape (rekli su mi), Ljubav je... (tata|mama mi je rekao|rekla) da budu posle Viktorije
-Buba Erdeljan umesto Računajte na nas: bolje je jer sadrži bolje izraze tipa "šta ti je trebalo to"
-
-Kad bi bio bijelo dugme
-Kad umrem, kada odem kad me ne bude
 Ti si me čekala: možda malo repetitive ako se koncept pokriva drugim pesmama
-Nikad te niko neće voljet ko ja: https://www.youtube.com/watch?v=iT9cPJ6-_W0
+Nikad te niko neće voljet ko ja: https://www.youtube.com/watch?v=iT9cPJ6-_W0 (nikadniko.mp3)
 
 Ako u pesmi nemam šta da naglasim, možda je suvišna?  Mada, vežbe su OK, pogotovu za playlist.
 
-Ima li negde neželjeni miks u pozadni?  Pozdravi je ima ženski prateći vokal u refrenu, jel to treba?  Ove noći ima neke čudne glasove?  Bacila je sve niz rijeku ima više zvukova/instrumenata nego što treba
-Računajte na nas ima tanke glasiće
-Jedan dan života je zbunjujuć jer i ženski i muški glas pevaju "poklonio" ili se pak ne čuje dobro
+Ima li negde neželjeni miks u pozadni?  Pozdravi je ima ženski prateći vokal u refrenu, jel to treba?  Ove noći ima neke čudne glasove?  Dodirni mi koljena ima nešto pri kraju.
 
-Pri kraju, možda i posle GRU:
-    Neće vatra kraj slame: https://www.youtube.com/watch?v=nTvO_9LsjS0
-    Nijedna zora ne svane: https://www.youtube.com/watch?v=kXL6Ulyphe8
-
-Filmovi:
-
-Na kraju:
-GRU: Za tebe uvek biću tu
-Novak sa originalom i sa prevodom: https://www.youtube.com/watch?v=FR2HyUurVCc
-Tjelo Hristovo
-Prednosti i mane grada: https://www.youtube.com/watch?v=zNHbw9vWNTk ali odseći ove ruse na kraju jer nisu Crnogorci
-Svađa u studiju: https://www.youtube.com/watch?v=J0Guz3gVDV4
-Kengur i molitva za Istvič ali i za Romu: 0:10-2:04, ~2:52-3:26
-(Sa peharom) Boža zvani Pub.
-
-Pesme sa delom prevoda
-- Crni leptir: "nekad sam leteo ... krila mi spržila"
-- Pozdravi je pozdravi: "eh da mogu ... bi joj rekle sve"
-- Ostariću, neću znati (možda)
+Ako se (novi) asset završava brojem, obrisati stare fajlove sa manjim brojem.
 
 Raspored za Španski:
 - Vale mucho
@@ -160,7 +126,9 @@ Treba da nastavi da svira kad se upali/ugasi Dark mode
 Kod playlist da bude "I promise" poruka (ako ima više pesama u listi) koja se menja na nekoliko raznih načina i bez koje ne može da se pusti Play, dok se načini ne potroše
 Da playlist po default ima prethodnu listu čekiranu, čak i ako je bio cancel
 
-for f in gonzales dijaspora; do rm -f app/src/$f/assets/links && for n in $(cat app/src/$f/assets/numbers); do cat app/src/$f/assets/$n | head -n 1 >> app/src/$f/assets/links; done; done
+Provera da li si linkovi i imena dobri:
+for f in gonzales dijaspora; do rm -f numbers.$f && for n in $(cat app/src/$f/assets/numbers); do cat app/src/$f/assets/$n | head -n 1 | sed -e 's|.*/||' | sed -e 's/.mp3//' >> numbers.$f; done; done
+for f in gonzales dijaspora; do diff numbers.$f app/src/$f/assets/numbers; done
 
 for i in {1..36}; do git mv app/src/dijaspora/assets/$i app/src/dijaspora/assets/$(cat app/src/dijaspora/assets/links | head -n $i | tail -n 1); done
 for i in {1..10}; do git mv app/src/gonzales/assets/$i app/src/gonzales/assets/$(cat app/src/gonzales/assets/links | head -n $i | tail -n 1); done
