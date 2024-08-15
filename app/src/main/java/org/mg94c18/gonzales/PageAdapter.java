@@ -122,7 +122,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                webView.loadData(createHtml(links, author, true, false), "text/html", "UTF-8");
+                webView.loadData(createHtml(links, author, false, false), "text/html", "UTF-8");
             }
         });
 
@@ -153,7 +153,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
     private static String createHtml(List<String> links, String author, boolean hints, boolean a3byka) {
         StringBuilder builder = new StringBuilder();
 
-        builder.append("<html><head><title></title></head><body><p>(" + author + ")<br><br>");
+        builder.append("<html><head><meta http-equiv=\"content-type\" value=\"UTF-8\"><title></title></head><body><p>(" + author + ")<br><br></p>");
         for (int i = 2; i < links.size(); i++) {
             builder.append(applyFilters(links.get(i), hints, a3byka)).append("<br>");
         }
@@ -164,9 +164,13 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
     private static final String hintsChars = "\\\\";
     private static Pattern nuggetsPattern = null;
     private static final Pattern hintsPattern = Pattern.compile(hintsChars);
+    private static final Pattern wordEmphasisPattern = Pattern.compile("\\|([^ ]+)");
     private static String applyFilters(String line, boolean hints, boolean a3byka) {
         if (hints) {
-            line = nuggetsPattern.matcher(line).replaceAll("<em>$1</em>");
+            // TODO: ako ovo menjam, treba da promenim i ručne ins u fajlovima...
+            // TODO: možda je napadno da sve ovo bude označeno na glavnoj strani, možda samo tokom analize (položeno)
+            line = nuggetsPattern.matcher(line).replaceAll("<ins>$1</ins>");
+            line = wordEmphasisPattern.matcher(line).replaceAll("<em>$1</em>");
             if (BuildConfig.DEBUG) {
                 String oldLine = line;
                 line = hintsPattern.matcher(oldLine).replaceAll("");
@@ -268,7 +272,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
             mediaPlayer.pause();
             playerState = State.PAUSED;
             button.setText("Resume");
-        } else if (playerState == State.PAUSED || playerState == State.PREPARED) {
+        } else if (playerState == State.PAUSED || playerState == State.PREPARED || playerState == State.PLAYBACK_COMPLETED) {
             mediaPlayer.start();
             playerState = State.STARTED;
             button.setText("Pause");

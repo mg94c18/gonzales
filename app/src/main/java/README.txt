@@ -50,14 +50,14 @@ Raspored za srpski:
 5) Kad zamirišu jorgovani (Verb declination for male/female) - podvučeno
 11) Medvedova ženidba (Aorist) sa naglaskom na prvom slogu svuda ili pak podvučenim aorist rečima
 
-Ti si me čekala: možda malo repetitive ako se koncept pokriva drugim pesmama
-Nikad te niko neće voljet ko ja: https://www.youtube.com/watch?v=iT9cPJ6-_W0 (nikadniko.mp3)
-
 Ako u pesmi nemam šta da naglasim, možda je suvišna?  Mada, vežbe su OK, pogotovu za playlist.
 
-Ima li negde neželjeni miks u pozadni?  Pozdravi je ima ženski prateći vokal u refrenu, jel to treba?  Ove noći ima neke čudne glasove?  Dodirni mi koljena ima nešto pri kraju.
+Ima li negde neželjeni miks u pozadni?  Pozdravi je ima ženski prateći vokal u refrenu, jel to treba?  Dodirni mi koljena ima nešto pri kraju.
 
 Ako se (novi) asset završava brojem, obrisati stare fajlove sa manjim brojem.
+Tenor_howto da bude jedan flavor!  Može li UTF-8 za notni zapis?  Ili pak slika.
+
+-----------------------------------------
 
 Raspored za Španski:
 - Vale mucho
@@ -87,6 +87,11 @@ Raspored za Španski:
 
 Ime aplikacije za španski: A ja ribam ja ribam? (dok ti sereš)
 
+Luz Casal pesme su preglasne u poređenju sa drugima...
+La Basurita prevod je pogrešan na nekoliko mesta
+
+-----------------------------------------
+
 s3cmd setacl --acl-public --recursive s3://mg94c18gonzales
 
 Dodati ћирилицу ako neko traži "a36yka", nemam nigde "injekcije" ili "konjukcije" ili "Bedžihe", pa bi trebalo da može da se prebaci lako
@@ -98,19 +103,7 @@ Sad zapravo ne znam šta sam mislio pod tim ^
 
 Onaj problem na emulatoru se dešava kad nema internet, onda gnjavi sa download u pozadini, ali ako se prebacim na drugu pesmu onda popuni WebView sa starom pesmom, a nova pesma pak još nije skinuta i tako ide unakrsno.
 
-Takođe nastavlja da svira ako odšetam na neku drugu aplikaciju.
-Ovo je diskutabilno, pa treba da dodam neki sistem koji će da uradi to što korisnik hoće u zavisnosti od pattern-a korišćenja.
-
 Izgleda da ne moram da koristim CPU lock, jer na primer na mom telefonu radi i svira.  Treba da ga testiram na duže distance.
-
-WebView je poznat po tome da local playback ne radi.  Zato za obično slušanje koristim MediaPlayer, a za playlist MediaSession.
-https://developer.android.com/training/tv/playback/media-session
-https://developer.android.com/media/optimize/audio-focus
-https://developer.android.com/reference/android/media/session/PlaybackState
-https://developer.android.com/reference/android/media/session/MediaSession
-
-Hm ovo je super: https://developer.android.com/media/legacy/audio/mediabrowserservice#mediastyle-notifications
-"Using MediaStyle notifications with a foreground service"
 
 requestFocus() passing in your OnAudioFocusChangeListener.
 Always call requestFocus() first, proceed only if focus is granted.
@@ -119,12 +112,8 @@ Slično tome, ako ima playback a onda zvoni alarm, ne pauzira
 Treba dodati media button, za integraciju sa slušalicama
 Slično tome treba da pauzira ako neko izvadi slušalice dok muzika svira
 
-Luz Casal pesme su preglasne u poređenju sa drugima...
-La Basurita prevod je pogrešan na nekoliko mesta
-
 Treba da nastavi da svira kad se upali/ugasi Dark mode
 Kod playlist da bude "I promise" poruka (ako ima više pesama u listi) koja se menja na nekoliko raznih načina i bez koje ne može da se pusti Play, dok se načini ne potroše
-Da playlist po default ima prethodnu listu čekiranu, čak i ako je bio cancel
 
 Provera da li si linkovi i imena dobri:
 for f in gonzales dijaspora; do rm -f numbers.$f && for n in $(cat app/src/$f/assets/numbers); do cat app/src/$f/assets/$n | head -n 1 | sed -e 's|.*/||' | sed -e 's/.mp3//' >> numbers.$f; done; done

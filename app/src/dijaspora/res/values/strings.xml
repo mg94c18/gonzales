@@ -11,5 +11,5 @@
     <string name="default_episode_number">abvgd</string>
     <string name="default_episode_author">Rambo Amadeus</string>
 
-    <string name="nuggets">(ću|ćeš|će|ćemo|ćete|će|ti|mo|la|lo|li|le|la|bi|.)</string>
+    <string name="nuggets">(ću|ćeš|će|ćemo|ćete|će|ti|mo|la|lo|li|le|la|bi|om|si|su|sam|smo|bi|.)</string>
 </resources>

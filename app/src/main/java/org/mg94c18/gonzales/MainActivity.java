@@ -74,6 +74,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     int selectedEpisode = 0;
     String selectedEpisodeTitle;
     String selectedEpisodeNumber;
+    String selectedEpisodeAuthor;
     AlertDialog configureDownloadDialog;
     AlertDialog quoteDialog;
     static final long syncIndex = -1;
@@ -586,12 +587,14 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     @Override
     protected void onSaveInstanceState(Bundle instanceState) {
+        // TODO: zašto se WebView ne vraća na stari scroll ako ugasim pa upalim ekran?
+
         if (BuildConfig.DEBUG) { LOG_V("onSaveInstanceState"); }
         if (BuildConfig.DEBUG) { LOG_V("Saving selectedEpisode=" + selectedEpisode); }
         instanceState.putInt(EPISODE_INDEX, selectedEpisode);
         instanceState.putString(EPISODE_TITLE, selectedEpisodeTitle);
         instanceState.putString(EPISODE_NUMBER, selectedEpisodeNumber);
-        instanceState.putString(EPISODE_AUTHOR, dates.get(selectedEpisode));
+        instanceState.putString(EPISODE_AUTHOR, selectedEpisodeAuthor);
         instanceState.putParcelable(DRAWER, drawerList.onSaveInstanceState());
 
         super.onSaveInstanceState(instanceState);
@@ -692,6 +695,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         if (position >= 0) {
             selectedEpisodeTitle = title;
             selectedEpisodeNumber = number;
+            selectedEpisodeAuthor = author;
         }
         mySetActionBarTitle(getMyActionBar(), title);
         destroyPageAdapter();
