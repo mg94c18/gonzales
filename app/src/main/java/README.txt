@@ -68,21 +68,9 @@ Raspored za Španski:
 - Un libro viejo (da se nastavlja na prethodnu)
 - Quizas, quizas, quizas
 - Ya no me interesas (da se nastavlja na prethodnu)
-- Uno mas uno: https://www.youtube.com/watch?v=TnKyvgoO_VI sa 3x više teksta
-- Yo soy su mujer: https://www.youtube.com/watch?v=0BTUOQFC66c (nastavak jer je i ovo iz serije)
-- Besame mucho, ali bez prevoda?
-
-- nešto od Hulija Iglesiasa?
-- Cielo Rojo, Flor Silvestre
-- Tu Sangre en Mi Cuerpo, Ana Bertha Castellanos
-- La Basurita, Flor Silvestre
 - boleros cubanos clasicos pogledati, ima oko sat i po
-- Entre mis recuerdos?
-- Hasta Siempre
-- Chupa la cana nena
 
 - neki rep u smislu komplikovanije, brže, al to može i kasnije
-- Larry Rada Apache - En defensa propia?
 - Volver razgovor oko 5 minuta
 
 Ime aplikacije za španski: A ja ribam ja ribam? (dok ti sereš)
@@ -121,3 +109,5 @@ for f in gonzales dijaspora; do diff numbers.$f app/src/$f/assets/numbers; done
 
 for i in {1..36}; do git mv app/src/dijaspora/assets/$i app/src/dijaspora/assets/$(cat app/src/dijaspora/assets/links | head -n $i | tail -n 1); done
 for i in {1..10}; do git mv app/src/gonzales/assets/$i app/src/gonzales/assets/$(cat app/src/gonzales/assets/links | head -n $i | tail -n 1); done
+
+Sve tekstove da propustim kroz neki checker za španski, pogotovu da stavim akcenat za prošlo i buduće vreme.
