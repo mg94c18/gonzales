@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name">Ja Ribam</string>
+
     <string name="apk_assets_time">1684032299000</string>
     <string name="sync_account_type">org.mg94c18.gonzales</string>
     <string name="sync_search_suggest_authority">org.mg94c18.gonzales.searchprovider</string>
@@ -8,7 +10,5 @@
 
     <string name="default_episode_title">Para siempre</string>
     <string name="default_episode_number">elrey</string>
-    <string name="default_episode_author">Vicente Fernandez</string>
-
-    <string name="nuggets">(r|ás|as|o|ó|go|ste|iendo)</string>
+    <string name="default_episode_author">Vicente Fernández</string>
 </resources>

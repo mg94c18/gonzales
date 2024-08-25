@@ -14,48 +14,24 @@ This app will NOT teach you to speak Serbian, but it is sure to help you on your
 
 ^ Bla, bla, bla.  Trebalo bi da ilustrujem slikama a ne rečima.
 
+Free from common mistakes made even by native speakers, correctness can be questioned only by 99.9% percentile of the population.
+
 You pay less than you would for a pie.
 
 These songs are translated correctly, with caveats that poetry and music, like other art, is subjective, and that I am native Serbian and not English.
 
-Azbuka: prebaciti na ovu staru: https://www.youtube.com/watch?v=jWDlaXrJOI4
-
-Medvedovu ženidbu staviti "Aorist" i dodati svuda akcente na prvom slogu.
-Koja je težina/vrednost pesme?
-	- broj različitih reči
-	- broj istih baznih reči koje se ponavljaju ali u svom drugom obliku
-	- ili pak koncept koji se ponavlja ali u drugom obliku
-
-Tozovac možda predugačak: https://www.youtube.com/watch?v=bPKLTSNZc1w
-Srce je moje: možda takođe predugačko.
-Možda pronaći negde raznorazne pesme od tih izvođača, pa staviti u algoritam da se vidi koja je korisna.
-Severina & dodaj mi jastuče / ostani kod kuće, možda da uzmem verziju bez koncerta
-
-Obojiti reči drugom bojom, ili pak drugim fontom/monospace?  Uglavnom imenice (bold), glagole (italic), možda i zamenice (podvučene).
-<p>Tambien <ins>me</ins> <em>dijo</em> un <tt>arriero</tt></p>
-Mada, izgleda možda nepotrebno ako postoji bukvalni prevod, videće se šta je šta, a previše pomoći nije dobro za pamćenje.
-
-Treba definivno da može da se izbaci podvlačenje (i to po pesmi) jer je to u originalu, a vratiće se na tu pesmu kasnije.
-Mada, ako se vrati kasnije, možda će već uglavnom znati šta treba i vratiće se na kratko.
-
-https://developer.android.com/media/platform/mediaplayer
-
-Raspored za srpski:
-1) ABVGD
-2) U dva će čistači odneti đubre (Verb forms; endings matter) - podvučeno m,š, i futur,infinitiv
-3) Daj, ne pitaj (Endings matter; nouns also change) podvučeni m,š, i dana,dane,dani
-4) Zlatibore pitaj Taru () podvučena poslednja slova svaki put kad je Zlatibor i Tara
-4a) ? Ove noći nećeš spavati (Make past from present)
-13) Jesi li sama večeras: za učenje "li", i njega prevesti kao obrnuti upitnik
-5) Kad zamirišu jorgovani (Verb declination for male/female) - podvučeno
-11) Medvedova ženidba (Aorist) sa naglaskom na prvom slogu svuda ili pak podvučenim aorist rečima
-
-Ako u pesmi nemam šta da naglasim, možda je suvišna?  Mada, vežbe su OK, pogotovu za playlist.
-
 Ima li negde neželjeni miks u pozadni?  Pozdravi je ima ženski prateći vokal u refrenu, jel to treba?  Dodirni mi koljena ima nešto pri kraju.
+Pozdravi je ima vrlo glasan početak
+Buba: šibica na početku?
 
-Ako se (novi) asset završava brojem, obrisati stare fajlove sa manjim brojem.
-Tenor_howto da bude jedan flavor!  Može li UTF-8 za notni zapis?  Ili pak slika.
+Ako se (novi) asset završava brojem, obrisati stare fajlove sa manjim brojem.  Ili pak obrisati sve .mp3 fajlove koji nisu u assets.
+
+-----------------------------------------
+
+Tenor_howto da bude jedan flavor!
+    Može li UTF-8 za notni zapis?
+    Ili pak slika.
+    https://vexflow.com/
 
 -----------------------------------------
 
@@ -72,11 +48,26 @@ Raspored za Španski:
 
 - neki rep u smislu komplikovanije, brže, al to može i kasnije
 - Volver razgovor oko 5 minuta
+- https://www.youtube.com/watch?v=aZAA73tWdoQ
 
 Ime aplikacije za španski: A ja ribam ja ribam? (dok ti sereš)
+Za srpski ikonica sa dva mrava, Ants are my friends
+Ili pak: "Plava riba" kao "Plava riba, kljukana dinastija, svastikin but"
+Ili pak: Sajfer?  Bah, zauzeto
+
+Ili pak: "Šifra Em"
+Explore the difficult aspects of Serbian language by listening to and deciphering the words from 39 hand-picked and meticulously transcribed musical tracks.
+3 modes of operation:
+* A configurable playlist for background offline listening, 2+ hours total length
+* Read-along while listening (NO karaoke, just study the words)
+* Deeper study mode with context-aware word-by-word mappings, and a final translation
+
+Enjoy the playlists for practicing listening while doing chores, even sing when nobody hears you.
+Meticulously transcribed, with context-aware word-by-word translations and a final translation for your study.
 
 Luz Casal pesme su preglasne u poređenju sa drugima...
 La Basurita prevod je pogrešan na nekoliko mesta
+Hey od Iglesiasa je preglasan početak
 
 -----------------------------------------
 
@@ -111,3 +102,35 @@ for i in {1..36}; do git mv app/src/dijaspora/assets/$i app/src/dijaspora/assets
 for i in {1..10}; do git mv app/src/gonzales/assets/$i app/src/gonzales/assets/$(cat app/src/gonzales/assets/links | head -n $i | tail -n 1); done
 
 Sve tekstove da propustim kroz neki checker za španski, pogotovu da stavim akcenat za prošlo i buduće vreme.
+
+mp3 fajlovi na Macbook nekad pritisnem pause pa play, a on nastavi malo unazad.  fixed-bit-rate problem?  Mada Android radi kako treba.
+Trebalo bi da stavim da sačuva poziciju u onStop tako da može da nastavi kasnije od tog istog mesta.
+Da testiram kada download gnjavi a ja rotiram ekran.
+
+Crash ima i kad otključam ekran u landscape položaju, izgleda u onResume()
+TODO: poslušati 'dernek' pažljivo za mjesto, ovdje
+Medvedova: prvi deo skloniti
+GRU: prvi deo prazan skloniti par sekundi
+Kengur mora glasnije
+Morena: tiše
+Rojo: tiše
+Svađu ponovo pregledati jer sam neke delove izgubio zbog update-ovanja pogrešnog fajla
+Tjelo Hristovo: obrisati bukvalni prevod
+
+Unakrsna provera da [] stvari nisu protivurečne
+Provera da je zaista 1:1 preslikavanje za bukvalno
+Ćirilica i "Tanjug" pripaziti
+
+Jaime:
+    Que en el perdón a crecido -> Que en el perdón ha crecido
+    Que entres o que salgas -> zaista?
+    Nadie que me comprenda -> nikog da me sluša ili nikog ko me sluša
+    koliko padeža? yo, me, mi, conmigo; "a mi"? još neki?
+        zatim svrstati que, aquel, cualqiuera, quales
+        decirte [reći tebi] ali? herirte [povrediti tebe] "a ti seguimos", "junto a ti"
+    Que no se apartan de mi -> da se ne odvoje, ili koji se ne odvajaju
+    prevod El Rey, posebno "hay qe"
+    "it" koncept; que hay de nuevo
+    interesas: ti mene više me ne interesuješ, ili pak ti mi više me ne interesuješ
+    eras muy feliz (papel) nema smisla
+    por que ili porque

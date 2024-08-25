@@ -8,6 +8,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.SearchManager;
 import android.app.Service;
 import android.content.Intent;
 import android.media.AudioAttributes;
@@ -60,6 +61,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
     int nextIndexToPlay;
     List<String> numbers;
     List<String> titles;
+    List<String> authors;
 
     @Nullable
     @Override
@@ -76,21 +78,29 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         state = State.IDLE;
         episodeIdsToPlay = EMPTY_ARRAY;
         nextIndexToPlay = 0;
-        numbers = AssetLoader.loadFromAssetOrUpdate(this, AssetLoader.NUMBERS, syncIndex);
-        titles = AssetLoader.loadFromAssetOrUpdate(this, AssetLoader.TITLES, syncIndex);
+        AssetLoader.handleAssetLoading(this);
+        numbers = MainActivity.numbers;
+        titles = MainActivity.titles;
+        authors = MainActivity.dates;
     }
 
     @Override
     public void onDestroy() {
         if (BuildConfig.DEBUG) { LOG_V("onDestroy()"); }
+        myDestroy();
+    }
+
+    void myDestroy() {
         myStopForeground(true);
         releasePlayerAsync(player);
         player = null;
         state = State.END;
 
         // Abandoning the service instead of trying to wait for cancelation
-        cleanupService.shutdown();
-        cleanupService = null;
+        if (cleanupService != null) {
+            cleanupService.shutdown();
+            cleanupService = null;
+        }
     }
 
     @Override
@@ -118,6 +128,9 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
     }
 
     private void releasePlayerAsync(MediaPlayer mediaPlayer) {
+        if (mediaPlayer == null) {
+            return;
+        }
         cleanupService.submit(new Runnable() {
             @Override
             public void run() {
@@ -149,8 +162,8 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
 
     private void onResumeRequested(Intent intent) {
         if (state != State.PAUSED) {
-            Log.wtf(TAG, "Unexpected state: " + state);
-            // TODO: nešto defensive ovde
+            Log.wtf(TAG, "Unexpected state: " + state + ", will self-destruct");
+            myDestroy();
             return;
         }
         player.start();
@@ -207,6 +220,10 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         Intent activityIntent = new Intent(this, MainActivity.class);
         // TODO: staviti možda da intent ode na tu epizodu
         activityIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
+        int actualIndex = episodeIdsToPlay[nextIndexToPlay - 1];
+        activityIntent.setAction(MainActivity.MY_ACTION_VIEW);
+        MainActivity.updateIntentWithEpisode(activityIntent, actualIndex, titles.get(actualIndex), authors.get(actualIndex), numbers.get(actualIndex));
 
         TaskStackBuilder builder = TaskStackBuilder.create(this);
         builder.addNextIntentWithParentStack(activityIntent); // even though there is no parent in this app

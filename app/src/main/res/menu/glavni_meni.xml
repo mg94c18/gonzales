@@ -8,10 +8,6 @@
         android:title="Dark mode on/off"
         app:showAsAction="never"
         android:visible="false"/>
-    <item android:id="@+id/action_download"
-        android:title="Sačuvaj na SD card"
-        app:showAsAction="never"
-        android:visible="false"/>
     <item android:id="@+id/action_download_internal"
         android:title="Playlist"
         app:showAsAction="never"
@@ -23,6 +19,9 @@
     <item android:id="@+id/action_review"
         app:showAsAction="never"
         android:title="@string/play_intent_title" />
+    <item android:id="@+id/action_toggle"
+        app:showAsAction="never"
+        android:title="@string/toggle"/>
     <item android:id="@+id/search"
         android:title="Nađi..."
         app:showAsAction="never"

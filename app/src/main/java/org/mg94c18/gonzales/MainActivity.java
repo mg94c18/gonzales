@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.graphics.Typeface;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -52,25 +53,27 @@ import java.util.Set;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
     private static final String SHARED_PREFS_NAME = "config";
-    private static final String EPISODE_TITLE = "episode_title";
-    private static final String EPISODE_NUMBER = "episode_number";
-    private static final String EPISODE_AUTHOR = "episode_author";
+    static final String EPISODE_TITLE = "episode_title";
+    static final String EPISODE_NUMBER = "episode_number";
+    static final String EPISODE_AUTHOR = "episode_author";
     private static final String EPISODE_INDEX = "episode";
     private static final String PLAYLIST_EPISODES = "playlist_episodes";
     private static final String DRAWER = "drawer";
     private static final String NIGHT_MODE = "night_mode";
     private static final String CONTACT_EMAIL = "yckopo@gmail.com";
-    private static final String MY_ACTION_VIEW = BuildConfig.APPLICATION_ID + ".VIEW";
+    static final String MY_ACTION_VIEW = BuildConfig.APPLICATION_ID + ".VIEW";
     static final String INTERNAL_OFFLINE = "offline";
 
     PageAdapter pageAdapter;
     DrawerLayout drawerLayout;
     ListView drawerList;
-    List<String> titles;
-    List<String> numbers;
-    List<String> dates;
-    List<String> numberAndTitle;
-    boolean assetsLoaded = false;
+
+    static List<String> titles = Collections.emptyList();
+    static List<String> numbers = Collections.emptyList();
+    static List<String> dates = Collections.emptyList();
+    static List<String> numberAndTitle = Collections.emptyList();
+    static boolean assetsLoaded = false;
+
     int selectedEpisode = 0;
     String selectedEpisodeTitle;
     String selectedEpisodeNumber;
@@ -191,10 +194,17 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         if (episode < 0) {
             showQuoteDialog(-1 * (episode + 1));
         } else {
-            selectEpisode(episode);
+            if (intent.hasExtra(EPISODE_TITLE) && intent.hasExtra(EPISODE_NUMBER) && intent.hasExtra(EPISODE_AUTHOR)) {
+                AssetLoader.handleAssetLoading(this);
+                selectEpisode(episode, intent.getStringExtra(EPISODE_TITLE), intent.getStringExtra(EPISODE_NUMBER), intent.getStringExtra(EPISODE_AUTHOR));
+                updateDrawer();
+            } else {
+                selectEpisode(episode);
+            }
             drawerList.setSelection(episode);
         }
 
+        if (BuildConfig.DEBUG) { LOG_V("handleNewIntent() returning true"); }
         return true;
     }
 
@@ -208,11 +218,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        titles = Collections.emptyList();
-        numbers = Collections.emptyList();
-        dates = Collections.emptyList();
-        numberAndTitle = Collections.emptyList();
-
         drawerLayout = findViewById(R.id.drawer_layout);
 
         drawerList = findViewById(R.id.navigation);
@@ -220,10 +225,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         drawerList.setOnItemClickListener(this);
 
         if (!handleNewIntent(getIntent())) {
+            if (BuildConfig.DEBUG) { LOG_V("handleNewIntent() returned false"); }
             EpisodeInfo episodeInfo = findSavedEpisode(savedInstanceState);
 
-            AssetLoader.startAssetLoadingThread(this);
+            AssetLoader.handleAssetLoading(this);
             selectEpisode(episodeInfo.index, episodeInfo.title, episodeInfo.number, episodeInfo.author);
+            updateDrawer();
         }
 
         if (savedInstanceState != null && savedInstanceState.containsKey(DRAWER)) {
@@ -258,10 +265,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         Log.i(TAG, "onResume");
     }
 
-    public void updateAssets(@NonNull List<String> titles, @NonNull List<String> numbers, @NonNull List<String> dates, List<String> hiddenTitles) {
-        SearchProvider.TITLES = this.titles = titles;
-        SearchProvider.NUMBERS = this.numbers = numbers;
-        SearchProvider.DATES = this.dates = dates;
+    public static void updateAssets(@NonNull List<String> titles, @NonNull List<String> numbers, @NonNull List<String> dates, List<String> hiddenTitles) {
+        SearchProvider.TITLES = MainActivity.titles = titles;
+        SearchProvider.NUMBERS = MainActivity.numbers = numbers;
+        SearchProvider.DATES = MainActivity.dates = dates;
         SearchProvider.HIDDEN_TITLES = hiddenTitles;
 
         numberAndTitle = new ArrayList<>(numbers.size());
@@ -270,7 +277,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
 
         assetsLoaded = true;
+    }
 
+    public void updateDrawer() {
         drawerList.setAdapter(new MyArrayAdapter(this, android.R.layout.simple_list_item_1));
         drawerList.setSelection(selectedEpisode);
         invalidateOptionsMenu();
@@ -328,7 +337,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     }
 
     private void updateDownloadButtons(Menu menu) {
-        menu.findItem(R.id.action_download_internal).setVisible(true);
         menu.findItem(R.id.action_cancel_download).setVisible(false);
     }
 
@@ -373,13 +381,24 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
 
         if (PlaybackService.inForeground) {
-            menu.findItem(R.id.action_download).setVisible(false);
             menu.findItem(R.id.action_download_internal).setVisible(false);
             menu.findItem(R.id.action_cancel_download).setVisible(true);
         } else {
+            menu.findItem(R.id.action_download_internal).setVisible(true);
             menu.findItem(R.id.action_cancel_download).setVisible(false);
             updateDownloadButtons(menu);
             progressString = null;
+        }
+
+        boolean inLandscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+        if (inLandscape) {
+            menu.findItem(R.id.action_email).setVisible(false);
+            menu.findItem(R.id.action_review).setVisible(false);
+            menu.findItem(R.id.action_toggle).setVisible(true);
+        } else {
+            menu.findItem(R.id.action_email).setVisible(true);
+            menu.findItem(R.id.action_review).setVisible(true);
+            menu.findItem(R.id.action_toggle).setVisible(false);
         }
 
         return super.onPrepareOptionsMenu(menu);
@@ -423,10 +442,19 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             case R.id.action_download_internal:
                 configureDownload(selectedEpisodeNumber);
                 return true;
+            case R.id.action_cancel_download:
+                Intent stopIntent = new Intent(this, PlaybackService.class);
+                stopIntent.setAction(PlaybackService.ACTION_STOP);
+                startService(stopIntent);
+                findViewById(R.id.button).setEnabled(true);
+                return true;
             case R.id.action_dark_mode:
                 boolean newNightMode = !getNightModeFromSharedPrefs();
                 getSharedPreferences().edit().putBoolean(NIGHT_MODE, newNightMode).apply();
                 recreate();
+                return true;
+            case R.id.action_toggle:
+                pageAdapter.toggle();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -531,6 +559,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                         MainActivity.this.startService(intent);
                         if (BuildConfig.DEBUG) { LOG_V("Saving the list: " + builder); }
                         preferences.edit().putString(PLAYLIST_EPISODES, builder.toString()).apply();
+                        findViewById(R.id.button).setEnabled(false);
                     }
                 })
                 .create();
@@ -709,7 +738,20 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     .putString(EPISODE_AUTHOR, author)
                     .putString(EPISODE_NUMBER, number)
                     .apply();
+
+            Intent intent = getIntent();
+            if (intent != null) {
+                if (BuildConfig.DEBUG) { LOG_V("Saving episode " + selectedEpisode + " in getIntent()"); }
+                updateIntentWithEpisode(intent, selectedEpisode, title, author, number);
+            }
         }
+    }
+
+    static void updateIntentWithEpisode(Intent activityIntent, int episodeId, String title, String author, String number) {
+        activityIntent.putExtra(SearchManager.EXTRA_DATA_KEY, Integer.toString(episodeId));
+        activityIntent.putExtra(MainActivity.EPISODE_TITLE, title);
+        activityIntent.putExtra(MainActivity.EPISODE_AUTHOR, author);
+        activityIntent.putExtra(MainActivity.EPISODE_NUMBER, number);
     }
 
     public static synchronized void deleteOldSavedFiles(@Nullable File dir, long maxImages) {

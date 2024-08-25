@@ -12,7 +12,6 @@ import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -249,46 +248,29 @@ public final class AssetLoader {
         return null;
     }
 
-    public static void startAssetLoadingThread(MainActivity mainActivity) {
-        final WeakReference<MainActivity> mainActivityRef = new WeakReference<>(mainActivity);
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                final List<String> titles;
-                final List<String> numbers;
-                final List<String> dates;
-                Context context = mainActivityRef.get();
-                if (context == null) {
-                    if (BuildConfig.DEBUG) { LOG_V("Not loading, context went away"); }
-                    return;
-                }
-                if (BuildConfig.DEBUG) { LOG_V("Begin loading: " + System.currentTimeMillis()); }
-                titles = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.TITLES, syncIndex);
-                numbers = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.NUMBERS, syncIndex);
-                dates = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.DATES, syncIndex);
-                if (BuildConfig.DEBUG) { LOG_V("End loading: " + System.currentTimeMillis()); }
+    // No longer starts a thread, no need to load from disk and causes a problem during recreation/rotation
+    // TODO: move the assets to this class instead of MainActivity
+    public static void handleAssetLoading(Context context) {
+        if (MainActivity.assetsLoaded) {
+            return;
+        }
+        final List<String> titles;
+        final List<String> numbers;
+        final List<String> dates;
+        if (BuildConfig.DEBUG) { LOG_V("Begin loading: " + System.currentTimeMillis()); }
+        titles = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.TITLES, syncIndex);
+        numbers = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.NUMBERS, syncIndex);
+        dates = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.DATES, syncIndex);
+        if (BuildConfig.DEBUG) { LOG_V("End loading: " + System.currentTimeMillis()); }
 
-                int count = titles.size();
-                if (numbers.size() != count || dates.size() != count) {
-                    Log.wtf(TAG, "Episode list mismatch: titles=" + titles.size() + ", numbers=" + numbers.size() + ", dates=" + dates.size());
-                    return;
-                }
+        int count = titles.size();
+        if (numbers.size() != count || dates.size() != count) {
+            Log.wtf(TAG, "Episode list mismatch: titles=" + titles.size() + ", numbers=" + numbers.size() + ", dates=" + dates.size());
+            return;
+        }
 
-                final List<String> hiddenTitles = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.HIDDEN_TITLES, syncIndex);
+        final List<String> hiddenTitles = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.HIDDEN_TITLES, syncIndex);
 
-                final MainActivity activity = mainActivityRef.get();
-                if (activity == null) {
-                    if (BuildConfig.DEBUG) { LOG_V("Not loading, activity went away"); }
-                    return;
-                }
-
-                activity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        activity.updateAssets(titles, numbers, dates, hiddenTitles);
-                    }
-                });
-            }
-        }).start();
+        MainActivity.updateAssets(titles, numbers, dates, hiddenTitles);
     }
 }

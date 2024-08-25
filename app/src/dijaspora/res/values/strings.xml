@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name">Šifra Em</string>
+
     <string name="apk_assets_time">1684032299000</string>
 
     <string name="sync_account_type">org.mg94c18.dijaspora</string>
@@ -10,6 +12,4 @@
     <string name="default_episode_title">ABVGD</string>
     <string name="default_episode_number">abvgd</string>
     <string name="default_episode_author">Rambo Amadeus</string>
-
-    <string name="nuggets">(ću|ćeš|će|ćemo|ćete|će|ti|mo|la|lo|li|le|la|bi|om|si|su|sam|smo|bi|.)</string>
 </resources>

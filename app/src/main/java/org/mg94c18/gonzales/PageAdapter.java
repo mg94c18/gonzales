@@ -5,6 +5,7 @@ import static org.mg94c18.gonzales.Logger.TAG;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.media.AudioAttributes;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
@@ -21,7 +22,10 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Pattern;
@@ -29,15 +33,21 @@ import java.util.regex.Pattern;
 public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.OnScaleGestureListener, View.OnClickListener,
     MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener {
     List<String> links;
+    List<String> bukvalno;
+    List<String> finalno;
+    List<String> zaPrikaz;
     String episode;
+    String author;
     String localFilePath;
     Context context;
     Button button;
     private WebView webView;
+    private boolean inLandscape;
     MyLoadTask loadTask;
 
     private static final ExecutorService cleanupService = Executors.newSingleThreadExecutor();
 
+    private String PREF_BUKVALNO = "bukvalno";
     private static final int SCALE_MAX_X_INT = 2;
     private static final int MINIMUM_ZOOM = 100;
     int originalZoom;
@@ -95,36 +105,47 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
             return;
         }
         playerState = State.PREPARED;
-        button.setEnabled(true);
+        if (!PlaybackService.inForeground) {
+            button.setEnabled(true);
+        }
+        if (inLandscape) {
+            button.setVisibility(View.GONE);
+        }
     }
 
     PageAdapter(MainActivity activity, String episode, String author) {
         if (BuildConfig.DEBUG) { LOG_V("PageAdapter(" + episode + ")"); }
 
-        if (nuggetsPattern == null) {
-            nuggetsPattern = Pattern.compile(hintsChars + activity.getResources().getString(R.string.nuggets));
+        if (explicits == null) {
+            explicits = new HashMap<>();
+            explicits.put(Pattern.compile("(([Ff])uck)"), "***");
+            // explicits.put(Pattern.compile("(([Ss])hit)"), "***");
         }
 
         this.context = activity;
         this.episode = episode;
+        this.author = author;
+        SharedPreferences preferences = MainActivity.getSharedPreferences(context);
         links = AssetLoader.loadFromAssetOrUpdate(context, episode, MainActivity.syncIndex);
+        bukvalno = AssetLoader.loadFromAssetOrUpdate(context, episode + ".bukvalno", MainActivity.syncIndex);
+        finalno = AssetLoader.loadFromAssetOrUpdate(context, episode + ".finalno", MainActivity.syncIndex);
+        zaPrikaz = preferences.getBoolean(PREF_BUKVALNO, true) ? bukvalno : finalno;
 
         mScaleDetector = new ScaleGestureDetector(context, this);
 
         webView = activity.findViewById(R.id.webview);
+        inLandscape = activity.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
         button = activity.findViewById(R.id.button);
-        button.setOnClickListener(this);
-        button.setText("Play");
-        button.setEnabled(false);
+        if (inLandscape) {
+            button.setVisibility(View.GONE);
+        } else {
+            button.setOnClickListener(this);
+            button.setText("Play");
+            button.setEnabled(false);
+        }
 
         updateScaleFromPrefs(context, webView);
-
-        activity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                webView.loadData(createHtml(links, author, false, false), "text/html", "UTF-8");
-            }
-        });
+        refreshWebView();
 
         ProgressBar progressBar = activity.findViewById(R.id.progressBar);
         progressBar.setVisibility(View.VISIBLE);
@@ -133,6 +154,13 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
 
         loadTask = new MyLoadTask(links, this, DownloadAndSave.fileNameFromNumber(episode));
         loadTask.execute();
+    }
+
+    private void refreshWebView() {
+        // TODO (manji prioritet): ako nema oba prevoda, ne treba da radi dugme...
+        // TODO (veći prioritet): iskoristiti ActionBar kao deo lekcije, a da ime pesme bude unutar HTML
+        webView.loadData(createHtml(links, zaPrikaz, zaPrikaz == finalno, author, false, inLandscape), "text/html", "UTF-8");
+        webView.invalidate();
     }
 
     public void destroy() {
@@ -150,26 +178,63 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         button.setEnabled(false);
     }
 
-    private static String createHtml(List<String> links, String author, boolean hints, boolean a3byka) {
+    public void toggle() {
+        if (zaPrikaz == bukvalno) {
+            MainActivity.getSharedPreferences(context).edit().putBoolean(PREF_BUKVALNO, false).apply();
+            zaPrikaz = finalno;
+        } else {
+            MainActivity.getSharedPreferences(context).edit().putBoolean(PREF_BUKVALNO, true).apply();
+            zaPrikaz = bukvalno;
+        }
+        refreshWebView();
+    }
+
+    private static String createHtml(List<String> tekst, List<String> prevod, boolean removeGroupings, String author, boolean a3byka, boolean inLandscape) {
         StringBuilder builder = new StringBuilder();
 
-        builder.append("<html><head><meta http-equiv=\"content-type\" value=\"UTF-8\"><title></title></head><body><p>(" + author + ")<br><br></p>");
-        for (int i = 2; i < links.size(); i++) {
-            builder.append(applyFilters(links.get(i), hints, a3byka)).append("<br>");
+        builder.append("<html><head><meta http-equiv=\"content-type\" value=\"UTF-8\"><title></title></head><body>");
+        if (inLandscape && !prevod.isEmpty()) {
+            builder.append("<table width=\"100%\">");
+            int i = 2;
+            for (; i < tekst.size(); i++) {
+                builder.append("<tr><td width=\"50%\">");
+                if (tekst.get(i).isEmpty()) {
+                    builder.append("&nbsp;");
+                } else {
+                    builder.append(applyFilters(tekst.get(i), true, a3byka, removeGroupings));
+                }
+                builder.append("</td><td width=\"50%\">");
+                if (i < prevod.size()) {
+                    builder.append(applyFilters(prevod.get(i), true, a3byka, false));
+                }
+                builder.append("</td></tr>");
+            }
+            builder.append("</table>");
+        } else {
+            builder.append("<p>(").append(author).append(")<br>");
+            if (tekst.size() > 1 && !tekst.get(1).isEmpty()) {
+                builder.append(tekst.get(1));
+            }
+            builder.append("<br>");
+            builder.append("</p><p>");
+            for (int i = 2; i < tekst.size(); i++) {
+                builder.append(applyFilters(tekst.get(i), false, a3byka, true)).append("<br>");
+            }
+            builder.append("<do>");
         }
         builder.append("</body></head></html>");
         return builder.toString();
     }
 
-    private static final String hintsChars = "\\\\";
-    private static Pattern nuggetsPattern = null;
+    private static final String hintsChars = "([\\\\|])";
+    private static final Pattern groupingPattern = Pattern.compile("[\\[\\]]");
     private static final Pattern hintsPattern = Pattern.compile(hintsChars);
-    private static final Pattern wordEmphasisPattern = Pattern.compile("\\|([^ ]+)");
-    private static String applyFilters(String line, boolean hints, boolean a3byka) {
+    private static final Pattern wordEmphasisPattern = Pattern.compile("\\|([^ \n,]+)");
+    private static Map<Pattern, String> explicits = null;
+    private static String applyFilters(String line, boolean hints, boolean a3byka, boolean removeGroupings) {
         if (hints) {
             // TODO: ako ovo menjam, treba da promenim i ručne ins u fajlovima...
             // TODO: možda je napadno da sve ovo bude označeno na glavnoj strani, možda samo tokom analize (položeno)
-            line = nuggetsPattern.matcher(line).replaceAll("<ins>$1</ins>");
             line = wordEmphasisPattern.matcher(line).replaceAll("<em>$1</em>");
             if (BuildConfig.DEBUG) {
                 String oldLine = line;
@@ -180,6 +245,12 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
             }
         }
         line = hintsPattern.matcher(line).replaceAll("");
+        for (Map.Entry<Pattern, String> fuck : explicits.entrySet()) {
+            line = fuck.getKey().matcher(line).replaceAll("$2" + fuck.getValue());
+        }
+        if (removeGroupings) {
+            line = groupingPattern.matcher(line).replaceAll("");
+        }
         return line;
     }
 
@@ -208,10 +279,8 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
     }
 
     private String getScaleKey() {
-        // TODO: ovde dodati orijentaciju
-        String orientation = "portrait";
-        String key = orientation + ".zoom";
-        return key;
+        String orientation = inLandscape ? "landscape" : "portrait";
+        return orientation + ".zoom";
     }
 
     private void updateScaleFromPrefs(Context context, @Nullable WebView webView) {
@@ -292,18 +361,26 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
             this.parentRef = new WeakReference<>(parent);
         }
 
+        private Context getParentContext() {
+            PageAdapter parent = parentRef.get();
+            if (parent == null) {
+                return null;
+            }
+            return parent.context;
+        }
+
         @Override
         protected String doInBackground(Void[] voids) {
             if (BuildConfig.DEBUG) { LOG_V("doInBackground(" + imageFile + ")"); }
             String savedBitmap = null;
-            PageAdapter parent = parentRef.get();
-            if (parent == null) {
+            Context context = getParentContext();
+            if (context == null) {
                 return null;
             }
             List<File> cacheDirs = new ArrayList<>();
 
             // TODO: ne znam zašto ovo već nisam imao.  Treba popraviti download ali zasad mogu da koristim ovo
-            cacheDirs.add(parent.context.getCacheDir());
+            cacheDirs.add(context.getCacheDir());
             for (File cacheDir : cacheDirs) {
                 if (cacheDir == null) {
                     continue;
@@ -327,11 +404,11 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
                 return savedBitmap;
             }
 
-            if (MainActivity.internetNotAvailable(parent.context)) {
+            if (MainActivity.internetNotAvailable(context)) {
                 return null;
             }
 
-            File imageToDownload = new File(parent.context.getCacheDir(), imageFile);
+            File imageToDownload = new File(context.getCacheDir(), imageFile);
             if (isCancelled()) {
                 return null;
             } else {
