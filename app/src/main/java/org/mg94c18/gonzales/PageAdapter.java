@@ -228,7 +228,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
 
     private static final String hintsChars = "([\\\\|])";
     private static final Pattern groupingPattern = Pattern.compile("[\\[\\]]");
-    private static final Pattern hintsPattern = Pattern.compile(hintsChars);
+    public static final Pattern hintsPattern = Pattern.compile(hintsChars);
     private static final Pattern wordEmphasisPattern = Pattern.compile("\\|([^ \n,]+)");
     private static Map<Pattern, String> explicits = null;
     private static String applyFilters(String line, boolean hints, boolean a3byka, boolean removeGroupings) {

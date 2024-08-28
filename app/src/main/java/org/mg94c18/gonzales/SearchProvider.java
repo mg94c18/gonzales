@@ -13,12 +13,14 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -26,6 +28,7 @@ import static org.mg94c18.gonzales.Logger.LOG_V;
 import static org.mg94c18.gonzales.Logger.TAG;
 
 public class SearchProvider extends ContentProvider {
+    private static final int MINIMUM_RESULTS = 16;
     public static List<String> TITLES = Collections.emptyList();
     public static List<String> NUMBERS = Collections.emptyList();
     public static List<String> DATES = Collections.emptyList();
@@ -45,6 +48,23 @@ public class SearchProvider extends ContentProvider {
     }
 
     private static class Position {
+        @Override
+        public int hashCode() {
+            return (title + episodeId).hashCode();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == null) {
+                return false;
+            }
+            if (!(o instanceof Position)) {
+                return false;
+            }
+            Position that = (Position) o;
+            return this.episodeId == that.episodeId && this.title.equals(that.title);
+        }
+
         int episodeId;
         String title;
     }
@@ -95,6 +115,7 @@ public class SearchProvider extends ContentProvider {
                     lines = AssetLoader.loadFromAssetOrUpdate(context, number, MainActivity.syncIndex);
                     for (int j = 2; j < lines.size(); j++) {
                         String line = htmlTags.matcher(lines.get(j)).replaceAll("").toLowerCase();
+                        line = PageAdapter.hintsPattern.matcher(line).replaceAll("");
                         String[] words = splitPattern.split(line);
                         if (words == null) {
                             continue;
@@ -144,7 +165,7 @@ public class SearchProvider extends ContentProvider {
         insertWord(child, finalWord, rest, position);
     }
 
-    private static int trieQuery(String query, Node node, MatrixCursor cursor) {
+    private static int trieQuery(String query, Node node, MatrixCursor cursor, Set<Position> positionsAdded) {
         // if (BuildConfig.DEBUG) { LOG_V("trieQuery(" + query + ")"); }
         int resultCount = 0;
         if (node == null) {
@@ -152,35 +173,49 @@ public class SearchProvider extends ContentProvider {
             return resultCount;
         }
         if (query.isEmpty()) {
-            for (Map.Entry<String, Set<Position>> entry : node.results.entrySet()) {
-                String finalWord = entry.getKey();
-                Set<Position> positions = entry.getValue();
-
-                Set<Integer> episodeIdsAdded = new HashSet<>();
-                for (Position position : positions) {
-                    if (episodeIdsAdded.contains(position.episodeId)) {
-                        continue;
-                    }
-
-                    // if (BuildConfig.DEBUG) { LOG_V("Adding result: " + position.title + "," + position.episodeId + " for " + finalWord); }
-                    MatrixCursor.RowBuilder builder = cursor.newRow();
-                    builder.add(resultCount++); // BaseColumns._ID
-                    builder.add(finalWord); // SearchManager.SUGGEST_COLUMN_TEXT_1
-                    // TODO: ovo sad otrkiva interno preslikavanje ali će i tako da se promeni kad promenim search
-                    builder.add(position.title); // SearchManager.SUGGEST_COLUMN_TEXT_2
-                    builder.add(position.episodeId); // SearchManager.SUGGEST_COLUMN_INTENT_EXTRA_DATA
-
-                    episodeIdsAdded.add(position.episodeId);
-                }
-            }
+            lastNode = node;
+            resultCount += addThisNode(node, cursor, positionsAdded);
         } else {
             String first = query.substring(0, 1);
             String rest = query.substring(1);
             Node child = node.children.get(first);
             // if (BuildConfig.DEBUG) { LOG_V("Searching for '" + rest + "' under '" + first + "'"); }
-            resultCount += trieQuery(rest, child, cursor);
+            resultCount += trieQuery(rest, child, cursor, positionsAdded);
         }
-        // TODO: dopuniti ako ih nema dovoljno
+        Queue<Node> fillUpNodes = new ArrayDeque<>();
+        fillUpNodes.add(node);
+        while (!fillUpNodes.isEmpty() && resultCount < MINIMUM_RESULTS) {
+            Node fillUpNode = fillUpNodes.poll();
+            for (Map.Entry<String, Node> entry : fillUpNode.children.entrySet()) {
+                fillUpNodes.add(entry.getValue());
+                resultCount += addThisNode(entry.getValue(), cursor, positionsAdded);
+            }
+        }
+        return resultCount;
+    }
+
+    private static int addThisNode(Node node, MatrixCursor cursor, Set<Position> positionsAdded) {
+        int resultCount = 0;
+        for (Map.Entry<String, Set<Position>> entry : node.results.entrySet()) {
+            String finalWord = entry.getKey();
+            Set<Position> positions = entry.getValue();
+
+            for (Position position : positions) {
+                if (positionsAdded.contains(position)) {
+                    continue;
+                }
+
+                // if (BuildConfig.DEBUG) { LOG_V("Adding result: " + position.title + "," + position.episodeId + " for " + finalWord); }
+                MatrixCursor.RowBuilder builder = cursor.newRow();
+                builder.add(resultCount++); // BaseColumns._ID
+                builder.add(finalWord); // SearchManager.SUGGEST_COLUMN_TEXT_1
+                // TODO: ovo sad otrkiva interno preslikavanje ali će i tako da se promeni kad promenim search
+                builder.add(position.title); // SearchManager.SUGGEST_COLUMN_TEXT_2
+                builder.add(position.episodeId); // SearchManager.SUGGEST_COLUMN_INTENT_EXTRA_DATA
+
+                positionsAdded.add(position);
+            }
+        }
         return resultCount;
     }
 
@@ -266,19 +301,22 @@ public class SearchProvider extends ContentProvider {
                 searchFrom = null;
                 searchWhat = query;
             } else {
+                // TODO: dodati i za backspace, da može da se vrati na prethodno
                 if (query.startsWith(lastQuery) && lastNode != null) {
+                    if (BuildConfig.DEBUG) { LOG_V("Using previous subtree"); }
                     searchWhat = query.substring(lastQuery.length());
                     searchFrom = lastNode;
                 } else {
                     searchWhat = query;
                     searchFrom = trie;
+                    lastNode = null;
                 }
             }
             lastQuery = query;
         }
         int resultCount = 0;
         if (searchFrom != null) {
-            resultCount = trieQuery(searchWhat, searchFrom, cursor);
+            resultCount = trieQuery(searchWhat, searchFrom, cursor, new HashSet<>());
         } else {
             resultCount = stdQuery(searchWhat, cursor);
         }
