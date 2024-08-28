@@ -22,7 +22,7 @@ These songs are translated correctly, with caveats that poetry and music, like o
 
 Ima li negde neželjeni miks u pozadni?  Pozdravi je ima ženski prateći vokal u refrenu, jel to treba?  Dodirni mi koljena ima nešto pri kraju.
 Pozdravi je ima vrlo glasan početak
-Buba: šibica na početku?
+Buba: šibica na početku treba da se čuje
 
 Ako se (novi) asset završava brojem, obrisati stare fajlove sa manjim brojem.  Ili pak obrisati sve .mp3 fajlove koji nisu u assets.
 
@@ -101,6 +101,9 @@ for f in gonzales dijaspora; do diff numbers.$f app/src/$f/assets/numbers; done
 for i in {1..36}; do git mv app/src/dijaspora/assets/$i app/src/dijaspora/assets/$(cat app/src/dijaspora/assets/links | head -n $i | tail -n 1); done
 for i in {1..10}; do git mv app/src/gonzales/assets/$i app/src/gonzales/assets/$(cat app/src/gonzales/assets/links | head -n $i | tail -n 1); done
 
+Da li je dobar pattern za reči:
+for f in gonzales dijaspora; do for n in $(cat app/src/$f/assets/numbers); do cat app/src/$f/assets/$n | java -cp . WordPatternTest; done; done 2>X
+
 Sve tekstove da propustim kroz neki checker za španski, pogotovu da stavim akcenat za prošlo i buduće vreme.
 
 mp3 fajlovi na Macbook nekad pritisnem pause pa play, a on nastavi malo unazad.  fixed-bit-rate problem?  Mada Android radi kako treba.
@@ -116,6 +119,7 @@ Morena: tiše
 Rojo: tiše
 Svađu ponovo pregledati jer sam neke delove izgubio zbog update-ovanja pogrešnog fajla
 Tjelo Hristovo: obrisati bukvalni prevod
+Rosario malo brže i sa više harmonike: https://www.youtube.com/watch?v=7sG3FGMi9CU ali iseći početak i kraj
 
 Unakrsna provera da [] stvari nisu protivurečne
 Provera da je zaista 1:1 preslikavanje za bukvalno
@@ -134,3 +138,11 @@ Jaime:
     interesas: ti mene više me ne interesuješ, ili pak ti mi više me ne interesuješ
     eras muy feliz (papel) nema smisla
     por que ili porque
+    šta je rekla carta?
+
+Čovek za koga ili Čovek za kog
+Predrag Žustrić: pogledati kako mu se zove mama?
+    https://valterportal.ba/kako-je-nastala-balada-o-pisonji-i-zugi-prica-o-jasminu-i-predragu-s-koseva/
+
+Search: "poslaću" odseče na "posla ću" zbog separatora, treba taj skloniti
+Staviti WordPatternTest da bude unit test

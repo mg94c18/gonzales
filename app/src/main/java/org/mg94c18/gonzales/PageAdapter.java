@@ -269,7 +269,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
     @Override
     public boolean onTouch(View view, MotionEvent motionEvent) {
         int action = motionEvent.getAction();
-        if (BuildConfig.DEBUG) { LOG_V("onTouch(" + action + ")"); }
+        // if (BuildConfig.DEBUG) { LOG_V("onTouch(" + action + ")"); }
         return mScaleDetector.onTouchEvent(motionEvent) && scaleInProgress;
     }
 

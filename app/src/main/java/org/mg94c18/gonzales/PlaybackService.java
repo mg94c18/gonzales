@@ -131,6 +131,9 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         if (mediaPlayer == null) {
             return;
         }
+        if (cleanupService == null) {
+            return;
+        }
         cleanupService.submit(new Runnable() {
             @Override
             public void run() {

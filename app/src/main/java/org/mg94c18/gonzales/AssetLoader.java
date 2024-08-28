@@ -272,5 +272,6 @@ public final class AssetLoader {
         final List<String> hiddenTitles = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.HIDDEN_TITLES, syncIndex);
 
         MainActivity.updateAssets(titles, numbers, dates, hiddenTitles);
+        SearchProvider.populateTrie(context, numbers, titles);
     }
 }

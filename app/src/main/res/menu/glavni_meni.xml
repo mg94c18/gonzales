@@ -23,7 +23,7 @@
         app:showAsAction="never"
         android:title="@string/toggle"/>
     <item android:id="@+id/search"
-        android:title="Nađi..."
+        android:title="@string/na_i"
         app:showAsAction="never"
         android:visible="false"
         app:actionViewClass="android.widget.SearchView" />

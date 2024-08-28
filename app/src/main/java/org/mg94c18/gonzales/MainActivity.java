@@ -390,6 +390,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             progressString = null;
         }
 
+        if (SearchProvider.deeperSearchReady()) {
+            menu.findItem(R.id.search).setTitle(R.string.na_i_2);
+        } else {
+            menu.findItem(R.id.search).setTitle(R.string.na_i);
+        }
+
         boolean inLandscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
         if (inLandscape) {
             menu.findItem(R.id.action_email).setVisible(false);

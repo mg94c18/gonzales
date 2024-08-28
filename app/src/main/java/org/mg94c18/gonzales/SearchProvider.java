@@ -11,14 +11,19 @@ import android.os.Build;
 import android.provider.BaseColumns;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import static org.mg94c18.gonzales.Logger.LOG_V;
+import static org.mg94c18.gonzales.Logger.TAG;
 
 public class SearchProvider extends ContentProvider {
     public static List<String> TITLES = Collections.emptyList();
@@ -35,22 +40,152 @@ public class SearchProvider extends ContentProvider {
             SearchManager.SUGGEST_COLUMN_INTENT_EXTRA_DATA
     };
 
-    @Override
-    public boolean onCreate() {
-        return true;
+    public static synchronized boolean deeperSearchReady() {
+        return trie != null;
     }
 
-    @Nullable
-    @Override
-    public Cursor query(@NonNull Uri uri, @Nullable String[] strings, @Nullable String s, @Nullable String[] strings1, @Nullable String s1) {
-        MatrixCursor cursor = new MatrixCursor(MANDATORY_COLUMNS);
-        if (uri.getLastPathSegment() == null) {
-            return cursor;
+    private static class Position {
+        int episodeId;
+        String title;
+    }
+
+    private static class Node {
+        public Node() {
+            children = new HashMap<>();
+            results = new HashMap<>();
+        }
+        Map<String, Node> children;
+        Map<String, Set<Position>> results;
+    }
+
+    private static Node trie = null;
+    private static boolean threadKickedOff = false;
+    private static Node lastNode = null;
+    private static String lastQuery = "";
+
+    private static Pattern splitPattern = Pattern.compile("[\\[\\] .,!?\\|¡¿:;\"\\(\\)'\\-_\\{\\}]");
+    private static Pattern htmlTags = Pattern.compile("(<[^>]+>)|(\\{[^\\{\\}]+\\})");
+
+    public static void populateTrie(Context context, List<String> numbers, List<String> titles) {
+        synchronized (SearchProvider.class) {
+            if (SearchProvider.trie != null) {
+                Log.wtf(TAG, "Already called");
+                return;
+            }
+            if (SearchProvider.threadKickedOff) {
+                Log.wtf(TAG, "Already called");
+                return;
+            }
+            SearchProvider.threadKickedOff = true;
         }
 
-        String query = uri.getLastPathSegment().toLowerCase();
-        if (BuildConfig.DEBUG) { LOG_V("query(" + query + ")"); }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                if (numbers.size() != titles.size()) {
+                    Log.wtf(TAG, "Unexpected: " + numbers.size() + "!=" + titles.size());
+                    return;
+                }
+                Log.i(TAG, "populateTrie: begin");
+                Node newTrie = new Node();
+                String number;
+                List<String> lines;
+                for (int i = 0; i < numbers.size(); i++) {
+                    number = numbers.get(i);
+                    lines = AssetLoader.loadFromAssetOrUpdate(context, number, MainActivity.syncIndex);
+                    for (int j = 2; j < lines.size(); j++) {
+                        String line = htmlTags.matcher(lines.get(j)).replaceAll("").toLowerCase();
+                        String[] words = splitPattern.split(line);
+                        if (words == null) {
+                            continue;
+                        }
 
+                        for (String word : words) {
+                            Position position = new Position();
+                            position.episodeId = i;
+                            position.title = titles.get(i);
+                            //if (BuildConfig.DEBUG) { LOG_V("insertWord(" + word + "," + position.number + ")"); }
+                            if (word.isBlank()) {
+                                continue;
+                            }
+                            insertWord(newTrie, word, word, position);
+                        }
+                    }
+                }
+                synchronized (SearchProvider.class) {
+                    SearchProvider.trie = newTrie;
+                }
+                Log.i(TAG, "populateTrie: end");
+            }
+        }).start();
+    }
+
+    private static void insertWord(Node node, String finalWord, String remaining, Position position) {
+        if (remaining.isEmpty()) {
+            Set<Position> results = node.results.get(finalWord);
+            if (results == null) {
+                results = new HashSet<>();
+                // if (BuildConfig.DEBUG) { LOG_V("Inserting: " + finalWord); }
+                node.results.put(finalWord, results);
+            }
+            // if (BuildConfig.DEBUG) { LOG_V("Adding position '" + position.title + "' to '" + finalWord + "'");}
+            results.add(position);
+            return;
+        }
+        String first = remaining.substring(0, 1);
+        String rest = remaining.substring(1);
+
+        Node child = node.children.get(first);
+        if (child == null) {
+            child = new Node();
+            // if (BuildConfig.DEBUG) { LOG_V("Growing trie for: " + first); }
+            node.children.put(first, child);
+        }
+        insertWord(child, finalWord, rest, position);
+    }
+
+    private static int trieQuery(String query, Node node, MatrixCursor cursor) {
+        // if (BuildConfig.DEBUG) { LOG_V("trieQuery(" + query + ")"); }
+        int resultCount = 0;
+        if (node == null) {
+            // if (BuildConfig.DEBUG) { LOG_V("Nothing here"); }
+            return resultCount;
+        }
+        if (query.isEmpty()) {
+            for (Map.Entry<String, Set<Position>> entry : node.results.entrySet()) {
+                String finalWord = entry.getKey();
+                Set<Position> positions = entry.getValue();
+
+                Set<Integer> episodeIdsAdded = new HashSet<>();
+                for (Position position : positions) {
+                    if (episodeIdsAdded.contains(position.episodeId)) {
+                        continue;
+                    }
+
+                    // if (BuildConfig.DEBUG) { LOG_V("Adding result: " + position.title + "," + position.episodeId + " for " + finalWord); }
+                    MatrixCursor.RowBuilder builder = cursor.newRow();
+                    builder.add(resultCount++); // BaseColumns._ID
+                    builder.add(finalWord); // SearchManager.SUGGEST_COLUMN_TEXT_1
+                    // TODO: ovo sad otrkiva interno preslikavanje ali će i tako da se promeni kad promenim search
+                    builder.add(position.title); // SearchManager.SUGGEST_COLUMN_TEXT_2
+                    builder.add(position.episodeId); // SearchManager.SUGGEST_COLUMN_INTENT_EXTRA_DATA
+
+                    episodeIdsAdded.add(position.episodeId);
+                }
+            }
+        } else {
+            String first = query.substring(0, 1);
+            String rest = query.substring(1);
+            Node child = node.children.get(first);
+            // if (BuildConfig.DEBUG) { LOG_V("Searching for '" + rest + "' under '" + first + "'"); }
+            resultCount += trieQuery(rest, child, cursor);
+        }
+        // TODO: dopuniti ako ih nema dovoljno
+        return resultCount;
+    }
+
+    private int stdQuery(String query, MatrixCursor cursor) {
+        int resultCount = 0;
         Set<String> querySet = new HashSet<>();
         querySet.add(query);
         querySet.add(query.replace('c', 'ć'));
@@ -68,19 +203,12 @@ public class SearchProvider extends ContentProvider {
             titlesLowercase.add(title.toLowerCase());
         }
 
-        int resultCount = 0;
         for (int i = 0; i < TITLES.size(); i++) {
             boolean addThis = false;
-            if (NUMBERS.get(i).contains(query)) {
-                addThis = true;
-            } else if (!query.equals(".") && DATES.get(i).contains(uri.getLastPathSegment())) {
-                addThis = true;
-            } else {
-                for (String q : querySet) {
-                    if (titlesLowercase.get(i).contains(q)) {
-                        addThis = true;
-                        break;
-                    }
+            for (String q : querySet) {
+                if (titlesLowercase.get(i).contains(q)) {
+                    addThis = true;
+                    break;
                 }
             }
 
@@ -104,9 +232,59 @@ public class SearchProvider extends ContentProvider {
                 builder.add(query); // SearchManager.SUGGEST_COLUMN_INTENT_EXTRA_DATA
             }
         }
+        return resultCount;
+    }
+
+    @Override
+    public boolean onCreate() {
+        return true;
+    }
+
+    // Ovde dodati da ima drvo gde su grane označene "karakterima", zapravo stringovima.
+    // I onda dodavanje treba da ima dodaj(ostatak reči, krajnja reč, pozicija) a da za zapravo doda svaku od kombinacija sa jekavskim, takođe ako neko traži c da nađe i ćč i slično
+    // ili u španskom ako neko traži a da takođe nađe á
+    // A? a... i a nisu iste reči, možda koristiti naglaske takođe
+    @Nullable
+    @Override
+    public Cursor query(@NonNull Uri uri, @Nullable String[] unused1, @Nullable String unused2, @Nullable String[] unused3, @Nullable String unused4) {
+        MatrixCursor cursor = new MatrixCursor(MANDATORY_COLUMNS);
+        if (uri.getLastPathSegment() == null) {
+            return cursor;
+        }
+
+        String query = uri.getLastPathSegment().toLowerCase();
+        if (query.compareTo(SearchManager.SUGGEST_URI_PATH_QUERY) == 0) {
+            return cursor;
+        }
+
+        if (BuildConfig.DEBUG) { LOG_V("query(" + query + ")"); }
+
+        Node searchFrom;
+        String searchWhat;
+        synchronized (SearchProvider.class) {
+            if (trie == null) {
+                searchFrom = null;
+                searchWhat = query;
+            } else {
+                if (query.startsWith(lastQuery) && lastNode != null) {
+                    searchWhat = query.substring(lastQuery.length());
+                    searchFrom = lastNode;
+                } else {
+                    searchWhat = query;
+                    searchFrom = trie;
+                }
+            }
+            lastQuery = query;
+        }
+        int resultCount = 0;
+        if (searchFrom != null) {
+            resultCount = trieQuery(searchWhat, searchFrom, cursor);
+        } else {
+            resultCount = stdQuery(searchWhat, cursor);
+        }
 
         if (resultCount == 0) {
-            tryAddingHiddenResults(querySet, cursor);
+            tryAddingHiddenResults(Set.of(query), cursor);
         }
 
         return cursor;
@@ -134,6 +312,18 @@ public class SearchProvider extends ContentProvider {
                 builder.add(Integer.toString(-1 * (i + 1))); // SearchManager.SUGGEST_COLUMN_INTENT_EXTRA_DATA
             }
         }
+    }
+
+    private static boolean nonAlphaExists(String word) {
+        String rest = word;
+        while (!rest.isEmpty()) {
+            String first = rest.substring(0, 1);
+            if (!Character.isAlphabetic(first.codePointAt(0))) {
+                return true;
+            }
+            rest = rest.substring(1);
+        }
+        return false;
     }
 
     @Nullable
