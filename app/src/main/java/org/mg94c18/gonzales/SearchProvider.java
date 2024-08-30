@@ -83,8 +83,8 @@ public class SearchProvider extends ContentProvider {
     private static Node lastNode = null;
     private static String lastQuery = "";
 
-    private static Pattern splitPattern = Pattern.compile("[\\[\\] .,!?\\|¡¿:;\"\\(\\)'\\-_\\{\\}]");
-    private static Pattern htmlTags = Pattern.compile("(<[^>]+>)|(\\{[^\\{\\}]+\\})");
+    public static final Pattern splitPattern = Pattern.compile("[\\[\\] .,!?\\|¡¿:;\"\\(\\)'\\-_\\{\\}]");
+    public static final Pattern htmlTags = Pattern.compile("(<[^>]+>)|(\\{[^\\{\\}]+\\})");
 
     public static void populateTrie(Context context, List<String> numbers, List<String> titles) {
         synchronized (SearchProvider.class) {
