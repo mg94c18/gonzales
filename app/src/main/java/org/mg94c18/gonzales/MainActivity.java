@@ -13,14 +13,14 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Parcelable;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatDelegate;
+import androidx.appcompat.app.AppCompatDelegate;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -164,6 +164,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     @Override
     protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
         handleNewIntent(intent);
     }
 
@@ -424,46 +425,46 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
 
         // Handle presses on the action bar items
-        switch (item.getItemId()) {
-            case R.id.action_email:
-                Intent emailIntent = new Intent(Intent.ACTION_SENDTO);
-                emailIntent.setData(Uri.parse("mailto:"));
-                String[] emails = {CONTACT_EMAIL};
-                emailIntent.putExtra(Intent.EXTRA_EMAIL, emails);
-                emailIntent.putExtra(Intent.EXTRA_SUBJECT, getResources().getString(R.string.app_name) + " App");
-                if (emailIntent.resolveActivity(getPackageManager()) != null) {
-                    startActivity(emailIntent);
-                }
-                return true;
-            case R.id.action_review:
-                Intent intent = PlayIntentMaker.createPlayIntent(this);
-                if (intent.resolveActivity(getPackageManager()) != null) {
-                    startActivity(intent);
-                }
-                return true;
-            case R.id.search:
-                if (BuildConfig.DEBUG) { LOG_V("Search requested"); }
-                onSearchRequested();
-                return true;
-            case R.id.action_download_internal:
-                configureDownload(selectedEpisodeNumber);
-                return true;
-            case R.id.action_cancel_download:
-                Intent stopIntent = new Intent(this, PlaybackService.class);
-                stopIntent.setAction(PlaybackService.ACTION_STOP);
-                startService(stopIntent);
-                findViewById(R.id.button).setEnabled(true);
-                return true;
-            case R.id.action_dark_mode:
-                boolean newNightMode = !getNightModeFromSharedPrefs();
-                getSharedPreferences().edit().putBoolean(NIGHT_MODE, newNightMode).apply();
-                recreate();
-                return true;
-            case R.id.action_toggle:
-                pageAdapter.toggle();
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
+        int itemId = item.getItemId();
+        if (itemId == R.id.action_email) {
+            Intent emailIntent = new Intent(Intent.ACTION_SENDTO);
+            emailIntent.setData(Uri.parse("mailto:"));
+            String[] emails = {CONTACT_EMAIL};
+            emailIntent.putExtra(Intent.EXTRA_EMAIL, emails);
+            emailIntent.putExtra(Intent.EXTRA_SUBJECT, getResources().getString(R.string.app_name) + " App");
+            if (emailIntent.resolveActivity(getPackageManager()) != null) {
+                startActivity(emailIntent);
+            }
+            return true;
+        } else if (itemId == R.id.action_review) {
+            Intent intent = PlayIntentMaker.createPlayIntent(this);
+            if (intent.resolveActivity(getPackageManager()) != null) {
+                startActivity(intent);
+            }
+            return true;
+        } else if (itemId == R.id.search) {
+            if (BuildConfig.DEBUG) { LOG_V("Search requested"); }
+            onSearchRequested();
+            return true;
+        } else if (itemId == R.id.action_download_internal) {
+            configureDownload(selectedEpisodeNumber);
+            return true;
+        } else if (itemId == R.id.action_cancel_download) {
+            Intent stopIntent = new Intent(this, PlaybackService.class);
+            stopIntent.setAction(PlaybackService.ACTION_STOP);
+            startService(stopIntent);
+            findViewById(R.id.button).setEnabled(true);
+            return true;
+        } else if (itemId == R.id.action_dark_mode) {
+            boolean newNightMode = !getNightModeFromSharedPrefs();
+            getSharedPreferences().edit().putBoolean(NIGHT_MODE, newNightMode).apply();
+            recreate();
+            return true;
+        } else if (itemId == R.id.action_toggle) {
+            pageAdapter.toggle();
+            return true;
+        } else {
+            return super.onOptionsItemSelected(item);
         }
     }
 

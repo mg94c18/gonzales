@@ -9,7 +9,7 @@ import android.content.res.Configuration;
 import android.media.AudioAttributes;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;

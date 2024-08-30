@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="org.mg94c18.gonzales">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <permission android:name="${applicationId}.search"
         android:protectionLevel="signature"/>
@@ -42,7 +41,7 @@
             android:exported="false"
             android:permission="${applicationId}.search" />
 
-        <service android:name=".PlaybackService"
+        <service android:name="org.mg94c18.gonzales.PlaybackService"
             android:foregroundServiceType="mediaPlayback"
             android:exported="false"/>
 

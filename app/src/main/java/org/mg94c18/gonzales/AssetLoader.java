@@ -2,8 +2,8 @@ package org.mg94c18.gonzales;
 
 import android.content.Context;
 import android.content.res.AssetManager;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import android.util.Log;
 import android.util.Pair;
 

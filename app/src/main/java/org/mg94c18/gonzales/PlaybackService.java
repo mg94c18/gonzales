@@ -15,9 +15,9 @@ import android.media.AudioAttributes;
 import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.IBinder;
-import android.support.annotation.Nullable;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.TaskStackBuilder;
+import androidx.annotation.Nullable;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.TaskStackBuilder;
 import android.util.Log;
 
 import java.io.File;
@@ -242,7 +242,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
                 .setContentIntent(activityPendingIntent)
                 .setDeleteIntent(myBuildServiceIntent(ACTION_STOP))
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                .setStyle(new android.support.v4.media.app.NotificationCompat.MediaStyle()
+                .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
                         .setShowActionsInCompactView(0)
                         .setShowCancelButton(false))
                 .addAction(new NotificationCompat.Action(
