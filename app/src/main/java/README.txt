@@ -20,9 +20,7 @@ You pay less than you would for a pie.
 
 These songs are translated correctly, with caveats that poetry and music, like other art, is subjective, and that I am native Serbian and not English.
 
-Ima li negde neželjeni miks u pozadni?  Pozdravi je ima ženski prateći vokal u refrenu, jel to treba?  Dodirni mi koljena ima nešto pri kraju.
-Pozdravi je ima vrlo glasan početak
-Buba: šibica na početku treba da se čuje
+Buba: šibica na početku treba da se čuje, ali sad ne mogu da nađem link.
 
 Ako se (novi) asset završava brojem, obrisati stare fajlove sa manjim brojem.  Ili pak obrisati sve .mp3 fajlove koji nisu u assets.
 
@@ -36,19 +34,7 @@ Tenor_howto da bude jedan flavor!
 -----------------------------------------
 
 Raspored za Španski:
-- Vale mucho
-- No me importa nada (ovo kao da se nastavlja na prethodnu)
-- El rey: "Pesma za sva vremena", podvući: svako ir/ar/er za infinitiv, svako as za futur
-- La Llorona (kao da se nastavlja na prethodnu)
-- Un ano de amor
-- Un libro viejo (da se nastavlja na prethodnu)
-- Quizas, quizas, quizas
-- Ya no me interesas (da se nastavlja na prethodnu)
-- boleros cubanos clasicos pogledati, ima oko sat i po
-
-- neki rep u smislu komplikovanije, brže, al to može i kasnije
 - Volver razgovor oko 5 minuta
-- https://www.youtube.com/watch?v=aZAA73tWdoQ
 
 Ime aplikacije za španski: A ja ribam ja ribam? (dok ti sereš)
 Za srpski ikonica sa dva mrava, Ants are my friends
@@ -77,9 +63,6 @@ Dodati ћирилицу ako neko traži "a36yka", nemam nigde "injekcije" ili "k
 
 Da ne koristim strings direktno za UI nego uvek preko assets...
 
-Zoom treba da uzme u obzir dužinu najduže linije u toj pesmi, pa da stalni faktor bude broj slova u liniji za vertikalno i horizontalno (dakle dva faktora ukupno).
-Sad zapravo ne znam šta sam mislio pod tim ^
-
 Onaj problem na emulatoru se dešava kad nema internet, onda gnjavi sa download u pozadini, ali ako se prebacim na drugu pesmu onda popuni WebView sa starom pesmom, a nova pesma pak još nije skinuta i tako ide unakrsno.
 
 Izgleda da ne moram da koristim CPU lock, jer na primer na mom telefonu radi i svira.  Treba da ga testiram na duže distance.
@@ -94,10 +77,6 @@ Slično tome treba da pauzira ako neko izvadi slušalice dok muzika svira
 Treba da nastavi da svira kad se upali/ugasi Dark mode
 Kod playlist da bude "I promise" poruka (ako ima više pesama u listi) koja se menja na nekoliko raznih načina i bez koje ne može da se pusti Play, dok se načini ne potroše
 
-Provera da li si linkovi i imena dobri:
-for f in gonzales dijaspora; do rm -f numbers.$f && for n in $(cat app/src/$f/assets/numbers); do cat app/src/$f/assets/$n | head -n 1 | sed -e 's|.*/||' | sed -e 's/.mp3//' >> numbers.$f; done; done
-for f in gonzales dijaspora; do diff numbers.$f app/src/$f/assets/numbers; done
-
 for i in {1..36}; do git mv app/src/dijaspora/assets/$i app/src/dijaspora/assets/$(cat app/src/dijaspora/assets/links | head -n $i | tail -n 1); done
 for i in {1..10}; do git mv app/src/gonzales/assets/$i app/src/gonzales/assets/$(cat app/src/gonzales/assets/links | head -n $i | tail -n 1); done
 
@@ -111,15 +90,11 @@ Trebalo bi da stavim da sačuva poziciju u onStop tako da može da nastavi kasni
 Da testiram kada download gnjavi a ja rotiram ekran.
 
 Crash ima i kad otključam ekran u landscape položaju, izgleda u onResume()
-TODO: poslušati 'dernek' pažljivo za mjesto, ovdje
-Medvedova: prvi deo skloniti
-GRU: prvi deo prazan skloniti par sekundi
-Kengur mora glasnije
-Morena: tiše
-Rojo: tiše
-Svađu ponovo pregledati jer sam neke delove izgubio zbog update-ovanja pogrešnog fajla
-Tjelo Hristovo: obrisati bukvalni prevod
-Rosario malo brže i sa više harmonike: https://www.youtube.com/watch?v=7sG3FGMi9CU ali iseći početak i kraj
+
+ffmpeg -ss 5 -i ~/Espanol/SR/zenidba.mp3 zenidba.mp3
+ffmpeg -i ~/Espanol/SR/necevatra.mp3 -t 175 necevatra.mp3
+ffmpeg -i ~/Espanol/SR/kengurmolitva.mp3 -filter:a "volume=3.5" kengur.mp3
+ffmpeg -i BS_Druze.mp3 -filter:a "volume=0.5" druze.mp3
 
 Unakrsna provera da [] stvari nisu protivurečne
 Provera da je zaista 1:1 preslikavanje za bukvalno
@@ -139,10 +114,19 @@ Jaime:
     eras muy feliz (papel) nema smisla
     por que ili porque
     šta je rekla carta?
+    ya ves -> "već"? vidiš
 
 Čovek za koga ili Čovek za kog
-Predrag Žustrić: pogledati kako mu se zove mama?
-    https://valterportal.ba/kako-je-nastala-balada-o-pisonji-i-zugi-prica-o-jasminu-i-predragu-s-koseva/
-
-Search: "poslaću" odseče na "posla ću" zbog separatora, treba taj skloniti
 Staviti WordPatternTest da bude unit test
+    - bah, Robolectric se žali da nemam android.useAndroidX property...
+
+Kandidati za izbacivanje:
+    - Mirno spavaj nano
+    - Crni leptiri
+    - Te noći kad umrem
+    - Pišonja i Žuga u paklu droge
+
+Pomeriti "Druže" malo gore jer nije komplikovana
+Dodati "Ne volem" od Balaševića
+
+Lutka: možda starija verzija sa drugačijim glasom i publikom
