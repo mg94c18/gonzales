@@ -50,7 +50,7 @@ public class SearchProvider extends ContentProvider {
     private static class Position {
         @Override
         public int hashCode() {
-            return (title + episodeId).hashCode();
+            return (title + episodeId + word).hashCode();
         }
 
         @Override
@@ -65,8 +65,9 @@ public class SearchProvider extends ContentProvider {
             return this.episodeId == that.episodeId && this.title.equals(that.title);
         }
 
-        int episodeId;
         String title;
+        int episodeId;
+        String word;
     }
 
     private static class Node {
@@ -123,9 +124,10 @@ public class SearchProvider extends ContentProvider {
 
                         for (String word : words) {
                             Position position = new Position();
-                            position.episodeId = i;
                             position.title = titles.get(i);
-                            //if (BuildConfig.DEBUG) { LOG_V("insertWord(" + word + "," + position.number + ")"); }
+                            position.episodeId = i;
+                            position.word = word;
+                            // if (BuildConfig.DEBUG) { LOG_V("insertWord(" + word + "," + position.episodeId + ")"); }
                             if (word.isBlank()) {
                                 continue;
                             }
@@ -141,6 +143,26 @@ public class SearchProvider extends ContentProvider {
         }).start();
     }
 
+    private static final Map<Set<String>, String> akasMap;
+
+    static {
+        // TODO: unit test za kòmšija, komšȉja, jê, i slično.
+        akasMap = new HashMap<>();
+        akasMap.put(Set.of("c", "č", "ć"), "c");
+        akasMap.put(Set.of("s", "š"), "s");
+        akasMap.put(Set.of("d", "đ"), "d");
+        akasMap.put(Set.of("ž", "z"), "z");
+    }
+
+    private static String akaFor(String ch) {
+        for (Map.Entry<Set<String>, String> entry : akasMap.entrySet()) {
+            if (entry.getKey().contains(ch)) {
+                return entry.getValue();
+            }
+        }
+        return ch;
+    }
+
     private static void insertWord(Node node, String finalWord, String remaining, Position position) {
         if (remaining.isEmpty()) {
             Set<Position> results = node.results.get(finalWord);
@@ -153,7 +175,7 @@ public class SearchProvider extends ContentProvider {
             results.add(position);
             return;
         }
-        String first = remaining.substring(0, 1);
+        String first = akaFor(remaining.substring(0, 1));
         String rest = remaining.substring(1);
 
         Node child = node.children.get(first);
@@ -163,6 +185,10 @@ public class SearchProvider extends ContentProvider {
             node.children.put(first, child);
         }
         insertWord(child, finalWord, rest, position);
+
+        if (remaining.startsWith("ije") || remaining.startsWith("je")) {
+            insertWord(node, finalWord, rest, position);
+        }
     }
 
     private static int trieQuery(String query, Node node, MatrixCursor cursor, Set<Position> positionsAdded) {
@@ -176,7 +202,7 @@ public class SearchProvider extends ContentProvider {
             lastNode = node;
             resultCount += addThisNode(node, cursor, positionsAdded);
         } else {
-            String first = query.substring(0, 1);
+            String first = akaFor(query.substring(0, 1));
             String rest = query.substring(1);
             Node child = node.children.get(first);
             // if (BuildConfig.DEBUG) { LOG_V("Searching for '" + rest + "' under '" + first + "'"); }
@@ -209,7 +235,6 @@ public class SearchProvider extends ContentProvider {
                 MatrixCursor.RowBuilder builder = cursor.newRow();
                 builder.add(resultCount++); // BaseColumns._ID
                 builder.add(finalWord); // SearchManager.SUGGEST_COLUMN_TEXT_1
-                // TODO: ovo sad otrkiva interno preslikavanje ali će i tako da se promeni kad promenim search
                 builder.add(position.title); // SearchManager.SUGGEST_COLUMN_TEXT_2
                 builder.add(position.episodeId); // SearchManager.SUGGEST_COLUMN_INTENT_EXTRA_DATA
 
@@ -292,7 +317,7 @@ public class SearchProvider extends ContentProvider {
             return cursor;
         }
 
-        if (BuildConfig.DEBUG) { LOG_V("query(" + query + ")"); }
+        // if (BuildConfig.DEBUG) { LOG_V("query(" + query + ")"); }
 
         Node searchFrom;
         String searchWhat;
@@ -303,7 +328,7 @@ public class SearchProvider extends ContentProvider {
             } else {
                 // TODO: dodati i za backspace, da može da se vrati na prethodno
                 if (query.startsWith(lastQuery) && lastNode != null) {
-                    if (BuildConfig.DEBUG) { LOG_V("Using previous subtree"); }
+                    // if (BuildConfig.DEBUG) { LOG_V("Using previous subtree"); }
                     searchWhat = query.substring(lastQuery.length());
                     searchFrom = lastNode;
                 } else {
@@ -350,18 +375,6 @@ public class SearchProvider extends ContentProvider {
                 builder.add(Integer.toString(-1 * (i + 1))); // SearchManager.SUGGEST_COLUMN_INTENT_EXTRA_DATA
             }
         }
-    }
-
-    private static boolean nonAlphaExists(String word) {
-        String rest = word;
-        while (!rest.isEmpty()) {
-            String first = rest.substring(0, 1);
-            if (!Character.isAlphabetic(first.codePointAt(0))) {
-                return true;
-            }
-            rest = rest.substring(1);
-        }
-        return false;
     }
 
     @Nullable

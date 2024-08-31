@@ -115,6 +115,7 @@ Jaime:
     por que ili porque
     šta je rekla carta?
     ya ves -> "već"? vidiš
+    kolko se često piše he->e? hace->ace?, hijo->ijo?, hizo->iso?
 
 Čovek za koga ili Čovek za kog
 Staviti WordPatternTest da bude unit test

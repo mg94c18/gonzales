@@ -52,7 +52,7 @@ public class WordPatternTest {
     }
 
     @Test
-    public void testOneToOne() {
+    public void DISABLED_testOneToOne() {
         // očajanja -> [of desperation] treba da bude 1:1
     }
 }
