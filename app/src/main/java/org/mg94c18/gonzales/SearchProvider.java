@@ -62,7 +62,7 @@ public class SearchProvider extends ContentProvider {
                 return false;
             }
             Position that = (Position) o;
-            return this.episodeId == that.episodeId && this.title.equals(that.title);
+            return this.episodeId == that.episodeId && this.title.equals(that.title) && this.word.equals(that.word);
         }
 
         String title;
@@ -71,12 +71,33 @@ public class SearchProvider extends ContentProvider {
     }
 
     private static class Node {
+        @Override
+        public int hashCode() { return treePath.hashCode(); }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == null) {
+                return false;
+            }
+            if (!(o instanceof Node)) {
+                return false;
+            }
+            Node that = (Node) o;
+            return this.treePath.equals(that.treePath);
+        }
+
         public Node() {
             children = new HashMap<>();
             results = new HashMap<>();
+            similars = new HashSet<>();
+            treePath = "";
+            transitiveSimilarsResolved = false;
         }
         Map<String, Node> children;
         Map<String, Set<Position>> results;
+        Set<Node> similars;
+        boolean transitiveSimilarsResolved;
+        String treePath;
     }
 
     private static Node trie = null;
@@ -131,7 +152,7 @@ public class SearchProvider extends ContentProvider {
                             if (word.isBlank()) {
                                 continue;
                             }
-                            insertWord(newTrie, word, word, position);
+                            insertWord(newTrie, word, word, word, position);
                         }
                     }
                 }
@@ -163,8 +184,13 @@ public class SearchProvider extends ContentProvider {
         return ch;
     }
 
-    private static void insertWord(Node node, String finalWord, String remaining, Position position) {
-        if (remaining.isEmpty()) {
+    private static final Set<String> skrati1 = Set.of("je");
+    private static final Set<String> skrati2 = Set.of("ije");
+    private static final Set<String> skrati3 = Set.of("tko", "gde", "pso");
+
+    private static Node insertWord(Node node, String origWord, String finalWord, String downPath, Position position) {
+        if (downPath.isEmpty()) {
+            // if (BuildConfig.DEBUG) { LOG_V("Adding (new/similar) node '" + origWord + "/" + finalWord + "'"); }
             Set<Position> results = node.results.get(finalWord);
             if (results == null) {
                 results = new HashSet<>();
@@ -172,11 +198,18 @@ public class SearchProvider extends ContentProvider {
                 node.results.put(finalWord, results);
             }
             // if (BuildConfig.DEBUG) { LOG_V("Adding position '" + position.title + "' to '" + finalWord + "'");}
+            if (node.treePath.isEmpty() && !origWord.isEmpty()) {
+                node.treePath = origWord;
+                for (Node similar : node.similars) {
+                    // if (BuildConfig.DEBUG) { LOG_V("Adding (update) similar '" + node.treePath + "' similar to '" + similar.treePath + "'"); }
+                    similar.similars.add(node);
+                }
+            }
             results.add(position);
-            return;
+            return node;
         }
-        String first = akaFor(remaining.substring(0, 1));
-        String rest = remaining.substring(1);
+        String first = akaFor(downPath.substring(0, 1));
+        String rest = downPath.substring(1);
 
         Node child = node.children.get(first);
         if (child == null) {
@@ -184,10 +217,49 @@ public class SearchProvider extends ContentProvider {
             // if (BuildConfig.DEBUG) { LOG_V("Growing trie for: " + first); }
             node.children.put(first, child);
         }
-        insertWord(child, finalWord, rest, position);
+        Node leaf = insertWord(child, origWord, finalWord, rest, position);
 
-        if (remaining.startsWith("ije") || remaining.startsWith("je")) {
-            insertWord(node, finalWord, rest, position);
+        if (!origWord.isEmpty()) {
+            Node jeka;
+            for (String s1 : skrati1) {
+                if (moreThan(rest, s1)) {
+                    jeka = insertWord(child, "", finalWord, rest.substring(1), position);
+                    applyShallowSimilarity(jeka, leaf);
+                }
+            }
+            for (String s2 : skrati2) {
+                if (moreThan(rest, s2)) {
+                    for (int i = 1; i <= 2; i++) {
+                        jeka = insertWord(child, "", finalWord, rest.substring(i), position);
+                        applyShallowSimilarity(jeka, leaf);
+                    }
+                }
+            }
+            for (String s3: skrati3) {
+                if (downPath.startsWith(s3)) {
+                    jeka = insertWord(node, "", finalWord, downPath.substring(1), position);
+                    applyShallowSimilarity(jeka, leaf);
+                }
+            }
+        }
+        return leaf;
+    }
+
+    private static boolean moreThan(String a, String b) {
+        return a.length() > b.length() && a.startsWith(b);
+    }
+
+    // Transitive similarity is solved because during search we'll add and de-dupe
+    private static void applyShallowSimilarity(Node node, Node similar) {
+        if (similar.treePath.isEmpty()) {
+            Log.wtf(TAG, "Unexpected similarity: node=" + node.results + ", similar=" + similar.results);
+            return;
+        }
+        // if (BuildConfig.DEBUG) { LOG_V("Adding '" + similar.treePath + "' similar to '" + node.treePath + "'"); }
+        node.similars.add(similar);
+        if (!node.treePath.isEmpty()) {
+            // if (BuildConfig.DEBUG) { LOG_V("Adding (reverse) '" + node.treePath + "' similar to '" + similar.treePath + "'"); }
+            similar.similars.add(node);
         }
     }
 
@@ -210,17 +282,48 @@ public class SearchProvider extends ContentProvider {
         }
         Queue<Node> fillUpNodes = new ArrayDeque<>();
         fillUpNodes.add(node);
+
         while (!fillUpNodes.isEmpty() && resultCount < MINIMUM_RESULTS) {
             Node fillUpNode = fillUpNodes.poll();
+            resultCount += addThisNode(fillUpNode, cursor, positionsAdded);
             for (Map.Entry<String, Node> entry : fillUpNode.children.entrySet()) {
                 fillUpNodes.add(entry.getValue());
-                resultCount += addThisNode(entry.getValue(), cursor, positionsAdded);
             }
         }
         return resultCount;
     }
 
+    private static void findTransitiveSimilars(Set<Node> result, Node node) {
+        for (Node similar : node.similars) {
+            // if (BuildConfig.DEBUG) { LOG_V("Adding transitive similar '" + similar.treePath + "'"); }
+            if (result.add(similar)) {
+                findTransitiveSimilars(result, similar);
+            }
+        }
+    }
+
     private static int addThisNode(Node node, MatrixCursor cursor, Set<Position> positionsAdded) {
+        int resultCount = 0;
+        if (!node.transitiveSimilarsResolved) {
+            Set<Node> transitiveSimilars = new HashSet<>();
+            transitiveSimilars.add(node);
+            findTransitiveSimilars(transitiveSimilars, node);
+
+            for (Node transitiveSimilar : transitiveSimilars) {
+                transitiveSimilar.similars = new HashSet<>();
+                transitiveSimilar.similars.addAll(transitiveSimilars);
+                transitiveSimilar.similars.remove(transitiveSimilar);
+                transitiveSimilar.transitiveSimilarsResolved = true;
+            }
+        }
+        resultCount += addThisNodeOnly(node, cursor, positionsAdded);
+        for (Node similar : node.similars) {
+            resultCount += addThisNodeOnly(similar, cursor, positionsAdded);
+        }
+        return resultCount;
+    }
+
+    private static int addThisNodeOnly(Node node, MatrixCursor cursor, Set<Position> positionsAdded) {
         int resultCount = 0;
         for (Map.Entry<String, Set<Position>> entry : node.results.entrySet()) {
             String finalWord = entry.getKey();
