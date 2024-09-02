@@ -12,6 +12,7 @@ import android.provider.BaseColumns;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import android.util.Log;
+import android.util.Pair;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.Stack;
 import java.util.regex.Pattern;
 
 import static org.mg94c18.gonzales.Logger.LOG_V;
@@ -29,6 +31,7 @@ import static org.mg94c18.gonzales.Logger.TAG;
 
 public class SearchProvider extends ContentProvider {
     private static final int MINIMUM_RESULTS = 16;
+    public static final char WORD_EPISODE_SEPARATOR = '/';
     public static List<String> TITLES = Collections.emptyList();
     public static List<String> NUMBERS = Collections.emptyList();
     public static List<String> DATES = Collections.emptyList();
@@ -103,7 +106,8 @@ public class SearchProvider extends ContentProvider {
     private static Node trie = null;
     private static boolean threadKickedOff = false;
     private static Node lastNode = null;
-    private static String lastQuery = "";
+    private static String lastMatchedQuery = "";
+    private static Stack<Pair<Node, String>> nodeStack = new Stack<>();
 
     public static final Pattern splitPattern = Pattern.compile("[\\[\\] .,!?\\|¡¿:;\"\\(\\)'\\-_\\{\\}]");
     public static final Pattern htmlTags = Pattern.compile("(<[^>]+>)|(\\{[^\\{\\}]+\\})");
@@ -186,7 +190,7 @@ public class SearchProvider extends ContentProvider {
 
     private static final Set<String> skrati1 = Set.of("je");
     private static final Set<String> skrati2 = Set.of("ije");
-    private static final Set<String> skrati3 = Set.of("tko", "gde", "pso");
+    private static final Set<String> skrati3 = Set.of("tko", "gde", "psova", "znači");
 
     private static Node insertWord(Node node, String origWord, String finalWord, String downPath, Position position) {
         if (downPath.isEmpty()) {
@@ -263,7 +267,7 @@ public class SearchProvider extends ContentProvider {
         }
     }
 
-    private static int trieQuery(String query, Node node, MatrixCursor cursor, Set<Position> positionsAdded) {
+    private static int trieQuery(String fullQuery, String query, Node node, MatrixCursor cursor, Set<Position> positionsAdded) {
         // if (BuildConfig.DEBUG) { LOG_V("trieQuery(" + query + ")"); }
         int resultCount = 0;
         if (node == null) {
@@ -271,14 +275,18 @@ public class SearchProvider extends ContentProvider {
             return resultCount;
         }
         if (query.isEmpty()) {
-            lastNode = node;
+            if (lastNode != node) {
+                lastNode = node;
+                lastMatchedQuery = fullQuery;
+                nodeStack.push(Pair.create(lastNode, lastMatchedQuery));
+            }
             resultCount += addThisNode(node, cursor, positionsAdded);
         } else {
             String first = akaFor(query.substring(0, 1));
             String rest = query.substring(1);
             Node child = node.children.get(first);
             // if (BuildConfig.DEBUG) { LOG_V("Searching for '" + rest + "' under '" + first + "'"); }
-            resultCount += trieQuery(rest, child, cursor, positionsAdded);
+            resultCount += trieQuery(fullQuery, rest, child, cursor, positionsAdded);
         }
         Queue<Node> fillUpNodes = new ArrayDeque<>();
         fillUpNodes.add(node);
@@ -339,7 +347,7 @@ public class SearchProvider extends ContentProvider {
                 builder.add(resultCount++); // BaseColumns._ID
                 builder.add(finalWord); // SearchManager.SUGGEST_COLUMN_TEXT_1
                 builder.add(position.title); // SearchManager.SUGGEST_COLUMN_TEXT_2
-                builder.add(position.episodeId); // SearchManager.SUGGEST_COLUMN_INTENT_EXTRA_DATA
+                builder.add(position.word + WORD_EPISODE_SEPARATOR + position.episodeId); // SearchManager.SUGGEST_COLUMN_INTENT_EXTRA_DATA
 
                 positionsAdded.add(position);
             }
@@ -415,36 +423,63 @@ public class SearchProvider extends ContentProvider {
             return cursor;
         }
 
-        String query = uri.getLastPathSegment().toLowerCase();
+        String query = uri.getLastPathSegment().trim().toLowerCase();
         if (query.compareTo(SearchManager.SUGGEST_URI_PATH_QUERY) == 0) {
+            return cursor;
+        }
+        if (query.isEmpty()) {
             return cursor;
         }
 
         // if (BuildConfig.DEBUG) { LOG_V("query(" + query + ")"); }
 
-        Node searchFrom;
-        String searchWhat;
+        final Node searchFrom;
+        final String searchWhat;
         synchronized (SearchProvider.class) {
             if (trie == null) {
                 searchFrom = null;
                 searchWhat = query;
             } else {
-                // TODO: dodati i za backspace, da može da se vrati na prethodno
-                if (query.startsWith(lastQuery) && lastNode != null) {
+                if (query.startsWith(lastMatchedQuery) && lastNode != null) {
                     // if (BuildConfig.DEBUG) { LOG_V("Using previous subtree"); }
-                    searchWhat = query.substring(lastQuery.length());
                     searchFrom = lastNode;
+                    searchWhat = query.substring(lastMatchedQuery.length());
+                } else if (lastMatchedQuery.startsWith(query)) {
+                    while (!nodeStack.isEmpty()) {
+                        Pair<Node, String> lastMatch = nodeStack.peek();
+                        if (query.startsWith(lastMatch.second)) {
+                            break;
+                        } else {
+                            nodeStack.pop();
+                        }
+                    }
+                    if (nodeStack.isEmpty()) {
+                        Log.wtf(TAG, "Unexpected empty stack, possible mid-word edit");
+                        searchFrom = trie;
+                        searchWhat = query;
+                        lastNode = null;
+                        lastMatchedQuery = "";
+                        nodeStack.clear();
+                    } else {
+                        Pair<Node, String> lastMatch = nodeStack.peek();
+                        lastNode = lastMatch.first;
+                        lastMatchedQuery = lastMatch.second;
+                        searchFrom = lastNode;
+                        searchWhat = query.substring(lastMatchedQuery.length());
+                    }
                 } else {
+                    if (BuildConfig.DEBUG) { LOG_V("query(" + query + "," + lastMatchedQuery + ")"); }
                     searchWhat = query;
                     searchFrom = trie;
                     lastNode = null;
+                    lastMatchedQuery = "";
+                    nodeStack.clear();
                 }
             }
-            lastQuery = query;
         }
         int resultCount = 0;
         if (searchFrom != null) {
-            resultCount = trieQuery(searchWhat, searchFrom, cursor, new HashSet<>());
+            resultCount = trieQuery(query, searchWhat, searchFrom, cursor, new HashSet<>());
         } else {
             resultCount = stdQuery(searchWhat, cursor);
         }

@@ -53,7 +53,6 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         ERROR,
         END
     }
-    // TODO: state za "svaki" MediaPlayer
     State state;
 
     int[] EMPTY_ARRAY = new int[0];
@@ -221,7 +220,6 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
 
     private void myStartForeground(boolean currentlyPlaying, boolean update) {
         Intent activityIntent = new Intent(this, MainActivity.class);
-        // TODO: staviti možda da intent ode na tu epizodu
         activityIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
         int actualIndex = episodeIdsToPlay[nextIndexToPlay - 1];

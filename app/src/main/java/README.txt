@@ -52,6 +52,7 @@ Enjoy the playlists for practicing listening while doing chores, even sing when 
 Meticulously transcribed, with context-aware word-by-word translations and a final translation for your study.
 
 Luz Casal pesme su preglasne u poređenju sa drugima...
+    - osim Recuerdos koja je primetno tiša
 La Basurita prevod je pogrešan na nekoliko mesta
 Hey od Iglesiasa je preglasan početak
 
@@ -59,7 +60,7 @@ Hey od Iglesiasa je preglasan početak
 
 s3cmd setacl --acl-public --recursive s3://mg94c18gonzales
 
-Dodati ћирилицу ako neko traži "a36yka", nemam nigde "injekcije" ili "konjukcije" ili "Bedžihe", pa bi trebalo da može da se prebaci lako
+Dodati ћирилицу ako neko traži "a36yka", nemam nigde "injekcije" ili "konjukcije" ili "Bedžihe", pa bi trebalo da može da se prebaci lako.  Ima Tanjug.
 
 Da ne koristim strings direktno za UI nego uvek preko assets...
 
@@ -83,7 +84,13 @@ for i in {1..10}; do git mv app/src/gonzales/assets/$i app/src/gonzales/assets/$
 Da li je dobar pattern za reči:
 for f in gonzales dijaspora; do for n in $(cat app/src/$f/assets/numbers); do cat app/src/$f/assets/$n | java -cp . WordPatternTest; done; done 2>X
 
+Provera da li si linkovi i imena dobri:
+for f in gonzales dijaspora; do rm -f numbers.$f && for n in $(cat app/src/$f/assets/numbers); do cat app/src/$f/assets/$n | head -n 1 | sed -e 's|.*/||' | sed -e 's/.mp3//' >> numbers.$f; done; done
+for f in gonzales dijaspora; do diff numbers.$f app/src/$f/assets/numbers; done
+
 Sve tekstove da propustim kroz neki checker za španski, pogotovu da stavim akcenat za prošlo i buduće vreme.
+🎓ako neko treba da uči sam (nema prevod i neće biti)
+🕑za "coming soon"
 
 mp3 fajlovi na Macbook nekad pritisnem pause pa play, a on nastavi malo unazad.  fixed-bit-rate problem?  Mada Android radi kako treba.
 Trebalo bi da stavim da sačuva poziciju u onStop tako da može da nastavi kasnije od tog istog mesta.
@@ -118,16 +125,32 @@ Jaime:
     kolko se često piše he->e? hace->ace?, hijo->ijo?, hizo->iso?
 
 Čovek za koga ili Čovek za kog
-Staviti WordPatternTest da bude unit test
-    - bah, Robolectric se žali da nemam android.useAndroidX property...
 
-Kandidati za izbacivanje:
-    - Mirno spavaj nano
-    - Crni leptiri
-    - Te noći kad umrem
-    - Pišonja i Žuga u paklu droge
+Imena za naglaske
+    - ȅ: double grave
+    - ê: circumflex
+    - è: grave
+    - é: acute
 
-Pomeriti "Druže" malo gore jer nije komplikovana
-Dodati "Ne volem" od Balaševića
+A   Ȁ   Â   À   Á
+E   Ȅ   Ê   È   É
+I   Ȉ   Î   Ì   Í
+O   Ȍ   Ô   Ò   Ó
+U   Ȕ   Û   Ù   Ú
 
-Lutka: možda starija verzija sa drugačijim glasom i publikom
+a   ȁ   â   à   á
+e   ȅ   ê   è   é
+i   ȉ   î   ì   í
+o   ȍ   ô   ò   ó
+u   ȕ   û   ù   ú
+
+https://issues.chromium.org/issues/350869464
+    - ako izvadim WebView->TextView, onda nestane
+
+    private static void keepScreenOn(@NonNull Activity activity, boolean on) {
+        if (on) {
+            activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        } else {
+            activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        }
+    }

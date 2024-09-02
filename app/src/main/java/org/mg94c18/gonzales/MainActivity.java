@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
     private static final String SHARED_PREFS_NAME = "config";
@@ -86,6 +87,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private String previousProgressString;
     private String progressString;
     private static boolean nightModeAllowed = Build.VERSION.SDK_INT >= 29;
+    private static String lastSearchedWord = "";
+    private static String lastSearchedWordEpisode = "";
 
     public SharedPreferences getSharedPreferences() {
         return getSharedPreferences(getApplicationContext());
@@ -185,7 +188,13 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
 
         int episode;
+        String searchedWord = "";
         try {
+            int separatorIndex = epizodeStr.indexOf(SearchProvider.WORD_EPISODE_SEPARATOR);
+            if (separatorIndex > 0) {
+                searchedWord = epizodeStr.substring(0, separatorIndex);
+                epizodeStr = epizodeStr.substring(separatorIndex + 1);
+            }
             episode = Integer.parseInt(epizodeStr);
         } catch (NumberFormatException nfe) {
             Log.wtf(TAG, "Can't convert the episode ID", nfe);
@@ -197,10 +206,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         } else {
             if (intent.hasExtra(EPISODE_TITLE) && intent.hasExtra(EPISODE_NUMBER) && intent.hasExtra(EPISODE_AUTHOR)) {
                 AssetLoader.handleAssetLoading(this);
-                selectEpisode(episode, intent.getStringExtra(EPISODE_TITLE), intent.getStringExtra(EPISODE_NUMBER), intent.getStringExtra(EPISODE_AUTHOR));
+                selectEpisode(searchedWord, episode, intent.getStringExtra(EPISODE_TITLE), intent.getStringExtra(EPISODE_NUMBER), intent.getStringExtra(EPISODE_AUTHOR));
                 updateDrawer();
             } else {
-                selectEpisode(episode);
+                selectEpisode(searchedWord, episode);
             }
             drawerList.setSelection(episode);
         }
@@ -370,7 +379,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 @Override
                 public void onDrawerOpened(View view) {
                     super.onDrawerOpened(view);
-                    String actionBarTitle = "Epizode"; // TODO: resources
+                    String actionBarTitle = "Tracks"; // TODO: resources
                     if (numbers != null && numbers.size() > 0) {
                         actionBarTitle = actionBarTitle + " " + 1 + "-" + numbers.size();
                     }
@@ -716,7 +725,11 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     }
 
     private void selectEpisode(int position) {
-        selectEpisode(position, titles.get(position), numbers.get(position), dates.get(position));
+        selectEpisode("", position);
+    }
+
+    private void selectEpisode(String searchedWord, int position) {
+        selectEpisode(searchedWord, position, titles.get(position), numbers.get(position), dates.get(position));
     }
 
     private @NonNull ActionBar getMyActionBar() {
@@ -728,6 +741,15 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     }
 
     private void selectEpisode(int position, String title, String number, String author) {
+        selectEpisode("", position, title, number, author);
+    }
+
+    private void selectEpisode(String searchedWord, int position, String title, String number, String author) {
+        if (lastSearchedWordEpisode.equals(number) && !lastSearchedWord.isEmpty() && searchedWord.isEmpty()) {
+            searchedWord = lastSearchedWord;
+        }
+        lastSearchedWord = searchedWord;
+        lastSearchedWordEpisode = number;
         if (position >= 0) {
             selectedEpisodeTitle = title;
             selectedEpisodeNumber = number;
@@ -735,7 +757,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
         mySetActionBarTitle(getMyActionBar(), title);
         destroyPageAdapter();
-        pageAdapter = new PageAdapter(this, number, author);
+        pageAdapter = new PageAdapter(this, number, author, searchedWord);
         if (position >= 0) {
             selectedEpisode = position;
             if (BuildConfig.DEBUG) { LOG_V("Saving episode " + selectedEpisode); }

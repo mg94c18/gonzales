@@ -38,6 +38,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
     List<String> zaPrikaz;
     String episode;
     String author;
+    String searchedWord;
     String localFilePath;
     Context context;
     Button button;
@@ -113,7 +114,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         }
     }
 
-    PageAdapter(MainActivity activity, String episode, String author) {
+    PageAdapter(MainActivity activity, String episode, String author, String searchedWord) {
         if (BuildConfig.DEBUG) { LOG_V("PageAdapter(" + episode + ")"); }
 
         if (explicits == null) {
@@ -125,6 +126,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         this.context = activity;
         this.episode = episode;
         this.author = author;
+        this.searchedWord = searchedWord;
         SharedPreferences preferences = MainActivity.getSharedPreferences(context);
         links = AssetLoader.loadFromAssetOrUpdate(context, episode, MainActivity.syncIndex);
         bukvalno = AssetLoader.loadFromAssetOrUpdate(context, episode + ".bukvalno", MainActivity.syncIndex);
@@ -159,7 +161,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
     private void refreshWebView() {
         // TODO (manji prioritet): ako nema oba prevoda, ne treba da radi dugme...
         // TODO (veći prioritet): iskoristiti ActionBar kao deo lekcije, a da ime pesme bude unutar HTML
-        webView.loadData(createHtml(links, zaPrikaz, zaPrikaz == finalno, author, false, inLandscape), "text/html", "UTF-8");
+        webView.loadData(createHtml(links, zaPrikaz, zaPrikaz == finalno, author, false, inLandscape, searchedWord), "text/html", "UTF-8");
         webView.invalidate();
     }
 
@@ -189,8 +191,12 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         refreshWebView();
     }
 
-    private static String createHtml(List<String> tekst, List<String> prevod, boolean removeGroupings, String author, boolean a3byka, boolean inLandscape) {
+    private static String createHtml(List<String> tekst, List<String> prevod, boolean removeGroupings, String author, boolean a3byka, boolean inLandscape, String searchedWord) {
         StringBuilder builder = new StringBuilder();
+        Pattern searchedWordPattern = null;
+        if (!searchedWord.isEmpty()) {
+            searchedWordPattern = Pattern.compile("\\b(" + searchedWord + ")\\b", Pattern.CASE_INSENSITIVE);
+        }
 
         builder.append("<html><head><meta http-equiv=\"content-type\" value=\"UTF-8\"><title></title></head><body>");
         if (inLandscape && !prevod.isEmpty()) {
@@ -201,11 +207,11 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
                 if (tekst.get(i).isEmpty()) {
                     builder.append("&nbsp;");
                 } else {
-                    builder.append(applyFilters(tekst.get(i), true, a3byka, removeGroupings));
+                    builder.append(applyFilters(tekst.get(i), true, a3byka, removeGroupings, searchedWordPattern));
                 }
                 builder.append("</td><td width=\"50%\">");
                 if (i < prevod.size()) {
-                    builder.append(applyFilters(prevod.get(i), true, a3byka, false));
+                    builder.append(applyFilters(prevod.get(i), true, a3byka, false, searchedWordPattern));
                 }
                 builder.append("</td></tr>");
             }
@@ -218,7 +224,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
             builder.append("<br>");
             builder.append("</p><p>");
             for (int i = 2; i < tekst.size(); i++) {
-                builder.append(applyFilters(tekst.get(i), false, a3byka, true)).append("<br>");
+                builder.append(applyFilters(tekst.get(i), false, a3byka, true, searchedWordPattern)).append("<br>");
             }
             builder.append("<do>");
         }
@@ -231,7 +237,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
     public static final Pattern hintsPattern = Pattern.compile(hintsChars);
     private static final Pattern wordEmphasisPattern = Pattern.compile("\\|([^ \n,]+)");
     private static Map<Pattern, String> explicits = null;
-    private static String applyFilters(String line, boolean hints, boolean a3byka, boolean removeGroupings) {
+    private static String applyFilters(String line, boolean hints, boolean a3byka, boolean removeGroupings, Pattern searchedWordPattern) {
         if (hints) {
             // TODO: ako ovo menjam, treba da promenim i ručne ins u fajlovima...
             // TODO: možda je napadno da sve ovo bude označeno na glavnoj strani, možda samo tokom analize (položeno)
@@ -250,6 +256,9 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         }
         if (removeGroupings) {
             line = groupingPattern.matcher(line).replaceAll("");
+        }
+        if (searchedWordPattern != null) {
+            line = searchedWordPattern.matcher(line).replaceAll("<strong>$1</strong>");
         }
         return line;
     }
