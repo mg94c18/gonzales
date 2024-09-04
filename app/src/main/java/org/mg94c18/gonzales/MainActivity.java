@@ -83,7 +83,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     AlertDialog quoteDialog;
     static final long syncIndex = -1;
     ActionBarDrawerToggle drawerToggle;
-    private static final String DOWNLOAD_DIALOG_TITLE = "Playlist";
+    private static final String DOWNLOAD_DIALOG_TITLE = "Play";
     private String previousProgressString;
     private String progressString;
     private static boolean nightModeAllowed = Build.VERSION.SDK_INT >= 29;
@@ -408,12 +408,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
         boolean inLandscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
         if (inLandscape) {
-            menu.findItem(R.id.action_email).setVisible(false);
-            menu.findItem(R.id.action_review).setVisible(false);
             menu.findItem(R.id.action_toggle).setVisible(true);
         } else {
-            menu.findItem(R.id.action_email).setVisible(true);
-            menu.findItem(R.id.action_review).setVisible(true);
             menu.findItem(R.id.action_toggle).setVisible(false);
         }
 
@@ -625,7 +621,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private static void updateDownloadDialogTitle(AlertDialog configureDownloadDialog, long downloadMb) {
         String title = DOWNLOAD_DIALOG_TITLE;
         if (downloadMb > 0) {
-            title = title + String.format(Locale.US, " (oko %d MB)", downloadMb);
+            // TODO: ovde prebaciti da daje približno trajanje
+            // title = title + String.format(Locale.US, " (oko %d MB)", downloadMb);
         }
         configureDownloadDialog.setTitle(title);
     }

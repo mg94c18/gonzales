@@ -215,7 +215,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         Intent serviceIntent = new Intent(this, PlaybackService.class);
         serviceIntent.setAction(action);
         // TODO: da li je requestCode uopšte bitan ovde?
-        return PendingIntent.getService(this, 0, serviceIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        return PendingIntent.getService(this, 0, serviceIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
     private void myStartForeground(boolean currentlyPlaying, boolean update) {
@@ -228,7 +228,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
 
         TaskStackBuilder builder = TaskStackBuilder.create(this);
         builder.addNextIntentWithParentStack(activityIntent); // even though there is no parent in this app
-        PendingIntent activityPendingIntent = builder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent activityPendingIntent = builder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         int iconId = currentlyPlaying ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play;
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)

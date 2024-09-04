@@ -91,6 +91,8 @@ for f in gonzales dijaspora; do diff numbers.$f app/src/$f/assets/numbers; done
 Sve tekstove da propustim kroz neki checker za španski, pogotovu da stavim akcenat za prošlo i buduće vreme.
 🎓ako neko treba da uči sam (nema prevod i neće biti)
 🕑za "coming soon"
+for i in $(cat app/src/dijaspora/assets/numbers); do echo -n $i\ ; echo $(find app/src/dijaspora/ -name $i.bukvalno | wc -l) $(find app/src/dijaspora/assets/ -name $i.finalno | wc -l); done
+for f in $(for i in $(cat app/src/dijaspora/assets/numbers); do echo -n $i\ ; echo $(find app/src/dijaspora/ -name $i.bukvalno | wc -l) $(find app/src/dijaspora/assets/ -name $i.finalno | wc -l); done | grep 0 | awk '{print $1}'); do cp na app/src/dijaspora/assets/$f.bukvalno && cp cs app/src/dijaspora/assets/$f.finalno; done
 
 mp3 fajlovi na Macbook nekad pritisnem pause pa play, a on nastavi malo unazad.  fixed-bit-rate problem?  Mada Android radi kako treba.
 Trebalo bi da stavim da sačuva poziciju u onStop tako da može da nastavi kasnije od tog istog mesta.
@@ -154,3 +156,7 @@ https://issues.chromium.org/issues/350869464
             activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
     }
+
+Dodati: Samo da rata ne bude: ima dosta elemenata na primer "ne mogu da me ne sete", komplikovane rečenice, "znaš šta", "pa šta" i slično.
+
+! Za AF: "We will soon take action because your app does not adhere to Google Play Developer Program policies. Fix violations as soon as possible."

@@ -9,9 +9,9 @@ android {
     defaultConfig {
         applicationId 'org.mg94c18'
         minSdkVersion 22
-        targetSdkVersion 33
-        versionCode 314159266 // izgleda da je 32-bit integer pa ne ne dopušta više decimala
-        versionName "3.14159266" // Kada menjam ovo, treba da promenim i apk_assets_time!
+        targetSdkVersion 34
+        versionCode 1413 // izgleda da je 32-bit integer pa ne ne dopušta više decimala
+        versionName "1.41" // Kada menjam ovo, treba da promenim i apk_assets_time!
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -32,7 +32,7 @@ android {
     productFlavors {
         dijaspora {
             dimension "jezik"
-            applicationIdSuffix ".dijaspora"
+            applicationIdSuffix ".englez"
         }
         gonzales {
             dimension "jezik"

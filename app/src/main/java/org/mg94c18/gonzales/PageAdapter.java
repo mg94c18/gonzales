@@ -144,6 +144,8 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
             button.setOnClickListener(this);
             button.setText("Play");
             button.setEnabled(false);
+            // Google Play ne voli da ima dugme.  Za sad ovako, a posle da obrišem kompletno.
+            button.setVisibility(View.GONE);
         }
 
         updateScaleFromPrefs(context, webView);
