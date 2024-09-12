@@ -93,6 +93,7 @@ Sve tekstove da propustim kroz neki checker za španski, pogotovu da stavim akce
 🕑za "coming soon"
 for i in $(cat app/src/dijaspora/assets/numbers); do echo -n $i\ ; echo $(find app/src/dijaspora/ -name $i.bukvalno | wc -l) $(find app/src/dijaspora/assets/ -name $i.finalno | wc -l); done
 for f in $(for i in $(cat app/src/dijaspora/assets/numbers); do echo -n $i\ ; echo $(find app/src/dijaspora/ -name $i.bukvalno | wc -l) $(find app/src/dijaspora/assets/ -name $i.finalno | wc -l); done | grep 0 | awk '{print $1}'); do cp na app/src/dijaspora/assets/$f.bukvalno && cp cs app/src/dijaspora/assets/$f.finalno; done
+for f in $(grep -l https $(find app/src/dijaspora/assets/ -name \*.bukvalno)); do sed -i '' s'|^https://.*||' $f; done
 
 mp3 fajlovi na Macbook nekad pritisnem pause pa play, a on nastavi malo unazad.  fixed-bit-rate problem?  Mada Android radi kako treba.
 Trebalo bi da stavim da sačuva poziciju u onStop tako da može da nastavi kasnije od tog istog mesta.
@@ -160,3 +161,15 @@ https://issues.chromium.org/issues/350869464
 Dodati: Samo da rata ne bude: ima dosta elemenata na primer "ne mogu da me ne sete", komplikovane rečenice, "znaš šta", "pa šta" i slično.
 
 ! Za AF: "We will soon take action because your app does not adhere to Google Play Developer Program policies. Fix violations as soon as possible."
+
+"Jugošpanija"?
+tu vs. tú
+
+Dodati Volver oko 30 minuta (6 x 5min), Serranos jednu epizodu (4 x 5min), Gavilanes jednu epizodu (2 x 5min)
+
+Ako je na speaker, onda sledeća pesma uopšte ne počinje dok se de upali ekran.  Možda MediaPlayer ima svoj lock.
+
+jerinicj@ je u Barseloni
+
+ffmpeg -ss 2490 -i ~/Movies/Volver.mp3 -t 340 ~/Movies/volver1.mp3
+Približno OK za dalju ručnu obradu: cat Volver.srt.es | grep -A 100000 "Ábreme, Sole\!" | grep -B 100000 "juntitas"  | grep -vE "[0-9][0-9][0-9]" | tr -d '\r' | tr '\n' '#' | sed -e 's/##/\n\- /g' | tr '#' ' ' > app/src/gonzales/assets/volver1

@@ -228,7 +228,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
             for (int i = 2; i < tekst.size(); i++) {
                 builder.append(applyFilters(tekst.get(i), false, a3byka, true, searchedWordPattern)).append("<br>");
             }
-            builder.append("<do>");
+            builder.append("</p>");
         }
         builder.append("</body></head></html>");
         return builder.toString();

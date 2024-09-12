@@ -37,6 +37,7 @@ android {
         gonzales {
             dimension "jezik"
             applicationIdSuffix ".gonzales"
+            versionCode 314159266
         }
     }
 }
