@@ -200,7 +200,8 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
             searchedWordPattern = Pattern.compile("\\b(" + searchedWord + ")\\b", Pattern.CASE_INSENSITIVE);
         }
 
-        builder.append("<html><head><meta http-equiv=\"content-type\" value=\"UTF-8\"><title></title></head><body>");
+        // TODO: Probati kao na iOS: <style>p { font-size: 5vw; }</style>
+        builder.append("<html><head><meta http-equiv=\"content-type\" value=\"UTF-8\"><title></title><style>p { font-size: 5vw; }</style></head><body>");
         if (inLandscape && !prevod.isEmpty()) {
             builder.append("<table width=\"100%\">");
             int i = 2;
@@ -302,7 +303,8 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         int scaleX = normalizeZoom(preferences.getInt(getScaleKey(), MINIMUM_ZOOM + 30));
         if (scaleX != webView.getSettings().getTextZoom()) {
             if (BuildConfig.DEBUG) { LOG_V("updateScaleFromPrefs(" + scaleX + ")"); }
-            webView.getSettings().setTextZoom(scaleX);
+            // TODO: prebaciti da ovo menja %vw
+            // webView.getSettings().setTextZoom(100);
             webView.invalidate();
         }
     }
