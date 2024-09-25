@@ -222,7 +222,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         } else {
             builder.append("<p>(").append(author).append(")<br>");
             if (tekst.size() > 1 && !tekst.get(1).isEmpty()) {
-                builder.append(tekst.get(1));
+                builder.append(tekst.get(1)).append("<br>");
             }
             builder.append("<br>");
             builder.append("</p><p>");

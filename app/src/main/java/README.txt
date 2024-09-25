@@ -115,8 +115,8 @@ Jaime:
     Que entres o que salgas -> zaista?
     Nadie que me comprenda -> nikog da me sluša ili nikog ko me sluša
     koliko padeža? yo, me, mi, conmigo; "a mi"? još neki?
-        zatim svrstati que, aquel, cualqiuera, quales
-        decirte [reći tebi] ali? herirte [povrediti tebe] "a ti seguimos", "junto a ti"
+        zatim svrstati que, aquel, cualqiuera, quales, yo, tu, el, ella
+        decirte [reći tebi] ali? herirte [povrediti tebe] "a ti seguimos", "junto a ti", "juntos a un cielo azul"
     Que no se apartan de mi -> da se ne odvoje, ili koji se ne odvajaju
     prevod El Rey, posebno "hay qe"
     "it" koncept; que hay de nuevo
@@ -126,6 +126,10 @@ Jaime:
     šta je rekla carta?
     ya ves -> "već"? vidiš
     kolko se često piše he->e? hace->ace?, hijo->ijo?, hizo->iso?
+    ya -> ma?
+    que vs. qué
+    "why, you little!" -> potražiti "ma"
+    "zar": pojačano "don't you know"
 
 Čovek za koga ili Čovek za kog
 
@@ -181,3 +185,17 @@ Još filmova:
 Los abrazos rotos (2009)
 Yo, también (2009)
 Mar adentro (2004) https://www.youtube.com/watch?v=3Ant7vfOaP4
+
+al + infinitivo
+Introduce una acción o un acontecimiento que se produce simultáneamente o inmediatamente antes que otro:
+    * decidió marcharse al comprender lo que pasaba
+    * al abrir los ojos, todo estaba oscuro
+    * perdió el equipaje al cambiarse de tren.
+
+"Iz inata" -> Zlatna ribica (Vajta) https://www.youtube.com/watch?v=Y91x3-r9Tiw
+    - out of defiance/spite/protest/principle/rebellion... out of "inat"
+    - a izbaciti @Jedina moja
+
+"Conjugación Irregular" nalazi dosta stvari u rečniku
+
+https://www.ingles.com/traductor/hechas
