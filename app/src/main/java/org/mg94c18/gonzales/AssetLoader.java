@@ -87,6 +87,7 @@ public final class AssetLoader {
         return assetUpdateTimestamp;
     }
 
+    // TODO: obrisati ovo
     public static long getApkAssetTime(Context context) {
         try {
             return Long.parseLong(context.getResources().getString(R.string.apk_assets_time));

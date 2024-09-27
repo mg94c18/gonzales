@@ -103,6 +103,33 @@ public class SearchProvider extends ContentProvider {
         String treePath;
     }
 
+    public static Set<String> nonPlainKeys() {
+        if (trie == null) {
+            return null;
+        }
+
+        Set<String> res = new HashSet<>();
+        fillNonPlainKeys(trie, res);
+        return res;
+    }
+
+    public static void fillNonPlainKeys(Node node, Set<String> res) {
+        for (Map.Entry<String, Node> entry : node.children.entrySet()) {
+            String key = entry.getKey();
+            if (key.length() > 1) {
+                res.add(key);
+            } else {
+                int c = key.codePointAt(0);
+                if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
+                    // all OK
+                } else {
+                    res.add(key);
+                }
+            }
+            fillNonPlainKeys(entry.getValue(), res);
+        }
+    }
+
     private static Node trie = null;
     private static boolean threadKickedOff = false;
     private static Node lastNode = null;
@@ -128,44 +155,48 @@ public class SearchProvider extends ContentProvider {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                if (numbers.size() != titles.size()) {
-                    Log.wtf(TAG, "Unexpected: " + numbers.size() + "!=" + titles.size());
-                    return;
-                }
-                Log.i(TAG, "populateTrie: begin");
-                Node newTrie = new Node();
-                String number;
-                List<String> lines;
-                for (int i = 0; i < numbers.size(); i++) {
-                    number = numbers.get(i);
-                    lines = AssetLoader.loadFromAssetOrUpdate(context, number, MainActivity.syncIndex);
-                    for (int j = 2; j < lines.size(); j++) {
-                        String line = htmlTags.matcher(lines.get(j)).replaceAll("").toLowerCase();
-                        line = PageAdapter.hintsPattern.matcher(line).replaceAll("");
-                        String[] words = splitPattern.split(line);
-                        if (words == null) {
-                            continue;
-                        }
-
-                        for (String word : words) {
-                            Position position = new Position();
-                            position.title = titles.get(i);
-                            position.episodeId = i;
-                            position.word = word;
-                            // if (BuildConfig.DEBUG) { LOG_V("insertWord(" + word + "," + position.episodeId + ")"); }
-                            if (word.isBlank()) {
-                                continue;
-                            }
-                            insertWord(newTrie, word, word, word, position);
-                        }
-                    }
-                }
-                synchronized (SearchProvider.class) {
-                    SearchProvider.trie = newTrie;
-                }
-                Log.i(TAG, "populateTrie: end");
+                populateTrieBlocking(context, numbers, titles);
             }
         }).start();
+    }
+
+    public static void populateTrieBlocking(Context context, List<String> numbers, List<String> titles) {
+        if (numbers.size() != titles.size()) {
+            Log.wtf(TAG, "Unexpected: " + numbers.size() + "!=" + titles.size());
+            return;
+        }
+        Log.i(TAG, "populateTrie: begin");
+        Node newTrie = new Node();
+        String number;
+        List<String> lines;
+        for (int i = 0; i < numbers.size(); i++) {
+            number = numbers.get(i);
+            lines = AssetLoader.loadFromAssetOrUpdate(context, number, MainActivity.syncIndex);
+            for (int j = 2; j < lines.size(); j++) {
+                String line = htmlTags.matcher(lines.get(j)).replaceAll("").toLowerCase();
+                line = PageAdapter.hintsPattern.matcher(line).replaceAll("");
+                String[] words = splitPattern.split(line);
+                if (words == null) {
+                    continue;
+                }
+
+                for (String word : words) {
+                    Position position = new Position();
+                    position.title = titles.get(i);
+                    position.episodeId = i;
+                    position.word = word;
+                    // if (BuildConfig.DEBUG) { LOG_V("insertWord(" + word + "," + position.episodeId + ")"); }
+                    if (word.isBlank()) {
+                        continue;
+                    }
+                    insertWord(newTrie, word, word, word, position);
+                }
+            }
+        }
+        synchronized (SearchProvider.class) {
+            SearchProvider.trie = newTrie;
+        }
+        Log.i(TAG, "populateTrie: end");
     }
 
     private static final Map<Set<String>, String> akasMap;
@@ -176,7 +207,13 @@ public class SearchProvider extends ContentProvider {
         akasMap.put(Set.of("c", "č", "ć"), "c");
         akasMap.put(Set.of("s", "š"), "s");
         akasMap.put(Set.of("d", "đ"), "d");
-        akasMap.put(Set.of("ž", "z"), "z");
+        akasMap.put(Set.of("z", "ž"), "z");
+        akasMap.put(Set.of("a", "á", "ȁ"), "a");
+        akasMap.put(Set.of("e", "ȅ", "è", "é", "ê"), "e");
+        akasMap.put(Set.of("i", "ȉ","í"), "i");
+        akasMap.put(Set.of("o", "ȍ", "ò", "ó"), "o");
+        akasMap.put(Set.of("u", "ȕ", "ú", "ü"), "u");
+        akasMap.put(Set.of("n", "ñ"), "n");
     }
 
     private static String akaFor(String ch) {
@@ -191,6 +228,14 @@ public class SearchProvider extends ContentProvider {
     private static final Set<String> skrati1 = Set.of("je");
     private static final Set<String> skrati2 = Set.of("ije");
     private static final Set<String> skrati3 = Set.of("tko", "gde", "psova", "znači");
+
+    // TODO: nastaviti ovde, ali paziti da se ne rasplinjuje previše pa da search postane beskoristan
+    private static final Set<String> skrati4 = Set.of("í", "ó", "ste", "é", "imos", "eron");
+    private static final Set<String> skrati5 = Set.of("o", "la", "lo", "li", "le");
+    private static final Set<String> skrati6 = Set.of("ću", "ćeš", "će", "ćemo", "ćete");
+    private static final Set<String> skrati7 = Set.of("é", "ás", "á", "án", "emos");
+    // ado, ido, iendo
+    // m, š
 
     private static Node insertWord(Node node, String origWord, String finalWord, String downPath, Position position) {
         if (downPath.isEmpty()) {

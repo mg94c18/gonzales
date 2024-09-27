@@ -44,13 +44,16 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
     Button button;
     private WebView webView;
     private boolean inLandscape;
+    private int currentWidth;
     MyLoadTask loadTask;
 
     private static final ExecutorService cleanupService = Executors.newSingleThreadExecutor();
 
     private String PREF_BUKVALNO = "bukvalno";
-    private static final int SCALE_MAX_X_INT = 2;
-    private static final int MINIMUM_ZOOM = 100;
+    private static final int MINIMUM_ZOOM_P = 4;
+    private static final int MAXIMUM_ZOOM_P = 8;
+    private static final int MINIMUM_ZOOM_L = 2;
+    private static final int MAXIMUM_ZOOM_L = 5;
     int originalZoom;
     private float beginScaleFactor;
     ScaleGestureDetector mScaleDetector;
@@ -148,6 +151,11 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
             button.setVisibility(View.GONE);
         }
 
+        if (inLandscape) {
+            currentWidth = 3;
+        } else {
+            currentWidth = 5;
+        }
         updateScaleFromPrefs(context, webView);
         refreshWebView();
 
@@ -163,7 +171,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
     private void refreshWebView() {
         // TODO (manji prioritet): ako nema oba prevoda, ne treba da radi dugme...
         // TODO (veći prioritet): iskoristiti ActionBar kao deo lekcije, a da ime pesme bude unutar HTML
-        webView.loadData(createHtml(links, zaPrikaz, zaPrikaz == finalno, author, false, inLandscape, searchedWord), "text/html", "UTF-8");
+        webView.loadData(createHtml(links, zaPrikaz, zaPrikaz == finalno, author, false, inLandscape, searchedWord, currentWidth), "text/html", "UTF-8");
         webView.invalidate();
     }
 
@@ -193,7 +201,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         refreshWebView();
     }
 
-    private static String createHtml(List<String> tekst, List<String> prevod, boolean removeGroupings, String author, boolean a3byka, boolean inLandscape, String searchedWord) {
+    private static String createHtml(List<String> tekst, List<String> prevod, boolean removeGroupings, String author, boolean a3byka, boolean inLandscape, String searchedWord, int width) {
         StringBuilder builder = new StringBuilder();
         Pattern searchedWordPattern = null;
         if (!searchedWord.isEmpty()) {
@@ -201,7 +209,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         }
 
         // TODO: Probati kao na iOS: <style>p { font-size: 5vw; }</style>
-        builder.append("<html><head><meta http-equiv=\"content-type\" value=\"UTF-8\"><title></title><style>p { font-size: 5vw; }</style></head><body>");
+        builder.append("<html><head><meta http-equiv=\"content-type\" value=\"UTF-8\"><title></title><style>* { font-size: ").append(width).append("vw; }</style></head><body>");
         if (inLandscape && !prevod.isEmpty()) {
             builder.append("<table width=\"100%\">");
             int i = 2;
@@ -266,13 +274,21 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         return line;
     }
 
-    private static int normalizeZoom(int currentZoom) {
-        if (currentZoom < MINIMUM_ZOOM) {
+    private static int normalizeZoom(int currentZoom, boolean inLandscape) {
+        final int min, max;
+        if (inLandscape) {
+            min = MINIMUM_ZOOM_L;
+            max = MAXIMUM_ZOOM_L;
+        } else {
+            min = MINIMUM_ZOOM_P;
+            max = MAXIMUM_ZOOM_P;
+        }
+        if (currentZoom < min) {
             Log.wtf(TAG, "Invalid scale: " + currentZoom);
-            return MINIMUM_ZOOM;
-        } else if (currentZoom > MINIMUM_ZOOM * SCALE_MAX_X_INT) {
+            return min;
+        } else if (currentZoom > max) {
             Log.wtf(TAG, "Invalid scale: " + currentZoom);
-            return MINIMUM_ZOOM * SCALE_MAX_X_INT;
+            return max;
         } else {
             return currentZoom;
         }
@@ -295,25 +311,25 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         return orientation + ".zoom";
     }
 
-    private void updateScaleFromPrefs(Context context, @Nullable WebView webView) {
+    private boolean updateScaleFromPrefs(Context context, @Nullable WebView webView) {
         if (webView == null) {
-            return;
+            return false;
         }
         SharedPreferences preferences = MainActivity.getSharedPreferences(context);
-        int scaleX = normalizeZoom(preferences.getInt(getScaleKey(), MINIMUM_ZOOM + 30));
-        if (scaleX != webView.getSettings().getTextZoom()) {
+        int scaleX = normalizeZoom(preferences.getInt(getScaleKey(), currentWidth), inLandscape);
+        if (scaleX != currentWidth) {
+            currentWidth = scaleX;
             if (BuildConfig.DEBUG) { LOG_V("updateScaleFromPrefs(" + scaleX + ")"); }
-            // TODO: prebaciti da ovo menja %vw
-            // webView.getSettings().setTextZoom(100);
-            webView.invalidate();
+            return true;
         }
+        return false;
     }
 
     @Override
     public boolean onScaleBegin(ScaleGestureDetector scaleGestureDetector) {
         if (BuildConfig.DEBUG) { LOG_V("Scaling: onScaleBegin"); }
         beginScaleFactor = mScaleDetector.getScaleFactor();
-        originalZoom = normalizeZoom(webView.getSettings().getTextZoom());
+        originalZoom = currentWidth;
         scaleInProgress = true;
         return true;
     }
@@ -330,16 +346,18 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
             return;
         }
         if (comparison < 0) {
-            newZoom = originalZoom - 10;
+            newZoom = originalZoom - 1;
         } else {
-            newZoom = originalZoom + 10;
+            newZoom = originalZoom + 1;
         }
 
         SharedPreferences preferences = MainActivity.getSharedPreferences(context);
         preferences.edit()
                 .putInt(getScaleKey(), newZoom)
                 .apply();
-        updateScaleFromPrefs(context, webView);
+        if (updateScaleFromPrefs(context, webView)) {
+            refreshWebView();
+        }
     }
 
     @Override
