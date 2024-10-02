@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Antifon</string>
+
+    <string name="apk_assets_time">1684032299000</string>
+    <string name="sync_account_type">org.mg94c18.antifon</string>
+    <string name="sync_search_suggest_authority">org.mg94c18.antifon.searchprovider</string>
+    <string name="sync_search_suggest_intent_action">org.mg94c18.antifon.VIEW</string>
+    <string name="sync_content_authority">org.mg94c18.antifon.sync.StubProvider</string>
+
+    <string name="default_episode_title">Lesson 5</string>
+    <string name="default_episode_number">lesson-5</string>
+    <string name="default_episode_author">page 7</string>
+</resources>

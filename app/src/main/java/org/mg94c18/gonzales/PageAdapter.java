@@ -139,6 +139,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         mScaleDetector = new ScaleGestureDetector(context, this);
 
         webView = activity.findViewById(R.id.webview);
+        webView.getSettings().setAllowFileAccess(true);
         inLandscape = activity.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
         button = activity.findViewById(R.id.button);
         if (inLandscape) {
@@ -171,7 +172,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
     private void refreshWebView() {
         // TODO (manji prioritet): ako nema oba prevoda, ne treba da radi dugme...
         // TODO (veći prioritet): iskoristiti ActionBar kao deo lekcije, a da ime pesme bude unutar HTML
-        webView.loadData(createHtml(links, zaPrikaz, zaPrikaz == finalno, author, false, inLandscape, searchedWord, currentWidth), "text/html", "UTF-8");
+        webView.loadDataWithBaseURL("file:///android_asset/", createHtml(links, zaPrikaz, zaPrikaz == finalno, author, false, inLandscape, searchedWord, currentWidth), "text/html", "UTF-8", null);
         webView.invalidate();
     }
 
@@ -228,12 +229,14 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
             }
             builder.append("</table>");
         } else {
-            builder.append("<p>(").append(author).append(")<br>");
-            if (tekst.size() > 1 && !tekst.get(1).isEmpty()) {
-                builder.append(tekst.get(1)).append("<br>");
+            if (!author.isEmpty()) {
+                builder.append("<p>(").append(author).append(")<br>");
+                if (tekst.size() > 1 && !tekst.get(1).isEmpty()) {
+                    builder.append(tekst.get(1)).append("<br>");
+                }
+                builder.append("<br></p>");
             }
-            builder.append("<br>");
-            builder.append("</p><p>");
+            builder.append("<p>");
             for (int i = 2; i < tekst.size(); i++) {
                 builder.append(applyFilters(tekst.get(i), false, a3byka, true, searchedWordPattern)).append("<br>");
             }

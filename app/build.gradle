@@ -38,6 +38,10 @@ android {
             dimension "jezik"
             applicationIdSuffix ".gonzales"
         }
+        antifon {
+            dimension "jezik"
+            applicationIdSuffix ".antifon"
+        }
     }
 }
 

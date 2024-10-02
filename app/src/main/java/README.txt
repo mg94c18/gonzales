@@ -30,6 +30,8 @@ Tenor_howto da bude jedan flavor!
     Može li UTF-8 za notni zapis?
     Ili pak slika.
     https://vexflow.com/
+for f in $(cat index.html  | grep -E "lesson-5|slow.mp3" | sed -r 's/[^"]+"//' | sed -e 's/".*//' | sed -r 's/(\-slow.mp3)|(.mp3)//'); do echo $f; done
+for f in $(cat app/src/antifon/assets/numbers); do echo https://mg94c18dijaspora.fra1.digitaloceanspaces.com/${f}.mp3 > app/src/antifon/assets/$f; cat cs | tail -n 2 >> app/src/antifon/assets/$f; done
 
 -----------------------------------------
 

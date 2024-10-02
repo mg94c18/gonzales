@@ -400,14 +400,18 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             progressString = null;
         }
 
-        if (SearchProvider.deeperSearchReady()) {
-            menu.findItem(R.id.search).setTitle(R.string.na_i_2);
+        if (getPackageName().endsWith("antifon")) {
+            menu.findItem(R.id.search).setVisible(false);
         } else {
-            menu.findItem(R.id.search).setTitle(R.string.na_i);
+            if (SearchProvider.deeperSearchReady()) {
+                menu.findItem(R.id.search).setTitle(R.string.na_i_2);
+            } else {
+                menu.findItem(R.id.search).setTitle(R.string.na_i);
+            }
         }
 
         boolean inLandscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
-        if (inLandscape) {
+        if (inLandscape && (!pageAdapter.bukvalno.isEmpty() || !pageAdapter.finalno.isEmpty())) {
             menu.findItem(R.id.action_toggle).setVisible(true);
         } else {
             menu.findItem(R.id.action_toggle).setVisible(false);
