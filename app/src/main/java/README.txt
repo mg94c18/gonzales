@@ -2,24 +2,6 @@ U položenom stanju, iskoristiti prvi deo za naravoučenije i slično
 Tokom OOBE, staviti da imena u meniju budu neokrivena/posebna, tako da skoro garantovano će ići po redu.
     - na primer ime "* [1-9] *"
 
-Ko kaže da ti ne možeš razumeti srpski?  Slušaj ove pesme, treniraj tvoje uvo, i ti ćeš razumeti.  Možda takođe pričati.
-
-Maybe they told you that Serbian is impossible to learn...
-But why waste time listening to naysayers when you can spend it wisely listening to music?
-Use the world of music to explore difficult concepts that native speakers take for granted but can't bother to explain.
-Create playlists to listen in the background, train your ear by listening repeatedly, more than XYZ minutes of music.
-Use landscape mode to explore the translation, with literal (wrong) translation available for many songs.
-The grammar rules for Serbian, Croatian, Bosnian, Montenegrin are all the same, so you will acquire knowledge relevant for languages spoken by 15 million people in the area.
-This app will NOT teach you to speak Serbian, but it is sure to help you on your journey.
-
-^ Bla, bla, bla.  Trebalo bi da ilustrujem slikama a ne rečima.
-
-Free from common mistakes made even by native speakers, correctness can be questioned only by 99.9% percentile of the population.
-
-You pay less than you would for a pie.
-
-These songs are translated correctly, with caveats that poetry and music, like other art, is subjective, and that I am native Serbian and not English.
-
 Buba: šibica na početku treba da se čuje, ali sad ne mogu da nađem link.
 
 Ako se (novi) asset završava brojem, obrisati stare fajlove sa manjim brojem.  Ili pak obrisati sve .mp3 fajlove koji nisu u assets.
@@ -30,8 +12,7 @@ Tenor_howto da bude jedan flavor!
     Može li UTF-8 za notni zapis?
     Ili pak slika.
     https://vexflow.com/
-for f in $(cat index.html  | grep -E "lesson-5|slow.mp3" | sed -r 's/[^"]+"//' | sed -e 's/".*//' | sed -r 's/(\-slow.mp3)|(.mp3)//'); do echo $f; done
-for f in $(cat app/src/antifon/assets/numbers); do echo https://mg94c18dijaspora.fra1.digitaloceanspaces.com/${f}.mp3 > app/src/antifon/assets/$f; cat cs | tail -n 2 >> app/src/antifon/assets/$f; done
+Da dodam da glas (tenor, sopran, bas, alt) može da se promeni kroz search kao easter egg, prefix svuda za ime pesme, i onda dodatni download ide sam od sebe.
 
 -----------------------------------------
 
@@ -191,9 +172,31 @@ Introduce una acción o un acontecimiento que se produce simultáneamente o inme
     * al abrir los ojos, todo estaba oscuro
     * perdió el equipaje al cambiarse de tren.
 
-"Iz inata" -> Zlatna ribica (Vajta) https://www.youtube.com/watch?v=Y91x3-r9Tiw
-    - out of defiance/spite/protest/principle/rebellion... out of "inat"
-    - a izbaciti @Jedina moja
+ir + gerundio
+Indica que la acción que se expresa se está realizando progresivamente:
+    * el enfermo va mejorando poco a poco.
+
+"a ras" ili "al ras" u perdi
+
+SRT kaže...
+    * 07x08: Si lo sé, te veo. -> Da sam znala, gledala bih te.
+    * 07x10: Si hubiese ido con él, como le dije -> Da sam bio s njim, kako sam obećao
+
+https://www.youtube.com/watch?v=SusylI-b7yo
+https://www.youtube.com/watch?v=Z5NCrUiIFIk
+https://www.youtube.com/watch?v=iZlhTMutExQ
+https://www.youtube.com/watch?v=Vt6etwmGRMo
+https://www.youtube.com/watch?v=wtpTCWF2fjk
+https://www.youtube.com/watch?v=GqJlWKIdBCI
+https://www.youtube.com/watch?v=XR_u-DWaK-w
+
+Intervju sa Šakirom pokazuje da uz dovoljno slušanja treba sve da se razume.
+Napraviti da nema prevod, nego da ima 1/42, 2/42 itd, ali da pokazuje ljutite face ako neko pokuša da vara.
+Treba da +1/42 bude da je neko odslušao sve pesme, i to tako da je razmaknuto vremenski.
+Ili pak da pokazuje face koje se polako menjaju u zavisnosti od broja ali ne pokazuje broj.
+Ili pak da pokazuje samo broj bez nagoveštaja kad će da se završi
+
+"no puedo evitar" -> dodati nekoliko pesama
 
 "Conjugación Irregular" nalazi dosta stvari u rečniku
 

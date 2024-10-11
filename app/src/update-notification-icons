@@ -1,0 +1,9 @@
+#!/bin/sh
+# Run from ../gonzales
+for d in 24 36 48 72 96; do /Applications/Inkscape.app//Contents/MacOS/inkscape -o $(pwd)/NotificationIcon$d.png -w 512 -h 512 $(pwd)/NotificationIcon.svg; done
+
+cp NotificationIcon24.png res/drawable-mdpi/ic_notification.png
+cp NotificationIcon36.png res/drawable-hdpi/ic_notification.png
+cp NotificationIcon48.png res/drawable-xhdpi/ic_notification.png
+cp NotificationIcon72.png res/drawable-xxhdpi/ic_notification.png
+cp NotificationIcon96.png res/drawable-xxxhdpi/ic_notification.png

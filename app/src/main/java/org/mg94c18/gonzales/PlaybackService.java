@@ -234,7 +234,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle(getCurrentTitle())
                 .setContentText("" + nextIndexToPlay + "/" + episodeIdsToPlay.length)
-                .setSmallIcon(R.drawable.ic_launcher)
+                .setSmallIcon(R.drawable.ic_notification)
                 .setAutoCancel(false)
                 .setOnlyAlertOnce(false) // izgleda da ako je ovo true onda se nekad ne vidi u top bar mada je i dalje tu ako se izvuče
                 .setContentIntent(activityPendingIntent)
