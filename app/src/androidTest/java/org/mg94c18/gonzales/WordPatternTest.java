@@ -90,6 +90,16 @@ public class WordPatternTest {
                     Assert.assertTrue(lines.get(i) + "->" + bukvalno.get(i), wordGroupingsMatch(lines.get(i), bukvalno.get(i)));
                 }
             }
+            if (finalno.size() > 3) {
+                for (int i = 2; i < finalno.size(); i++) {
+                    String message = "'" + lines.get(i) + "' -> '" + finalno.get(i) + "'";
+                    if (lines.get(i).isBlank()) {
+                        Assert.assertTrue(message, finalno.get(i).isBlank());
+                    } else {
+                        Assert.assertFalse(message, finalno.get(i).isBlank());
+                    }
+                }
+            }
         }
     }
 

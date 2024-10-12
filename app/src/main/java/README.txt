@@ -16,31 +16,6 @@ Da dodam da glas (tenor, sopran, bas, alt) može da se promeni kroz search kao e
 
 -----------------------------------------
 
-Raspored za Španski:
-- Volver razgovor oko 5 minuta
-
-Ime aplikacije za španski: A ja ribam ja ribam? (dok ti sereš)
-Za srpski ikonica sa dva mrava, Ants are my friends
-Ili pak: "Plava riba" kao "Plava riba, kljukana dinastija, svastikin but"
-Ili pak: Sajfer?  Bah, zauzeto
-
-Ili pak: "Šifra Em"
-Explore the difficult aspects of Serbian language by listening to and deciphering the words from 39 hand-picked and meticulously transcribed musical tracks.
-3 modes of operation:
-* A configurable playlist for background offline listening, 2+ hours total length
-* Read-along while listening (NO karaoke, just study the words)
-* Deeper study mode with context-aware word-by-word mappings, and a final translation
-
-Enjoy the playlists for practicing listening while doing chores, even sing when nobody hears you.
-Meticulously transcribed, with context-aware word-by-word translations and a final translation for your study.
-
-Luz Casal pesme su preglasne u poređenju sa drugima...
-    - osim Recuerdos koja je primetno tiša
-La Basurita prevod je pogrešan na nekoliko mesta
-Hey od Iglesiasa je preglasan početak
-
------------------------------------------
-
 s3cmd setacl --acl-public --recursive s3://mg94c18gonzales
 
 Dodati ћирилицу ako neko traži "a36yka", nemam nigde "injekcije" ili "konjukcije" ili "Bedžihe", pa bi trebalo da može da se prebaci lako.  Ima Tanjug.
@@ -50,6 +25,8 @@ Da ne koristim strings direktno za UI nego uvek preko assets...
 Onaj problem na emulatoru se dešava kad nema internet, onda gnjavi sa download u pozadini, ali ako se prebacim na drugu pesmu onda popuni WebView sa starom pesmom, a nova pesma pak još nije skinuta i tako ide unakrsno.
 
 Izgleda da ne moram da koristim CPU lock, jer na primer na mom telefonu radi i svira.  Treba da ga testiram na duže distance.
+Sa jednostavnijim slušalicama više ne radi (u kratkom vremenu kad se završi jedna pesma onda prestane da svira), znači treba CPU lock.
+Ako je na speaker (bez slušalica), onda sledeća pesma uopšte ne počinje dok se de upali ekran.  Možda MediaPlayer ima svoj lock.
 
 requestFocus() passing in your OnAudioFocusChangeListener.
 Always call requestFocus() first, proceed only if focus is granted.
@@ -58,14 +35,10 @@ Slično tome, ako ima playback a onda zvoni alarm, ne pauzira
 Treba dodati media button, za integraciju sa slušalicama
 Slično tome treba da pauzira ako neko izvadi slušalice dok muzika svira
 
-Treba da nastavi da svira kad se upali/ugasi Dark mode
 Kod playlist da bude "I promise" poruka (ako ima više pesama u listi) koja se menja na nekoliko raznih načina i bez koje ne može da se pusti Play, dok se načini ne potroše
 
 for i in {1..36}; do git mv app/src/dijaspora/assets/$i app/src/dijaspora/assets/$(cat app/src/dijaspora/assets/links | head -n $i | tail -n 1); done
 for i in {1..10}; do git mv app/src/gonzales/assets/$i app/src/gonzales/assets/$(cat app/src/gonzales/assets/links | head -n $i | tail -n 1); done
-
-Da li je dobar pattern za reči:
-for f in gonzales dijaspora; do for n in $(cat app/src/$f/assets/numbers); do cat app/src/$f/assets/$n | java -cp . WordPatternTest; done; done 2>X
 
 Provera da li si linkovi i imena dobri:
 for f in gonzales dijaspora; do rm -f numbers.$f && for n in $(cat app/src/$f/assets/numbers); do cat app/src/$f/assets/$n | head -n 1 | sed -e 's|.*/||' | sed -e 's/.mp3//' >> numbers.$f; done; done
@@ -146,13 +119,6 @@ https://issues.chromium.org/issues/350869464
         }
     }
 
-! Za AF: "We will soon take action because your app does not adhere to Google Play Developer Program policies. Fix violations as soon as possible."
-
-"Jugošpanija"?
-tu vs. tú
-
-Ako je na speaker, onda sledeća pesma uopšte ne počinje dok se de upali ekran.  Možda MediaPlayer ima svoj lock.
-
 jerinicj@ je u Barseloni
 
 ffmpeg -ss 2490 -i ~/Movies/Volver.mp3 -t 340 ~/Movies/volvera.mp3
@@ -171,6 +137,7 @@ Introduce una acción o un acontecimiento que se produce simultáneamente o inme
     * decidió marcharse al comprender lo que pasaba
     * al abrir los ojos, todo estaba oscuro
     * perdió el equipaje al cambiarse de tren.
+    * dakle i glagoski prilog prošli i sadašnji
 
 ir + gerundio
 Indica que la acción que se expresa se está realizando progresivamente:
@@ -196,10 +163,11 @@ Treba da +1/42 bude da je neko odslušao sve pesme, i to tako da je razmaknuto v
 Ili pak da pokazuje face koje se polako menjaju u zavisnosti od broja ali ne pokazuje broj.
 Ili pak da pokazuje samo broj bez nagoveštaja kad će da se završi
 
-"no puedo evitar" -> dodati nekoliko pesama
+"no puedo evitar" -> odslušao nekoliko pesama, nažalost nijedna nije baš melodična
 
 "Conjugación Irregular" nalazi dosta stvari u rečniku
 
 https://www.ingles.com/traductor/hechas
+https://www.wordreference.com/conj/esverbs.aspx?v=dar
 
 Za Špance imamo https://www.youtube.com/watch?v=um6DhjyF5q8 kao prvu umesto ABVGD
