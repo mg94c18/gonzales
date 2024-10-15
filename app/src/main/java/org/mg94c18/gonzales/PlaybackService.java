@@ -10,7 +10,9 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.SearchManager;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.media.AudioAttributes;
 import android.media.MediaPlayer;
 import android.os.Build;
@@ -18,26 +20,32 @@ import android.os.IBinder;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.TaskStackBuilder;
+
+import android.os.PowerManager;
 import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class PlaybackService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener {
+public class PlaybackService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener, MediaPlayer.OnSeekCompleteListener {
     public static final String ACTION_PLAY = "play";
     public static final String ACTION_PAUSE = "pause";
     public static final String ACTION_STOP = "stop";
     public static final String ACTION_RESUME = "resume";
     public static final String EXTRA_IDS = "IDs";
+    public static final String EXTRA_LAST_ID = "last_number";
+    public static final String EXTRA_LAST_OFFSET = "last_offset";
     private static final String CHANNEL_ID = "8082e7d3-aa37-482c-8ce5-6004e2709cd7";
     private static final int NOTIFICATION_ID = 42;
+    private static final int EXPECTED_MS_TO_SWITCH_SONGS = 5000;
 
-    MediaPlayer player;
     private ExecutorService cleanupService;
-
     public static boolean inForeground = false;
 
     // https://developer.android.com/static/images/mediaplayer_state_diagram.gif
@@ -54,10 +62,18 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         END
     }
     State state;
+    MediaPlayer player;
+
+    PowerManager.WakeLock wakeLock;
 
     int[] EMPTY_ARRAY = new int[0];
     int[] episodeIdsToPlay = EMPTY_ARRAY;
     int nextIndexToPlay;
+    int nextOffset;
+
+    int lastOffset;
+    String lastNumber;
+
     List<String> numbers;
     List<String> titles;
     List<String> authors;
@@ -77,19 +93,38 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         state = State.IDLE;
         episodeIdsToPlay = EMPTY_ARRAY;
         nextIndexToPlay = 0;
+        lastOffset = 0;
+        nextOffset = 0;
         AssetLoader.handleAssetLoading(this);
         numbers = MainActivity.numbers;
         titles = MainActivity.titles;
         authors = MainActivity.dates;
+        PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
+        wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, getClass().toString());
+        wakeLock.setReferenceCounted(false);
     }
 
     @Override
     public void onDestroy() {
         if (BuildConfig.DEBUG) { LOG_V("onDestroy()"); }
         myDestroy();
+        wakeLock.release();
+    }
+
+    void saveOrInvalidateState() {
+        SharedPreferences preferences = MainActivity.getSharedPreferences(this);
+        if (state == State.PAUSED) {
+            preferences.edit()
+                    .putString(MainActivity.PLAYLIST_TRACK, lastNumber)
+                    .putInt(MainActivity.PLAYLIST_TRACK_OFFSET, player.getCurrentPosition())
+                    .apply();
+        } else {
+            preferences.edit().remove(MainActivity.PLAYLIST_TRACK).apply();
+        }
     }
 
     void myDestroy() {
+        saveOrInvalidateState();
         myStopForeground(true);
         releasePlayerAsync(player);
         player = null;
@@ -148,7 +183,8 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
             return;
         }
         episodeIdsToPlay = episodeIds;
-        nextIndexToPlay = 0;
+        nextIndexToPlay = intent.getIntExtra(EXTRA_LAST_ID, 0);
+        nextOffset = intent.getIntExtra(EXTRA_LAST_OFFSET, 0);
         playNext();
     }
 
@@ -162,15 +198,76 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         myStartForeground(false, true);
     }
 
+    private static int[] episodeIdsFromNumbers(Set<String> numberSet, List<String> numbers) {
+        int[] episodeIds = new int[numberSet.size()];
+        int addedCount = 0;
+        for (String number : numberSet) {
+            int index = numbers.indexOf(number);
+            if (index < 0) {
+                Log.w(TAG, "Skipping over '" + number + "', not available anymore");
+                continue;
+            }
+            episodeIds[addedCount++] = index;
+        }
+        int[] copy = Arrays.copyOf(episodeIds, addedCount);
+        Arrays.sort(copy);
+        return copy;
+    }
+
     private void onResumeRequested(Intent intent) {
         if (state != State.PAUSED) {
-            Log.wtf(TAG, "Unexpected state: " + state + ", will self-destruct");
-            myDestroy();
+            if (state != State.IDLE) {
+                Log.wtf(TAG, "Unexpected state: " + state + ", will self-destruct");
+                myDestroy();
+                return;
+            }
+
+            if (populateRecoveryIntent(intent, numbers, this)) {
+                Log.i(TAG, "Successfully recovered the playback");
+                // Defensively remove the state; one recovery attempt is enough
+                MainActivity.getSharedPreferences(this).edit().remove(MainActivity.PLAYLIST_TRACK).apply();
+                onPlayRequested(intent);
+            } else {
+                Log.wtf(TAG, "Asked to resume, but not playing and can't recover; will self-destruct");
+                myDestroy();
+            }
             return;
         }
         player.start();
         state = State.STARTED;
         myStartForeground(true, false); // TODO: argumenti su sad uvek suprotno jedan drugom, možda mi ne trabaju oba
+    }
+
+    private static boolean populateRecoveryIntent(Intent intent, List<String> numbers, Context context) {
+        SharedPreferences preferences = MainActivity.getSharedPreferences(context);
+        Set<String> playlist = preferences.getStringSet(MainActivity.PLAYLIST_EPISODES_SET, Collections.emptySet());
+        Log.i(TAG, "Playlist to resume: " + playlist);
+        int[] episodeIds = episodeIdsFromNumbers(playlist, numbers);
+
+        intent.putExtra(EXTRA_IDS, episodeIds);
+        String lastTrack = preferences.getString(MainActivity.PLAYLIST_TRACK, null);
+        if (lastTrack == null) {
+            Log.wtf(TAG, "Can't find last track");
+            return false;
+        }
+
+        int lastId = -1;
+        for (int i = 0; i < episodeIds.length; i++) {
+            if (numbers.get(episodeIds[i]).equals(lastTrack)) {
+                lastId = i;
+                break;
+            }
+        }
+        if (lastId == -1) {
+            Log.wtf(TAG, "Last track got removed");
+            return false;
+        }
+
+        intent.putExtra(EXTRA_LAST_ID, lastId);
+        int savedOffset = preferences.getInt(MainActivity.PLAYLIST_TRACK_OFFSET, 0);
+        intent.putExtra(EXTRA_LAST_OFFSET, savedOffset);
+        Log.i(TAG, "lastId=" + lastId + ", savedOffset=" + savedOffset);
+        return true;
     }
 
     private void onStopRequested() {
@@ -183,6 +280,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         player = new MediaPlayer();
         state = State.IDLE;
         myStopForeground(true);
+        wakeLock.release();
     }
 
     private void playNext() {
@@ -191,6 +289,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
             return;
         }
 
+        wakeLock.acquire(EXPECTED_MS_TO_SWITCH_SONGS);
         releasePlayerAsync(player);
         player = new MediaPlayer();
         state = State.IDLE;
@@ -199,13 +298,16 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         player.setOnPreparedListener(this);
         player.setOnCompletionListener(this);
         player.setOnErrorListener(this);
-        String file = new File(getCacheDir(), DownloadAndSave.fileNameFromNumber(numbers.get(episodeIdsToPlay[nextIndexToPlay]))).getAbsolutePath();
+        lastNumber = numbers.get(episodeIdsToPlay[nextIndexToPlay]);
+        String file = new File(getCacheDir(), DownloadAndSave.fileNameFromNumber(lastNumber)).getAbsolutePath();
         try {
             player.setDataSource(file);
             state = State.INITIALIZED;
             player.prepareAsync();
             state = State.PREPARING;
             nextIndexToPlay++;
+            lastOffset = nextOffset;
+            nextOffset = 0;
         } catch (IOException e) {
             Log.wtf(TAG, "Can't setDataSource(" + file + ")");
         }
@@ -304,12 +406,30 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         Log.i(TAG, "onPrepared()");
         if (mediaPlayer != player) {
             Log.wtf(TAG, "Mismatched players, ignoring");
+            wakeLock.release();
             return;
         }
         state = State.PREPARED;
+        if (lastOffset > 0) {
+            player.setOnSeekCompleteListener(this);
+            player.seekTo(lastOffset);
+        } else {
+            onSeekComplete(player);
+        }
+    }
+
+    @Override
+    public void onSeekComplete(MediaPlayer mediaPlayer) {
+        if (mediaPlayer != player) {
+            Log.wtf(TAG, "Invalid player seeked, probably terminating");
+            wakeLock.release();
+            return;
+        }
+
         player.start();
         state = State.STARTED;
         myStartForeground(true, false);
+        wakeLock.release();
     }
 
     @Override
@@ -318,6 +438,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         if (mediaPlayer != player) {
             // TODO: ovde verovatno dođe ako u onError vratim false, probati ovo
             Log.wtf(TAG, "Mismatched players, ignoring");
+            wakeLock.release();
             return;
         }
         state = State.PLAYBACK_COMPLETED;
@@ -329,6 +450,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         Log.i(TAG, "onError(" + i1 + "," + i2 + ")");
         if (mediaPlayer != player) {
             Log.wtf(TAG, "Mismatched players, ignoring");
+            wakeLock.release();
             return false;
         }
         state = State.ERROR;

@@ -10,8 +10,8 @@ android {
         applicationId 'org.mg94c18'
         minSdkVersion 22
         targetSdkVersion 34
-        versionCode 1417 // izgleda da je 32-bit integer pa ne ne dopušta više decimala
-        versionName "1.414213"
+        versionCode 1418 // izgleda da je 32-bit integer pa ne ne dopušta više decimala
+        versionName "1.4142135"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {

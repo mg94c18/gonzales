@@ -1,3 +1,11 @@
+-----------------------------------------
+Prioritet:
+    - onDestroy: zaglavi se notification; umesto toga, može da zapamti (zajedno sa PID?) pa da nastavi
+    - neki put ne nastavlja sam od sebe dok ne mrdnem telefon (dakle CPU lock)
+
+-----------------------------------------
+[(it|he|she) nešto] skloniti ako to nešto je u istoj formi
+
 U položenom stanju, iskoristiti prvi deo za naravoučenije i slično
 Tokom OOBE, staviti da imena u meniju budu neokrivena/posebna, tako da skoro garantovano će ići po redu.
     - na primer ime "* [1-9] *"
@@ -44,6 +52,8 @@ Provera da li si linkovi i imena dobri:
 for f in gonzales dijaspora; do rm -f numbers.$f && for n in $(cat app/src/$f/assets/numbers); do cat app/src/$f/assets/$n | head -n 1 | sed -e 's|.*/||' | sed -e 's/.mp3//' >> numbers.$f; done; done
 for f in gonzales dijaspora; do diff numbers.$f app/src/$f/assets/numbers; done
 
+gs | grep modified | grep assets | awk '{print $2}'
+
 Sve tekstove da propustim kroz neki checker za španski, pogotovu da stavim akcenat za prošlo i buduće vreme.
 🎓ako neko treba da uči sam (nema prevod i neće biti)
 🕑za "coming soon"
@@ -65,8 +75,6 @@ ffmpeg -i ~/Espanol/SR/kengurmolitva.mp3 -filter:a "volume=3.5" kengur.mp3
 ffmpeg -i BS_Druze.mp3 -filter:a "volume=0.5" druze.mp3
 
 Unakrsna provera da [] stvari nisu protivurečne
-Provera da je zaista 1:1 preslikavanje za bukvalno
-Ćirilica i "Tanjug" pripaziti
 
 Jaime:
     Que en el perdón a crecido -> Que en el perdón ha crecido
@@ -119,7 +127,7 @@ https://issues.chromium.org/issues/350869464
         }
     }
 
-jerinicj@ je u Barseloni
+jerinicj@ je u Barseloni, ili potražiti nekog drugog (za anketu, ili pak za šalu Dice:E,dice:O,dice:A!)
 
 ffmpeg -ss 2490 -i ~/Movies/Volver.mp3 -t 340 ~/Movies/volvera.mp3
 Približno OK za dalju ručnu obradu: cat Volver.srt.es | grep -A 100000 "Ábreme, Sole\!" | grep -B 100000 "juntitas"  | grep -vE "[0-9][0-9][0-9]" | tr -d '\r' | tr '\n' '#' | sed -e 's/##/\n\- /g' | tr '#' ' ' > app/src/gonzales/assets/volvera
@@ -170,4 +178,8 @@ Ili pak da pokazuje samo broj bez nagoveštaja kad će da se završi
 https://www.ingles.com/traductor/hechas
 https://www.wordreference.com/conj/esverbs.aspx?v=dar
 
+-----------------------------------------
+
 Za Špance imamo https://www.youtube.com/watch?v=um6DhjyF5q8 kao prvu umesto ABVGD
+
+-----------------------------------------

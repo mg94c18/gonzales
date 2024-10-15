@@ -22,6 +22,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatDelegate;
 import android.util.Log;
+import android.util.Pair;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -58,7 +59,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     static final String EPISODE_NUMBER = "episode_number";
     static final String EPISODE_AUTHOR = "episode_author";
     private static final String EPISODE_INDEX = "episode";
-    private static final String PLAYLIST_EPISODES = "playlist_episodes";
+    static final String PLAYLIST_EPISODES_SET = "playlist_episodes_set";
+    static final String PLAYLIST_TRACK = "playlist_track";
+    static final String PLAYLIST_TRACK_OFFSET = "playlist_track_offset";
     private static final String DRAWER = "drawer";
     private static final String NIGHT_MODE = "night_mode";
     private static final String CONTACT_EMAIL = "yckopo@gmail.com";
@@ -517,11 +520,11 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         final long averageMbPerEpisode = getResources().getInteger(R.integer.average_episode_size_mb);
         boolean[] checkedItems = new boolean[namesToShow.size()];
         SharedPreferences preferences = getSharedPreferences();
-        String previousPlaylist = getSharedPreferences().getString(PLAYLIST_EPISODES, "");
+        Set<String> previousPlaylist = getSharedPreferences().getStringSet(PLAYLIST_EPISODES_SET, Collections.emptySet());
         if (BuildConfig.DEBUG) { LOG_V("Previous list: " + previousPlaylist); }
         for (int i = 0; i < checkedItems.length; i++) {
             int episodeId = indexesOfNamesToShow.get(i);
-            checkedItems[i] = previousPlaylist.contains("," + numbers.get(episodeId) + ",");
+            checkedItems[i] = previousPlaylist.contains(numbers.get(episodeId));
             if (checkedItems[i]) {
                 episodesToDownload.add(episodeId);
             }
@@ -559,22 +562,13 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                             return;
                         }
                         if (BuildConfig.DEBUG) { LOG_V("episodesToDownload: " + episodesToDownload); }
-                        StringBuilder builder = new StringBuilder();
-                        builder.append(',');
-                        int[] episodeIds = new int[episodesToDownload.size()];
-                        int i = 0;
-                        for (Integer episodeToDownload : episodesToDownload) {
-                            episodeIds[i] = episodeToDownload;
-                            builder.append(numbers.get(episodeIds[i])).append(',');
-                            i++;
-                        }
-                        Arrays.sort(episodeIds); // onClick može da promeni redosled
+                        Pair<int[], Set<String>> collectionPair = getIdCollections(episodesToDownload);
                         Intent intent = new Intent(MainActivity.this, PlaybackService.class);
                         intent.setAction(PlaybackService.ACTION_PLAY);
-                        intent.putExtra(PlaybackService.EXTRA_IDS, episodeIds);
+                        intent.putExtra(PlaybackService.EXTRA_IDS, collectionPair.first);
                         MainActivity.this.startService(intent);
-                        if (BuildConfig.DEBUG) { LOG_V("Saving the list: " + builder); }
-                        preferences.edit().putString(PLAYLIST_EPISODES, builder.toString()).apply();
+                        if (BuildConfig.DEBUG) { LOG_V("Saving the list: " + collectionPair.second); }
+                        preferences.edit().putStringSet(PLAYLIST_EPISODES_SET, collectionPair.second).apply();
                         findViewById(R.id.button).setEnabled(false);
                     }
                 })
@@ -592,6 +586,19 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         if (listView != null && indexToScrollTo != -1) {
             listView.setSelection(indexToScrollTo);
         }
+    }
+
+    static Pair<int[], Set<String>> getIdCollections(Set<Integer> ids) {
+        Set<String> episodeNumbers = new HashSet<>();
+        int[] episodeIds = new int[ids.size()];
+        int i = 0;
+        for (Integer episodeToDownload : ids) {
+            episodeIds[i] = episodeToDownload;
+            episodeNumbers.add(numbers.get(episodeIds[i]));
+            i++;
+        }
+        Arrays.sort(episodeIds); // onClick može da promeni redosled
+        return Pair.create(episodeIds, episodeNumbers);
     }
 
     private static Set<String> getCompletelyDownloadedEpisodes(File cacheDir, List<String> numbers) {
