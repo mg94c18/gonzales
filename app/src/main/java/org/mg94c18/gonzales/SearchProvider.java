@@ -171,6 +171,9 @@ public class SearchProvider extends ContentProvider {
         List<String> lines;
         for (int i = 0; i < numbers.size(); i++) {
             number = numbers.get(i);
+            if (number.equals("abvgd")) {
+                continue;
+            }
             lines = AssetLoader.loadFromAssetOrUpdate(context, number, MainActivity.syncIndex);
             for (int j = 2; j < lines.size(); j++) {
                 String line = htmlTags.matcher(lines.get(j)).replaceAll("").toLowerCase();
@@ -236,6 +239,9 @@ public class SearchProvider extends ContentProvider {
     private static final Set<String> skrati7 = Set.of("é", "ás", "á", "án", "emos");
     // ado, ido, iendo
     // m, š
+
+    // TODO: hizo->izo, hijo->ijo, hajde->ajde
+    private static final Set<String> skrati8 = Set.of("hi");
 
     private static Node insertWord(Node node, String origWord, String finalWord, String downPath, Position position) {
         if (downPath.isEmpty()) {
@@ -392,6 +398,12 @@ public class SearchProvider extends ContentProvider {
                 builder.add(resultCount++); // BaseColumns._ID
                 builder.add(finalWord); // SearchManager.SUGGEST_COLUMN_TEXT_1
                 builder.add(position.title); // SearchManager.SUGGEST_COLUMN_TEXT_2
+                if (!finalWord.equals(position.word)) {
+                    Log.wtf(TAG, finalWord + " != " + position.word);
+                }
+                if (!position.title.equals(TITLES.get(position.episodeId))) {
+                    Log.wtf(TAG, position.title + " != " + TITLES.get(position.episodeId));
+                }
                 builder.add(position.word + WORD_EPISODE_SEPARATOR + position.episodeId); // SearchManager.SUGGEST_COLUMN_INTENT_EXTRA_DATA
 
                 positionsAdded.add(position);

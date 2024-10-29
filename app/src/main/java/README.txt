@@ -1,16 +1,21 @@
 -----------------------------------------
-Prioritet:
-    - onDestroy: zaglavi se notification; umesto toga, može da zapamti (zajedno sa PID?) pa da nastavi
-    - neki put ne nastavlja sam od sebe dok ne mrdnem telefon (dakle CPU lock)
-
+Search u vodoravnom položaju: ako tražim "vino", onda će naći "rujno vino" pio, ali ne i "opilo nas vin|o"
+Pregledati ostale TODO:
 -----------------------------------------
 [(it|he|she) nešto] skloniti ako to nešto je u istoj formi
+[setiti ćeš] -> setićeš: videti da pre toga nema spojeni oblik, a da posle toga nema razdvojeni
 
 U položenom stanju, iskoristiti prvi deo za naravoučenije i slično
 Tokom OOBE, staviti da imena u meniju budu neokrivena/posebna, tako da skoro garantovano će ići po redu.
     - na primer ime "* [1-9] *"
 
 Buba: šibica na početku treba da se čuje, ali sad ne mogu da nađem link.
+Jorgovani sa boljim uvodom: https://www.youtube.com/watch?v=xdcpIcuWiLg
+Primer (možda jedini) Lanetovog pisma https://www.youtube.com/watch?v=GH3JWHLsDMs
+https://www.youtube.com/watch?v=c7u4v8kfPrQ
+Neće vatra: tiše
+Pišonja i Žuga da se zamene sa Bubom Erdeljan
+Mrtav ladan oko 10 minuta, ceo deo sa vozom
 
 Ako se (novi) asset završava brojem, obrisati stare fajlove sa manjim brojem.  Ili pak obrisati sve .mp3 fajlove koji nisu u assets.
 
@@ -29,6 +34,9 @@ s3cmd setacl --acl-public --recursive s3://mg94c18gonzales
 Dodati ћирилицу ako neko traži "a36yka", nemam nigde "injekcije" ili "konjukcije" ili "Bedžihe", pa bi trebalo da može da se prebaci lako.  Ima Tanjug.
 
 Da ne koristim strings direktno za UI nego uvek preko assets...
+
+Za ostale tri pesme, najbolje da stavim što više minuta iz filmova jer to podstiče ljude da gledaju sami (na primer sa srpskim prevodom? hm, da li postoji srpski sub-titles? to zvuči glupo)
+https://www.youtube.com/watch?v=lUi2xofN4zM
 
 Onaj problem na emulatoru se dešava kad nema internet, onda gnjavi sa download u pozadini, ali ako se prebacim na drugu pesmu onda popuni WebView sa starom pesmom, a nova pesma pak još nije skinuta i tako ide unakrsno.
 
@@ -51,6 +59,15 @@ for i in {1..10}; do git mv app/src/gonzales/assets/$i app/src/gonzales/assets/$
 Provera da li si linkovi i imena dobri:
 for f in gonzales dijaspora; do rm -f numbers.$f && for n in $(cat app/src/$f/assets/numbers); do cat app/src/$f/assets/$n | head -n 1 | sed -e 's|.*/||' | sed -e 's/.mp3//' >> numbers.$f; done; done
 for f in gonzales dijaspora; do diff numbers.$f app/src/$f/assets/numbers; done
+
+Za duže linije:
+cat app/src/dijaspora/assets/anketa2 | sed -e 's/\.  /.#/g' | tr '#' '\n'
+Pa se vratim da vratim?  Ručno je OK
+cat app/src/dijaspora/assets/anketa2 | grep -E "^[^\-]"
+
+Za debug:
+git apply diff-debug
+git diff app/build.gradle app/src/dijaspora/res/values/strings.xml app/src/gonzales/res/values/strings.xml > diff-debug
 
 gs | grep modified | grep assets | awk '{print $2}'
 
@@ -177,6 +194,8 @@ Ili pak da pokazuje samo broj bez nagoveštaja kad će da se završi
 
 https://www.ingles.com/traductor/hechas
 https://www.wordreference.com/conj/esverbs.aspx?v=dar
+
+Bilbao posle Volver: probi uši, treba da se utiša anketa
 
 -----------------------------------------
 
