@@ -7,7 +7,6 @@ android {
 
     compileSdk 34
     defaultConfig {
-        applicationId 'org.mg94c18'
         minSdkVersion 22
         targetSdkVersion 34
         versionCode 1418 // izgleda da je 32-bit integer pa ne ne dopušta više decimala
@@ -18,6 +17,9 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            applicationIdSuffix ".d"
         }
     }
     compileOptions {
@@ -32,15 +34,19 @@ android {
     productFlavors {
         dijaspora {
             dimension "jezik"
-            applicationIdSuffix ".englez"
+            applicationId "org.mg94c18.englez"
         }
         gonzales {
             dimension "jezik"
-            applicationIdSuffix ".gonzales"
+            applicationId "org.mg94c18.gonzales"
         }
         antifon {
             dimension "jezik"
-            applicationIdSuffix ".antifon"
+            applicationId "org.mg94c18.antifon"
+        }
+        slusac {
+            dimension "jezik"
+            applicationId "org.mg94c18.slusac"
         }
     }
 }

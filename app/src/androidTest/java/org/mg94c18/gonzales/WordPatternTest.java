@@ -111,6 +111,7 @@ public class WordPatternTest {
     private static boolean wordGroupingsMatch(String tekst, String prevod) {
         tekst = groupingPattern.matcher(tekst).replaceAll("group");
         tekst = PageAdapter.hintsPattern.matcher(tekst).replaceAll("");
+        tekst = noTranslationPattern.matcher(tekst).replaceAll("noot");
         prevod = noTranslationPattern.matcher(prevod).replaceAll("noot");
         prevod = groupingPattern.matcher(prevod).replaceAll("group");
         prevod = PageAdapter.hintsPattern.matcher(prevod).replaceAll("");
@@ -128,7 +129,12 @@ public class WordPatternTest {
         while (inText.remove(""));
         while (inTranslation.remove(""));
 
-        return inTranslation.size() == inText.size();
+        if (inTranslation.size() == inText.size()) {
+            return true;
+        } else {
+            // For the breakpoint :)
+            return false;
+        }
     }
 
     private static Set<String> allowedNonPlainKeys = Set.of("ǆ", "ǉ", "ǌ");

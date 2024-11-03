@@ -64,4 +64,12 @@ public class ExternalStorageHelper {
             return -1;
         }
     }
+
+    public static File getMyCacheDir(Context context) {
+        if (context.getPackageName().endsWith(".slusac")) {
+            return context.getExternalCacheDir();
+        } else {
+            return context.getCacheDir();
+        }
+    }
 }

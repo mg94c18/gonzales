@@ -494,7 +494,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private void configureDownload(String episode) {
         dismissAlertDialogs();
         final MainActivity activity = this;
-        final File destinationDir = getCacheDir();
+        final File destinationDir = ExternalStorageHelper.getMyCacheDir(this);
         final List<String> episodesToDelete = new ArrayList<>();
 
         if (destinationDir == null) {

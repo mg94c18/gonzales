@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sync_account_type">org.mg94c18.gonzales.d</string>
+    <string name="sync_search_suggest_authority">org.mg94c18.gonzales.d.searchprovider</string>
+    <string name="sync_search_suggest_intent_action">org.mg94c18.gonzales.d.VIEW</string>
+    <string name="sync_content_authority">org.mg94c18.gonzales.d.sync.StubProvider</string>
+</resources>

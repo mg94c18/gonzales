@@ -299,7 +299,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         player.setOnCompletionListener(this);
         player.setOnErrorListener(this);
         lastNumber = numbers.get(episodeIdsToPlay[nextIndexToPlay]);
-        String file = new File(getCacheDir(), DownloadAndSave.fileNameFromNumber(lastNumber)).getAbsolutePath();
+        String file = new File(ExternalStorageHelper.getMyCacheDir(this), DownloadAndSave.fileNameFromNumber(lastNumber)).getAbsolutePath();
         try {
             player.setDataSource(file);
             state = State.INITIALIZED;
@@ -309,7 +309,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
             lastOffset = nextOffset;
             nextOffset = 0;
         } catch (IOException e) {
-            Log.wtf(TAG, "Can't setDataSource(" + file + ")");
+            Log.wtf(TAG, "Can't setDataSource(" + file + ")", e);
         }
     }
 

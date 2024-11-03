@@ -249,7 +249,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
     private static final String hintsChars = "([\\\\|])";
     private static final Pattern groupingPattern = Pattern.compile("[\\[\\]]");
     public static final Pattern hintsPattern = Pattern.compile(hintsChars);
-    private static final Pattern wordEmphasisPattern = Pattern.compile("\\|([^ \n,]+)");
+    private static final Pattern wordEmphasisPattern = Pattern.compile("\\|([^ \n\\],]+)");
     private static Map<Pattern, String> explicits = null;
     private static String applyFilters(String line, boolean hints, boolean a3byka, boolean removeGroupings, Pattern searchedWordPattern) {
         if (hints) {
@@ -414,7 +414,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
             List<File> cacheDirs = new ArrayList<>();
 
             // TODO: ne znam zašto ovo već nisam imao.  Treba popraviti download ali zasad mogu da koristim ovo
-            cacheDirs.add(context.getCacheDir());
+            cacheDirs.add(ExternalStorageHelper.getMyCacheDir(context));
             for (File cacheDir : cacheDirs) {
                 if (cacheDir == null) {
                     continue;
@@ -442,7 +442,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
                 return null;
             }
 
-            File imageToDownload = new File(context.getCacheDir(), imageFile);
+            File imageToDownload = new File(ExternalStorageHelper.getMyCacheDir(context), imageFile);
             if (isCancelled()) {
                 return null;
             } else {

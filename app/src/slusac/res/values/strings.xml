@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Slušač</string>
+
+    <string name="apk_assets_time">1684032299000</string>
+    <string name="sync_account_type">org.mg94c18.slusac</string>
+    <string name="sync_search_suggest_authority">org.mg94c18.slusac.searchprovider</string>
+    <string name="sync_search_suggest_intent_action">org.mg94c18.slusac.VIEW</string>
+    <string name="sync_content_authority">org.mg94c18.slusac.sync.StubProvider</string>
+
+    <string name="default_episode_title">B02</string>
+    <string name="default_episode_number">B02</string>
+    <string name="default_episode_author">B02</string>
+</resources>
