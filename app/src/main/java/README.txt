@@ -1,9 +1,14 @@
 -----------------------------------------
 Search u vodoravnom položaju: ako tražim "vino", onda će naći "rujno vino" pio, ali ne i "opilo nas vin|o"
-Pregledati ostale TODO:
+Zapravo će da nađe pesmu, ali neće da stavi u bold.
+Pregledati ostale TODO
+Dark Mode:
+    nekad je meni beo a nekad crn.  Kao da je beo na cold start a crn kad se Activity ponovo kreira
+    takođe, AF se učitava brže; pogledati zašto; search se popunjava u posebnom thread-u
 -----------------------------------------
 [(it|he|she) nešto] skloniti ako to nešto je u istoj formi
 [setiti ćeš] -> setićeš: videti da pre toga nema spojeni oblik, a da posle toga nema razdvojeni
+sam / su -> I have / they have koncept
 
 U položenom stanju, iskoristiti prvi deo za naravoučenije i slično
 Tokom OOBE, staviti da imena u meniju budu neokrivena/posebna, tako da skoro garantovano će ići po redu.

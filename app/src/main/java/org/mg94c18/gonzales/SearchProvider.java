@@ -103,6 +103,21 @@ public class SearchProvider extends ContentProvider {
         String treePath;
     }
 
+    public static int wordCount() {
+        return wordCount(trie);
+    }
+
+    private static int wordCount(Node node) {
+        if (node == null) {
+            return 0;
+        }
+        int wc = 0;
+        for (Map.Entry<String, Node> entry : node.children.entrySet()) {
+            wc += wordCount(entry.getValue());
+        }
+        return wc + node.results.size();
+    }
+
     public static Set<String> nonPlainKeys() {
         if (trie == null) {
             return null;

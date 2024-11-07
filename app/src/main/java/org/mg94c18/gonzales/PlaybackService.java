@@ -4,25 +4,32 @@ import static org.mg94c18.gonzales.Logger.LOG_V;
 import static org.mg94c18.gonzales.Logger.TAG;
 import static org.mg94c18.gonzales.MainActivity.syncIndex;
 
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.SearchManager;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.media.AudioAttributes;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.media.session.MediaSession;
 import android.os.Build;
 import android.os.IBinder;
+
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.TaskStackBuilder;
 
 import android.os.PowerManager;
 import android.util.Log;
+import android.view.KeyEvent;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,6 +51,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
     private static final String CHANNEL_ID = "8082e7d3-aa37-482c-8ce5-6004e2709cd7";
     private static final int NOTIFICATION_ID = 42;
     private static final int EXPECTED_MS_TO_SWITCH_SONGS = 5000;
+    private static final String COMPONENT_ID = PlaybackService.class.toString();
 
     private ExecutorService cleanupService;
     public static boolean inForeground = false;
@@ -78,6 +86,100 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
     List<String> titles;
     List<String> authors;
 
+    private static class ReceiverInfo {
+        private final IntentFilter filter;
+        private final BroadcastReceiver receiver;
+        private boolean registered;
+
+        public ReceiverInfo(IntentFilter filter, BroadcastReceiver receiver) {
+            this.filter = filter;
+            this.receiver = receiver;
+            this.registered = false;
+        }
+
+        @SuppressLint("UnspecifiedRegisterReceiverFlag") // OK because we only use it for system broadcasts
+        public void register(Context context) {
+            if (registered) {
+                return;
+            }
+            context.registerReceiver(receiver, filter);
+            registered = true;
+        }
+
+        public void unregister(Context context) {
+            if (!registered) {
+                return;
+            }
+            try {
+                context.unregisterReceiver(receiver);
+            } catch (IllegalArgumentException iae) {
+                Log.wtf(TAG, "Unexpected, we were registered", iae);
+            }
+            registered = false;
+        }
+    }
+
+    private final ReceiverInfo becomingNoisy = new ReceiverInfo(
+            new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY),
+            new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    if (AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(intent.getAction())) {
+                        onPauseRequested();
+                    }
+                }
+            });
+
+    private final ReceiverInfo mediaButton = new ReceiverInfo(
+            new IntentFilter(Intent.ACTION_MEDIA_BUTTON),
+            new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    handleMediaButtonIntent(intent);
+                }
+            });
+
+    private boolean handleMediaButtonIntent(Intent intent) {
+        if (intent == null || intent.getExtras() == null) {
+            Log.wtf(TAG, "Null intent or extras");
+            return false;
+        }
+
+        if (!intent.hasExtra(Intent.EXTRA_KEY_EVENT)) {
+            Log.e(TAG, "Doesn't have KeyEvent");
+            return false;
+        }
+
+        KeyEvent keyEvent = (KeyEvent) intent.getExtras().get(Intent.EXTRA_KEY_EVENT);
+        if (keyEvent.getKeyCode() != KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) {
+            Log.w(TAG, "Unexpected keyCode: " + keyEvent.getKeyCode());
+            return false;
+        }
+
+        if (keyEvent.getAction() != KeyEvent.ACTION_UP) {
+            Log.i(TAG, "KeyEvent received but not done yet");
+            return true;
+        }
+
+        if ((keyEvent.getFlags() & KeyEvent.FLAG_CANCELED) != 0) {
+            Log.i(TAG, "KeyEvent got canceled");
+            return false;
+        }
+
+        if (state == State.STARTED) {
+            onPauseRequested();
+        } else if (state == State.PAUSED) {
+            onResumeRequested();
+        } else {
+            Log.wtf(TAG, "Invalid state: " + state);
+            return false;
+        }
+
+        return true;
+    }
+
+    MediaSession mediaSession;
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -100,8 +202,15 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         titles = MainActivity.titles;
         authors = MainActivity.dates;
         PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
-        wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, getClass().toString());
+        wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, COMPONENT_ID);
         wakeLock.setReferenceCounted(false);
+        mediaSession = new MediaSession(this, COMPONENT_ID);
+        mediaSession.setCallback(new MediaSession.Callback() {
+            @Override
+            public boolean onMediaButtonEvent(@NonNull Intent intent) {
+                return handleMediaButtonIntent(intent);
+            }
+        });
     }
 
     @Override
@@ -109,6 +218,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         if (BuildConfig.DEBUG) { LOG_V("onDestroy()"); }
         myDestroy();
         wakeLock.release();
+        mediaSession.release();
     }
 
     void saveOrInvalidateState() {
@@ -150,11 +260,11 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         if (ACTION_PLAY.equals(action)) {
             onPlayRequested(intent);
         } else if (ACTION_PAUSE.equals(action)) {
-            onPauseRequested(intent);
+            onPauseRequested();
         } else if (ACTION_STOP.equals(action)) {
             onStopRequested();
         } else if (ACTION_RESUME.equals(action)) {
-            onResumeRequested(intent);
+            onResumeRequested();
         } else {
             Log.wtf(TAG, "Unknown action: " + intent.getAction());
         }
@@ -188,7 +298,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         playNext();
     }
 
-    private void onPauseRequested(Intent intent) {
+    private void onPauseRequested() {
         if (state != State.STARTED) {
             Log.wtf(TAG, "Unexpected state: " + state);
             return;
@@ -214,7 +324,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         return copy;
     }
 
-    private void onResumeRequested(Intent intent) {
+    private void onResumeRequested() {
         if (state != State.PAUSED) {
             if (state != State.IDLE) {
                 Log.wtf(TAG, "Unexpected state: " + state + ", will self-destruct");
@@ -222,6 +332,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
                 return;
             }
 
+            Intent intent = new Intent();
             if (populateRecoveryIntent(intent, numbers, this)) {
                 Log.i(TAG, "Successfully recovered the playback");
                 // Defensively remove the state; one recovery attempt is enough
@@ -275,6 +386,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         nextIndexToPlay = 0;
         if (state == State.STARTED || state == State.PAUSED) {
             player.stop();
+            state = State.STOPPED;
         }
         releasePlayerAsync(player);
         player = new MediaPlayer();
@@ -290,6 +402,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         }
 
         wakeLock.acquire(EXPECTED_MS_TO_SWITCH_SONGS);
+        Log.i(TAG, "wakeLock.acquire() called");
         releasePlayerAsync(player);
         player = new MediaPlayer();
         state = State.IDLE;
@@ -298,6 +411,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         player.setOnPreparedListener(this);
         player.setOnCompletionListener(this);
         player.setOnErrorListener(this);
+        player.setWakeMode(this, PowerManager.PARTIAL_WAKE_LOCK);
         lastNumber = numbers.get(episodeIdsToPlay[nextIndexToPlay]);
         String file = new File(ExternalStorageHelper.getMyCacheDir(this), DownloadAndSave.fileNameFromNumber(lastNumber)).getAbsolutePath();
         try {
@@ -359,7 +473,11 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
             inForeground = true;
         }
 
-        if (!currentlyPlaying) {
+        mediaButton.register(this);
+        mediaSession.setActive(true);
+        if (currentlyPlaying) {
+            becomingNoisy.register(this);
+        } else {
             myStopForeground(false);
         }
     }
@@ -383,6 +501,9 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         if (remove) {
             inForeground = false;
         }
+        becomingNoisy.unregister(this);
+        mediaButton.unregister(this);
+        mediaSession.setActive(false);
     }
 
     private void createNotificationChannel() {

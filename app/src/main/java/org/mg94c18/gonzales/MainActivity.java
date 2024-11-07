@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Typeface;
+import android.media.AudioManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -276,6 +277,13 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     public void onResume() {
         super.onResume();
         Log.i(TAG, "onResume");
+        setVolumeControlStream(AudioManager.STREAM_MUSIC);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        setVolumeControlStream(AudioManager.USE_DEFAULT_STREAM_TYPE);
     }
 
     public static void updateAssets(@NonNull List<String> titles, @NonNull List<String> numbers, @NonNull List<String> dates, List<String> hiddenTitles) {

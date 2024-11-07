@@ -153,6 +153,9 @@ public class WordPatternTest {
 
         nonPlainKeys.removeAll(allowedNonPlainKeys);
         Assert.assertTrue(nonPlainKeys.toString(), nonPlainKeys.isEmpty());
+
+        int wc = SearchProvider.wordCount();
+        Assert.assertTrue("" + wc, wc > (context.getPackageName().endsWith("dijaspora") ? 3236 : 1799));
     }
 
     @Test
