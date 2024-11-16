@@ -161,6 +161,14 @@ Još filmova:
 Los abrazos rotos (2009)
 Yo, también (2009)
 Mar adentro (2004) https://www.youtube.com/watch?v=3Ant7vfOaP4
+https://www.filmaffinity.com/es/ranking.php?rn=ranking_movies_mx
+    - https://www.youtube.com/watch?v=YxkXK742rM0
+    - https://www.youtube.com/watch?v=B42LhCN_0WM
+
+Meksički filmovi za koje imam SRT:
+    - Viento Negro 1965: https://www.youtube.com/watch?v=jGNKhlDre8A
+    - Macario 1960: https://www.youtube.com/watch?v=ThQaEQNDjdQ
+    - Nosotros los pobres 1948: https://www.youtube.com/watch?v=Eg9DwzJ8LYc
 
 al + infinitivo
 Introduce una acción o un acontecimiento que se produce simultáneamente o inmediatamente antes que otro:

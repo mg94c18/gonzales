@@ -123,6 +123,8 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         if (explicits == null) {
             explicits = new HashMap<>();
             explicits.put(Pattern.compile("((f)uck)", Pattern.CASE_INSENSITIVE), "***");
+            explicits.put(Pattern.compile("((d)ick)", Pattern.CASE_INSENSITIVE), "***");
+            explicits.put(Pattern.compile("((c)unt)", Pattern.CASE_INSENSITIVE), "***");
             // explicits.put(Pattern.compile("(([Ss])hit)"), "***");
         }
 

@@ -106,12 +106,13 @@ public class WordPatternTest {
     private static final Pattern groupingPattern = Pattern.compile("\\[[^\\]]+\\]"); // [je rekao]
     private static final Pattern translationHintPattern = Pattern.compile("\\([^\\)]+\\)"); // he (the smile)
     private static final Pattern noTranslationPattern = Pattern.compile("[_¿]"); // ¿ alone tonight?
-    private static final Pattern insideWordSeparator = Pattern.compile("['\\-]"); // self's, passers-by
+    private static final Pattern insideWordSeparator = Pattern.compile("['\\-]"); // self's, passers-by, WC-a
 
     private static boolean wordGroupingsMatch(String tekst, String prevod) {
         tekst = groupingPattern.matcher(tekst).replaceAll("group");
         tekst = PageAdapter.hintsPattern.matcher(tekst).replaceAll("");
         tekst = noTranslationPattern.matcher(tekst).replaceAll("noot");
+        tekst = insideWordSeparator.matcher(tekst).replaceAll("");
         prevod = noTranslationPattern.matcher(prevod).replaceAll("noot");
         prevod = groupingPattern.matcher(prevod).replaceAll("group");
         prevod = PageAdapter.hintsPattern.matcher(prevod).replaceAll("");
