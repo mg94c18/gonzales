@@ -10,6 +10,9 @@ import android.media.AudioAttributes;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+
+import android.os.Build;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
@@ -22,7 +25,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -172,10 +174,30 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
     }
 
     private void refreshWebView() {
+        refreshWebView(false);
+    }
+
+    private void refreshWebView(boolean restoreScroll) {
         // TODO (manji prioritet): ako nema oba prevoda, ne treba da radi dugme...
         // TODO (veći prioritet): iskoristiti ActionBar kao deo lekcije, a da ime pesme bude unutar HTML
+        if (restoreScroll && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            setRestoreScrollListener();
+        }
         webView.loadDataWithBaseURL("file:///android_asset/", createHtml(links, zaPrikaz, zaPrikaz == finalno, author, false, inLandscape, searchedWord, currentWidth), "text/html", "UTF-8", null);
-        webView.invalidate();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private void setRestoreScrollListener() {
+        int oldHeight = webView.getContentHeight();
+        webView.setOnScrollChangeListener((view, scrollX, scrollY, oldScrollX, oldScrollY) -> {
+            int newHeight = webView.getContentHeight();
+            int newScrollY = (int) Math.floor(oldScrollY * newHeight * 1.0 / oldHeight);
+            Log.i(TAG, "oldHeight=" + oldHeight + ",oldScrollY=" + oldScrollY + "," + "newHeight=" + newHeight + ",newY=" + newScrollY);
+            if (newScrollY > 0 && newScrollY < 1234567) {
+                webView.setScrollY(newScrollY);
+            }
+            webView.post(() -> webView.setOnScrollChangeListener(null));
+        });
     }
 
     public void destroy() {
@@ -201,7 +223,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
             MainActivity.getSharedPreferences(context).edit().putBoolean(PREF_BUKVALNO, true).apply();
             zaPrikaz = bukvalno;
         }
-        refreshWebView();
+        refreshWebView(true);
     }
 
     private static String createHtml(List<String> tekst, List<String> prevod, boolean removeGroupings, String author, boolean a3byka, boolean inLandscape, String searchedWord, int width) {

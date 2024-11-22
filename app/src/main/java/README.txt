@@ -2,6 +2,8 @@
 Search u vodoravnom položaju: ako tražim "vino", onda će naći "rujno vino" pio, ali ne i "opilo nas vin|o"
 Zapravo će da nađe pesmu, ali neće da stavi u bold.
 Pregledati ostale TODO
+{} u bukvalnom prevodu?  uglavnom ne bi trebalo
+zagrade () gde još ima? uglavnom ne treba nigde u bukvalnom prevodu
 Dark Mode:
     nekad je meni beo a nekad crn.  Kao da je beo na cold start a crn kad se Activity ponovo kreira
     takođe, AF se učitava brže; pogledati zašto; search se popunjava u posebnom thread-u
@@ -166,9 +168,9 @@ https://www.filmaffinity.com/es/ranking.php?rn=ranking_movies_mx
     - https://www.youtube.com/watch?v=B42LhCN_0WM
 
 Meksički filmovi za koje imam SRT:
-    - Viento Negro 1965: https://www.youtube.com/watch?v=jGNKhlDre8A
-    - Macario 1960: https://www.youtube.com/watch?v=ThQaEQNDjdQ
-    - Nosotros los pobres 1948: https://www.youtube.com/watch?v=Eg9DwzJ8LYc
+    - Viento Negro 1965: https://www.youtube.com/watch?v=jGNKhlDre8A više vestern i malo prevod kasni ili žuri
+    - Macario 1960: https://www.youtube.com/watch?v=ThQaEQNDjdQ nije loše ali je tematika možda "pogrešna", a prevod se ponekad naređa jedan na drugi
+    - Nosotros los pobres 1948: https://www.youtube.com/watch?v=Eg9DwzJ8LYc drama koja izgleda OK za početak a prevod je OK
 
 al + infinitivo
 Introduce una acción o un acontecimiento que se produce simultáneamente o inmediatamente antes que otro:
