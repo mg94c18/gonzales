@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <integer name="average_episode_size_mb">51</integer>
+    <integer name="default_episode_index">1</integer>
 </resources>

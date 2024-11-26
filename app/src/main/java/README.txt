@@ -1,4 +1,6 @@
 -----------------------------------------
+Search ako tražim "acab", a nađe/ponudi acabo, acaba, acaban i acabado, sve u jednoj pesmi, onda traba sve da bude bold, ili pak da glavna reč bude bold a da ostale budu italic
+Za Android, Search ne pamti prethodni search, mada na iOS pamti.
 Search u vodoravnom položaju: ako tražim "vino", onda će naći "rujno vino" pio, ali ne i "opilo nas vin|o"
 Zapravo će da nađe pesmu, ali neće da stavi u bold.
 Pregledati ostale TODO
@@ -7,6 +9,102 @@ zagrade () gde još ima? uglavnom ne treba nigde u bukvalnom prevodu
 Dark Mode:
     nekad je meni beo a nekad crn.  Kao da je beo na cold start a crn kad se Activity ponovo kreira
     takođe, AF se učitava brže; pogledati zašto; search se popunjava u posebnom thread-u
+    AF brže učitavanje uglavnom nije zbog dark mode; ako ugasim podršku za to, i dalje se sporije učitava
+ovaj, onaj, taj: tri reči u srpskom ali dve u engleskom; još gore ako ima ovom, onom, tom, ovim, onim, tim, ovih, onih, tih, itd
+
+Who?
+    ovaj, ovi
+    onaj, oni
+    taj, ti
+
+    ova, ove
+    ona, one
+    ta, te
+
+    ovo, ova
+    ono, ona
+    to, ta
+
+    svaki
+    svaka
+    svako
+
+    nijedan
+    nijedna
+    nijedno
+
+    neki, neki
+    neka, neke
+    neko, neka
+
+    poneki, pokeki
+    poneka, poneke
+    poneko, poneka
+
+Where?
+    ovde
+    onde
+    tu
+
+How?
+    ovako
+    onako
+    tako
+
+How big?
+    koliki, koliki
+    kolika, kolike
+    koliko, kolika
+
+    ovoliki, ovoliki
+    onoliki, onoliki
+    toliki, toliki
+
+    ovolika, ovolike
+    onolika, onolike
+    tolika, tolike
+
+    ovoliko, ovolika
+    onoliko, onolika
+    toliko, tolika
+
+What like?
+    kakav, kakvi
+    kakva, kakve
+    kakvo, kakva
+
+    ovakav, ovakvi
+    onakav, onakvi
+    takav, takvi
+
+    ovakva, ovakve
+    onakva, onakve
+    takva, takve
+
+    ovakvo, ovakva
+    onakvo, onakva
+    takvo, takva
+
+    nikakav, nikakvi
+    nikakva, nikakve
+    nikakvo, nikakva
+
+    bilo kakav, bilo kakvi
+    bilo kakva, bilo kakve
+    bilo kakvo, bilo kakva
+
+    ikakav, ikakvi
+    ikakva, ikakve
+    ikakvo, ikakva
+
+    svakakav
+    svakakva
+    svakakvo
+
+    nekakav, nekakvi
+    nekakva, nekakve
+    nekakvo, nekakva
+
 -----------------------------------------
 [(it|he|she) nešto] skloniti ako to nešto je u istoj formi
 [setiti ćeš] -> setićeš: videti da pre toga nema spojeni oblik, a da posle toga nema razdvojeni
@@ -77,6 +175,33 @@ git apply diff-debug
 git diff app/build.gradle app/src/dijaspora/res/values/strings.xml app/src/gonzales/res/values/strings.xml > diff-debug
 
 gs | grep modified | grep assets | awk '{print $2}'
+
+Napad na padeže:
+rm assets.all && for a in $(ls app/src/dijaspora/assets/*.bukvalno | grep -vE "leptirko|zajedno|kadodem|mirno"); do cat $a >> assets.all ; done
+cat assets.all | grep -E "\[|\]" | sed -e 's/\[/#[/g' | sed -e 's/\]/]#/g' | tr '#' '\n' | grep -E "\[|\]" > groups.all
+cat groups.all | wc -l
+2721
+cat groups.all | tr '[:upper:]' '[:lower:]' | tr -d '"' | grep -vE "\[(they|he|she|we|you|i\ |y'all)" | sort -u | tee groups.hunt.1 | wc -l
+810
+cat groups.hunt.1 | tr -d ',' | sed -e 's/ .*//' | sort -u | tee groups.hunt.2 | wc -l
+187
+
+Da padeži dobiju predlog "po Bogu" "ka Bogu" treba da bude isti padež i predlog
+  - nominativ: ko, šta: bez predloga    | Bog   | on    | to   | ja
+  - genitiv: od koga, od čega: from     | Boga  | njega | toga | mene
+  - dativ: kome, čemu: to               | Bogu  | njemu | tom  | meni
+  - akuzativ: koga, šta: bez predloga; mada... možda staviti da bude "for", jer uglavnom su završeci baš takvi?
+  - vokativ: bez predloga
+  - instrumental: s kim, čim: with      | Bogom | njim  | time | mnom
+  - lokativ: o kome, o čemu, gde: isti kao dativ, dok se ne dokaže suprotno
+  - 'from' vs. 'of' za dativ...
+
+Kod analize padeža stao kod: diesel
+
+Kasnije:
+    self, mnom, nama, ' o '
+    one koje imaju zagrade ili male/female, možda treba da budu svuda tako označene
+    Zlatibore pitaj Taru - začiniti nekim pomagalicama
 
 Sve tekstove da propustim kroz neki checker za španski, pogotovu da stavim akcenat za prošlo i buduće vreme.
 🎓ako neko treba da uči sam (nema prevod i neće biti)

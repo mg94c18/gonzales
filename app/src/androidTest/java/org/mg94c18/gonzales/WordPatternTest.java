@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @RunWith(AndroidJUnit4.class)
@@ -68,6 +69,7 @@ public class WordPatternTest {
         Assert.assertNotNull(context);
 
         List<String> numbers = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.NUMBERS, MainActivity.syncIndex);
+        numbers.remove("abvgd");
         for (String number : numbers) {
             List<String> lines = AssetLoader.loadFromAssetOrUpdate(context, number, MainActivity.syncIndex);
             List<String> bukvalno = AssetLoader.loadFromAssetOrUpdate(context, number + ".bukvalno", MainActivity.syncIndex);
@@ -156,7 +158,7 @@ public class WordPatternTest {
         Assert.assertTrue(nonPlainKeys.toString(), nonPlainKeys.isEmpty());
 
         int wc = SearchProvider.wordCount();
-        Assert.assertTrue("" + wc, wc > (context.getPackageName().endsWith("dijaspora") ? 3236 : 1799));
+        Assert.assertTrue("" + wc, wc > (context.getPackageName().contains("englez") ? 3236 : 1799));
     }
 
     @Test
@@ -165,6 +167,7 @@ public class WordPatternTest {
         Assert.assertNotNull(context);
 
         List<String> numbers = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.NUMBERS, MainActivity.syncIndex);
+        numbers.remove("abvgd");
         for (String number : numbers) {
             List<String> lines = AssetLoader.loadFromAssetOrUpdate(context, number, MainActivity.syncIndex);
             List<String> bukvalno = AssetLoader.loadFromAssetOrUpdate(context, number + ".bukvalno", MainActivity.syncIndex);
@@ -176,6 +179,45 @@ public class WordPatternTest {
 
             Assert.assertTrue(number,lines.size() == bukvalno.size() || bukvalno.size() == 3);
             Assert.assertTrue(number,lines.size() == finalno.size() || finalno.size() == 3);
+        }
+    }
+
+    @Test
+    public void testInat() {
+        Context context = ApplicationProvider.getApplicationContext();
+        Assert.assertNotNull(context);
+
+        if (context.getPackageName().contains("englez")) {
+            verifyReference(context,"pub", 18, "inat");
+        }
+    }
+
+    private void verifyReference(Context context, String number, int lineIndex, String word) {
+        List<List<String>> pubs = new ArrayList<>();
+        pubs.add(AssetLoader.loadFromAssetOrUpdate(context, number + ".bukvalno", MainActivity.syncIndex));
+        pubs.add(AssetLoader.loadFromAssetOrUpdate(context, number + ".finalno", MainActivity.syncIndex));
+        List<String> titles = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.TITLES, MainActivity.syncIndex);
+
+        String line;
+        Pattern inat = Pattern.compile("^.*" + word + ".*see track ([1-9][0-9]).*$");
+        Matcher matcher;
+        String trackStr;
+        Integer trackId;
+        String title;
+
+        for (List<String> pub : pubs) {
+            Assert.assertFalse(pub.isEmpty());
+
+            line = pub.get(lineIndex);
+            matcher = inat.matcher(line);
+
+            Assert.assertTrue(line, matcher.matches());
+            trackStr = matcher.group(1);
+            Assert.assertNotNull(trackStr);
+
+            trackId = Integer.parseInt(trackStr);
+            title = titles.get(trackId - 1);
+            Assert.assertTrue(title, title.contains(word));
         }
     }
 }
