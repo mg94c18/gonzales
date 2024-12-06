@@ -7,4 +7,6 @@
     <string name="default_episode_title">Igramo se, igramo</string>
     <string name="default_episode_number">igramo2</string>
     <string name="default_episode_author">Ljupka Dimitrovska</string>
+    <string name="rationale_title">Playback permission</string>
+    <string name="rationale">Application needs to be able to post notifications.  These are used for pausing and resuming the playback, as well as jumping into the current track.</string>
 </resources>

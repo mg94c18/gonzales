@@ -15,4 +15,6 @@
     <string name="na_i">Nađi..</string>
     <string name="na_i_2">Nađi...</string>
     <string name="tracks">Pesme</string>
+    <string name="rationale_title">Dozvola za muziku</string>
+    <string name="rationale">Aplikacija mora da ima dozvolu da prikaže notifikacije.  One se koriste za pauziranje ili nastavljanje muzike, ili da se prikaže pesma koja trenutno svira.</string>
 </resources>

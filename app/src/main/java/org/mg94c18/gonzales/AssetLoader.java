@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.content.res.AssetManager;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import android.os.Build;
 import android.util.Log;
 import android.util.Pair;
 
@@ -285,7 +287,11 @@ public final class AssetLoader {
         if (PlaybackService.inForeground) {
             Intent intent = new Intent(context, PlaybackService.class);
             intent.setAction(PlaybackService.ACTION_ASSET_UPDATE);
-            context.startService(intent);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(intent);
+            } else {
+                context.startService(intent);
+            }
         }
     }
 }

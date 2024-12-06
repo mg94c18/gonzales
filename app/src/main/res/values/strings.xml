@@ -3,8 +3,8 @@
     <string name="play_intent_title">Vidi u Google Play</string>
     <string name="drawer_open_accessibility">Otvori spisak epizoda</string>
     <string name="drawer_close_accessibility">Zatvori spisak epizoda</string>
-    <string name="channel_name">channel_name</string>
-    <string name="channel_description">channel_description</string>
+    <string name="channel_name">@string/app_name</string>
+    <string name="channel_description">@string/app_name</string>
     <string name="play">Play</string>
     <string name="otkazi_download">Stop</string>
     <string name="dark_mode">Dark mode</string>

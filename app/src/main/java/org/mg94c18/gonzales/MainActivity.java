@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Typeface;
 import android.media.AudioManager;
@@ -14,8 +15,13 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Parcelable;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -84,6 +90,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     String selectedEpisodeTitle;
     String selectedEpisodeNumber;
     String selectedEpisodeAuthor;
+    ActivityResultLauncher<String> requestPermissionLauncher;
+    Intent playbackServiceIntent;
     AlertDialog configureDownloadDialog;
     AlertDialog quoteDialog;
     static final long syncIndex = -1;
@@ -241,6 +249,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+            if (isGranted) {
+                startPlaybackService(this, playbackServiceIntent);
+            }
+        });
+
         if (BuildConfig.DEBUG) { LOG_V("onCreate"); }
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -599,12 +613,16 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                         }
                         if (BuildConfig.DEBUG) { LOG_V("episodesToDownload: " + episodesToDownload); }
                         Pair<int[], Set<String>> collectionPair = getIdCollections(episodesToDownload);
-                        Intent intent = new Intent(MainActivity.this, PlaybackService.class);
-                        intent.setAction(PlaybackService.ACTION_PLAY);
-                        intent.putExtra(PlaybackService.EXTRA_IDS, collectionPair.first);
-                        MainActivity.this.startService(intent);
+                        playbackServiceIntent = new Intent(MainActivity.this, PlaybackService.class);
+                        playbackServiceIntent.setAction(PlaybackService.ACTION_PLAY);
+                        playbackServiceIntent.putExtra(PlaybackService.EXTRA_IDS, collectionPair.first);
                         if (BuildConfig.DEBUG) { LOG_V("Saving the list: " + collectionPair.second); }
                         preferences.edit().putStringSet(PLAYLIST_EPISODES_SET, collectionPair.second).apply();
+                        // https://developer.android.com/training/permissions/requesting
+                        if (!canShowNotifications()) {
+                            return;
+                        }
+                        startPlaybackService(MainActivity.this, playbackServiceIntent);
                         findViewById(R.id.button).setEnabled(false);
                     }
                 })
@@ -622,6 +640,40 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         if (listView != null && indexToScrollTo != -1) {
             listView.setSelection(indexToScrollTo);
         }
+    }
+
+    private static void startPlaybackService(Context context, Intent intent) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(intent);
+        } else {
+            context.startService(intent);
+        }
+    }
+
+    private boolean canShowNotifications() {
+        String permission = "android.permission.POST_NOTIFICATIONS";
+        // https://developer.android.com/training/permissions/requesting
+        if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
+            return true;
+        } else if (ActivityCompat.shouldShowRequestPermissionRationale(this, permission)) {
+            quoteDialog = new AlertDialog.Builder(this)
+                    .setTitle(R.string.rationale_title)
+                    .setMessage(R.string.rationale)
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            requestPermissionLauncher.launch(permission);
+                        }
+                    }).create();
+            quoteDialog.setCanceledOnTouchOutside(false);
+            quoteDialog.show();
+        } else {
+            // You can directly ask for the permission.
+            // The registered ActivityResultCallback gets the result of this request.
+            requestPermissionLauncher.launch(permission);
+        }
+        return false;
     }
 
     static Pair<int[], Set<String>> getIdCollections(Set<Integer> ids) {

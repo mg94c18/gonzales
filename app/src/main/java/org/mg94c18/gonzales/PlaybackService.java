@@ -97,12 +97,17 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
             this.registered = false;
         }
 
-        @SuppressLint("UnspecifiedRegisterReceiverFlag") // OK because we only use it for system broadcasts
+        @SuppressLint("UnspecifiedRegisterReceiverFlag") // OK because we supply flag on >= 34
         public void register(Context context) {
             if (registered) {
                 return;
             }
-            context.registerReceiver(receiver, filter);
+            // Ovde ima crash na SDK=34; zaista, broadcast_actions.txt nema nijedan od mojih filtera, mada sam mislio da oni jesu "system broadcasts"
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                context.registerReceiver(receiver, filter, RECEIVER_NOT_EXPORTED);
+            } else {
+                context.registerReceiver(receiver, filter);
+            }
             registered = true;
         }
 
