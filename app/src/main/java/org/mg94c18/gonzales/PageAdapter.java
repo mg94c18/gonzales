@@ -135,7 +135,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         this.author = author;
         this.searchedWord = searchedWord;
         SharedPreferences preferences = MainActivity.getSharedPreferences(context);
-        links = AssetLoader.loadFromAssetOrUpdate(context, episode, MainActivity.syncIndex);
+        links = AssetLoader.loadFromAssetOrUpdateOrCyrillic(context, episode, MainActivity.syncIndex);
         bukvalno = AssetLoader.loadFromAssetOrUpdate(context, episode + ".bukvalno", MainActivity.syncIndex);
         finalno = AssetLoader.loadFromAssetOrUpdate(context, episode + ".finalno", MainActivity.syncIndex);
         zaPrikaz = preferences.getBoolean(PREF_BUKVALNO, true) ? bukvalno : finalno;
@@ -261,8 +261,13 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
                 builder.append("<br></p>");
             }
             builder.append("<p>");
+            String line;
             for (int i = 2; i < tekst.size(); i++) {
-                builder.append(applyFilters(tekst.get(i), false, a3byka, true, searchedWordPattern)).append("<br>");
+                line = tekst.get(i);
+                if (line.startsWith("§")) {
+                    break;
+                }
+                builder.append(applyFilters(line, false, a3byka, true, searchedWordPattern)).append("<br>");
             }
             builder.append("</p>");
         }

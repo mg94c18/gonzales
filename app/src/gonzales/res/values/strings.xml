@@ -7,4 +7,12 @@
     <string name="default_episode_title">Para siempre</string>
     <string name="default_episode_number">valemucho</string>
     <string name="default_episode_author">Vicente Fernández</string>
+
+    <string name="play">Sviraj</string>
+    <string name="otkazi_download">Ugasi</string>
+    <string name="dark_mode">Tamno</string>
+    <string name="toggle">Prevod</string>
+    <string name="na_i">Nađi..</string>
+    <string name="na_i_2">Nađi...</string>
+    <string name="tracks">Pesme</string>
 </resources>

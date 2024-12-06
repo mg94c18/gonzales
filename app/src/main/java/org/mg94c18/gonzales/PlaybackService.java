@@ -2,7 +2,6 @@ package org.mg94c18.gonzales;
 
 import static org.mg94c18.gonzales.Logger.LOG_V;
 import static org.mg94c18.gonzales.Logger.TAG;
-import static org.mg94c18.gonzales.MainActivity.syncIndex;
 
 import android.annotation.SuppressLint;
 import android.app.Notification;
@@ -45,6 +44,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
     public static final String ACTION_PAUSE = "pause";
     public static final String ACTION_STOP = "stop";
     public static final String ACTION_RESUME = "resume";
+    public static final String ACTION_ASSET_UPDATE = "cyrillic";
     public static final String EXTRA_IDS = "IDs";
     public static final String EXTRA_LAST_ID = "last_number";
     public static final String EXTRA_LAST_OFFSET = "last_offset";
@@ -265,6 +265,8 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
             onStopRequested();
         } else if (ACTION_RESUME.equals(action)) {
             onResumeRequested();
+        } else if (ACTION_ASSET_UPDATE.equals(action)) {
+            onCyrillicChanged();
         } else {
             Log.wtf(TAG, "Unknown action: " + intent.getAction());
         }
@@ -347,6 +349,13 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         player.start();
         state = State.STARTED;
         myStartForeground(true, false); // TODO: argumenti su sad uvek suprotno jedan drugom, možda mi ne trabaju oba
+    }
+
+    private void onCyrillicChanged() {
+        titles = MainActivity.titles;
+        authors = MainActivity.dates;
+        boolean playing = (state == State.STARTED);
+        myStartForeground(playing, !playing);
     }
 
     private static boolean populateRecoveryIntent(Intent intent, List<String> numbers, Context context) {

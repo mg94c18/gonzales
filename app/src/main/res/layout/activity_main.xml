@@ -37,10 +37,9 @@
     </FrameLayout>
 
     <!-- The navigation drawer -->
-    <!-- TODO: android:layout_width="240dp"? -->
     <ListView
         android:id="@+id/navigation"
-        android:layout_width="match_parent"
+        android:layout_width="320dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"
         android:background="?android:attr/colorBackground"

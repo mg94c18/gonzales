@@ -1,4 +1,10 @@
 -----------------------------------------
+Bug:
+    - play
+    - swipe out the task
+    - resume
+    - nekad ode na drugu pesmu, a nekad ne može da nađe pesmu pa proba "self-destruct", koji pak ne uspe
+
 Search ako tražim "acab", a nađe/ponudi acabo, acaba, acaban i acabado, sve u jednoj pesmi, onda traba sve da bude bold, ili pak da glavna reč bude bold a da ostale budu italic
 Za Android, Search ne pamti prethodni search, mada na iOS pamti.
 Search u vodoravnom položaju: ako tražim "vino", onda će naći "rujno vino" pio, ali ne i "opilo nas vin|o"
@@ -137,26 +143,14 @@ Da dodam da glas (tenor, sopran, bas, alt) može da se promeni kroz search kao e
 s3cmd setacl --acl-public --recursive s3://mg94c18gonzales
 
 Dodati ћирилицу ako neko traži "a36yka", nemam nigde "injekcije" ili "konjukcije" ili "Bedžihe", pa bi trebalo da može da se prebaci lako.  Ima Tanjug.
-
-Da ne koristim strings direktno za UI nego uvek preko assets...
+for n in $(cat app/src/dijaspora/assets/numbers | grep -v abvgd) titles dates; do echo $n; cat app/src/dijaspora/assets/$n | /Library/Java/JavaVirtualMachines/amazon-corretto-17.jdk/Contents/Home/bin/java -javaagent:/Applications/IntelliJ\ IDEA.app/Contents/lib/idea_rt.jar=51954:/Applications/IntelliJ\ IDEA.app/Contents/bin -Dfile.encoding=UTF-8 -classpath /Users/sstevano/Documents/my/src/Workspace/Hello/out/production/Hello a3byka.Hijeroglif > app/src/dijaspora/assets/$n.cirilica; done
 
 Za ostale tri pesme, najbolje da stavim što više minuta iz filmova jer to podstiče ljude da gledaju sami (na primer sa srpskim prevodom? hm, da li postoji srpski sub-titles? to zvuči glupo)
 https://www.youtube.com/watch?v=lUi2xofN4zM
 
-Onaj problem na emulatoru se dešava kad nema internet, onda gnjavi sa download u pozadini, ali ako se prebacim na drugu pesmu onda popuni WebView sa starom pesmom, a nova pesma pak još nije skinuta i tako ide unakrsno.
-
-Izgleda da ne moram da koristim CPU lock, jer na primer na mom telefonu radi i svira.  Treba da ga testiram na duže distance.
-Sa jednostavnijim slušalicama više ne radi (u kratkom vremenu kad se završi jedna pesma onda prestane da svira), znači treba CPU lock.
-Ako je na speaker (bez slušalica), onda sledeća pesma uopšte ne počinje dok se de upali ekran.  Možda MediaPlayer ima svoj lock.
-
 requestFocus() passing in your OnAudioFocusChangeListener.
 Always call requestFocus() first, proceed only if focus is granted.
 Slično tome, ako ima playback a onda zvoni alarm, ne pauzira
-
-Treba dodati media button, za integraciju sa slušalicama
-Slično tome treba da pauzira ako neko izvadi slušalice dok muzika svira
-
-Kod playlist da bude "I promise" poruka (ako ima više pesama u listi) koja se menja na nekoliko raznih načina i bez koje ne može da se pusti Play, dok se načini ne potroše
 
 for i in {1..36}; do git mv app/src/dijaspora/assets/$i app/src/dijaspora/assets/$(cat app/src/dijaspora/assets/links | head -n $i | tail -n 1); done
 for i in {1..10}; do git mv app/src/gonzales/assets/$i app/src/gonzales/assets/$(cat app/src/gonzales/assets/links | head -n $i | tail -n 1); done
@@ -169,10 +163,6 @@ Za duže linije:
 cat app/src/dijaspora/assets/anketa2 | sed -e 's/\.  /.#/g' | tr '#' '\n'
 Pa se vratim da vratim?  Ručno je OK
 cat app/src/dijaspora/assets/anketa2 | grep -E "^[^\-]"
-
-Za debug:
-git apply diff-debug
-git diff app/build.gradle app/src/dijaspora/res/values/strings.xml app/src/gonzales/res/values/strings.xml > diff-debug
 
 gs | grep modified | grep assets | awk '{print $2}'
 
@@ -188,20 +178,39 @@ cat groups.hunt.1 | tr -d ',' | sed -e 's/ .*//' | sort -u | tee groups.hunt.2 |
 
 Da padeži dobiju predlog "po Bogu" "ka Bogu" treba da bude isti padež i predlog
   - nominativ: ko, šta: bez predloga    | Bog   | on    | to   | ja
-  - genitiv: od koga, od čega: from     | Boga  | njega | toga | mene
+  - genitiv: od koga, od čega: of       | Boga  | njega | toga | mene
   - dativ: kome, čemu: to               | Bogu  | njemu | tom  | meni
-  - akuzativ: koga, šta: bez predloga; mada... možda staviti da bude "for", jer uglavnom su završeci baš takvi?
-  - vokativ: bez predloga
+  - akuzativ: koga, šta: bez predloga; mada... možda staviti da bude onto/into/for, jer uglavnom su završeci baš takvi?
+  - vokativ: bez predloga (hey, )
   - instrumental: s kim, čim: with      | Bogom | njim  | time | mnom
   - lokativ: o kome, o čemu, gde: isti kao dativ, dok se ne dokaže suprotno
-  - 'from' vs. 'of' za dativ...
+  - 'from' vs. 'of' za dativ... of je bolje jer from uvek ima predlog
+  - in vs. into: potražiti "into [" ili pak "in [^\[]"
 
-Kod analize padeža stao kod: diesel
+Kod analize padeža stao kod: zapravo zarvšio :)
+Spell check takođe završio
+Oko 70 promenjenih fajlova
 
 Kasnije:
-    self, mnom, nama, ' o '
+    self, mnom, nama, ' o ', which, what
     one koje imaju zagrade ili male/female, možda treba da budu svuda tako označene
-    Zlatibore pitaj Taru - začiniti nekim pomagalicama
+    Zlatibore pitaj Taru - začiniti lekcijom za padeže, gde se uvode svi predlozi from/to/"for"/with; plural... less important
+    Kad zamirišu jorgovani - slično ubaciti neke pomagalice na primer "kakav stvarno ti si", "znaš u kakvoj smo akciji", "u ovakvom finalu"
+    tod [long tailed] -> [for tod] [for long tailed] i još mnogo drugih propuštenih, ali ne pri početku dok se ne uvedu padeži
+    tako gde su duže linije (anketa2, novak, zenidba) "Find in Files" ne prikazuje sve rezultate; potražiti u tim fajlovima ručno preko regex koji obuhvata sve one u [
+    koljena vs. kolena provera
+    {(male|female)} da bude u običnim zagradama
+
+"ni" je prilično tricky:
+    - nije ništa bolje očekivala                didn't expect any better
+    - nije ništa bolje ni očekivala             ?
+    - i onako nije ništa bolje ni očekivala     didn't expect any better anyway
+    - nemam kuda da bežim                       I don't have anywhere to escape to
+    - nemam kuda ni da bežim                    ?
+    - čak nemam kuda ni da bežim                I don't even have anywhere to escape to
+    - ne znaju bližnji                          close ones don't know
+    - ne znaju ni bližnji                       ?
+    - ne znaju čak ni bližnji                   not even close ones know
 
 Sve tekstove da propustim kroz neki checker za španski, pogotovu da stavim akcenat za prošlo i buduće vreme.
 🎓ako neko treba da uči sam (nema prevod i neće biti)
@@ -222,6 +231,7 @@ ffmpeg -ss 5 -i ~/Espanol/SR/zenidba.mp3 zenidba.mp3
 ffmpeg -i ~/Espanol/SR/necevatra.mp3 -t 175 necevatra.mp3
 ffmpeg -i ~/Espanol/SR/kengurmolitva.mp3 -filter:a "volume=3.5" kengur.mp3
 ffmpeg -i BS_Druze.mp3 -filter:a "volume=0.5" druze.mp3
+ffmpeg -i "concat:volvera.mp3|silence-1s.mp3|volverb.mp3" -acodec copy volverc.mp3 && ffmpeg -i volverc.mp3 -filter:a "volume=3.5" volver.mp3
 
 Unakrsna provera da [] stvari nisu protivurečne
 
@@ -296,6 +306,9 @@ Meksički filmovi za koje imam SRT:
     - Viento Negro 1965: https://www.youtube.com/watch?v=jGNKhlDre8A više vestern i malo prevod kasni ili žuri
     - Macario 1960: https://www.youtube.com/watch?v=ThQaEQNDjdQ nije loše ali je tematika možda "pogrešna", a prevod se ponekad naređa jedan na drugi
     - Nosotros los pobres 1948: https://www.youtube.com/watch?v=Eg9DwzJ8LYc drama koja izgleda OK za početak a prevod je OK
+Nazarin:
+    00:34:00 - 00:49:10
+Macario: 00:23:20 - 00:37:20
 
 al + infinitivo
 Introduce una acción o un acontecimiento que se produce simultáneamente o inmediatamente antes que otro:
@@ -322,20 +335,8 @@ https://www.youtube.com/watch?v=wtpTCWF2fjk
 https://www.youtube.com/watch?v=GqJlWKIdBCI
 https://www.youtube.com/watch?v=XR_u-DWaK-w
 
-Intervju sa Šakirom pokazuje da uz dovoljno slušanja treba sve da se razume.
-Napraviti da nema prevod, nego da ima 1/42, 2/42 itd, ali da pokazuje ljutite face ako neko pokuša da vara.
-Treba da +1/42 bude da je neko odslušao sve pesme, i to tako da je razmaknuto vremenski.
-Ili pak da pokazuje face koje se polako menjaju u zavisnosti od broja ali ne pokazuje broj.
-Ili pak da pokazuje samo broj bez nagoveštaja kad će da se završi
-
-"no puedo evitar" -> odslušao nekoliko pesama, nažalost nijedna nije baš melodična
-
-"Conjugación Irregular" nalazi dosta stvari u rečniku
-
 https://www.ingles.com/traductor/hechas
 https://www.wordreference.com/conj/esverbs.aspx?v=dar
-
-Bilbao posle Volver: probi uši, treba da se utiša anketa
 
 -----------------------------------------
 

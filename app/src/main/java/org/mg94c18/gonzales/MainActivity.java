@@ -65,6 +65,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     static final String PLAYLIST_TRACK_OFFSET = "playlist_track_offset";
     private static final String DRAWER = "drawer";
     private static final String NIGHT_MODE = "night_mode";
+    public static final String CYRILLIC_MODE = "cyrillic_mode";
     private static final String CONTACT_EMAIL = "yckopo@gmail.com";
     static final String MY_ACTION_VIEW = BuildConfig.APPLICATION_ID + ".VIEW";
     static final String INTERNAL_OFFLINE = "offline";
@@ -87,7 +88,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     AlertDialog quoteDialog;
     static final long syncIndex = -1;
     ActionBarDrawerToggle drawerToggle;
-    private static final String DOWNLOAD_DIALOG_TITLE = "Play";
+    private String downloadDialogTitle;
     private String previousProgressString;
     private String progressString;
     private static boolean nightModeAllowed = Build.VERSION.SDK_INT >= 29;
@@ -162,7 +163,20 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         quoteDialog = new AlertDialog.Builder(this)
                 .setTitle(SearchProvider.HIDDEN_TITLES.get(episode))
                 .setNegativeButton(android.R.string.cancel, null)
-                .setPositiveButton(android.R.string.ok, null)
+                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        SharedPreferences preferences = getSharedPreferences();
+                        boolean cyrillic = preferences.getBoolean(CYRILLIC_MODE, false);
+                        // 12-05 18:19:27.541 29825 30102 E dijaspora: Nijedna zora ne svane != Ниједна зора не сване
+                        // Potiče iz SearchProvider-a, mada tamo koristim Log.wtf(); nema odakle drugo
+                        // Zato probam u ovom slučaju commit(), da taj drugi thread
+                        preferences.edit().putBoolean(CYRILLIC_MODE, !cyrillic).commit();
+                        MainActivity.assetsLoaded = false;
+                        SearchProvider.invalidateAssets();
+                        recreate();
+                    }
+                })
                 .setItems(quotes, null)
                 .create();
         quoteDialog.setCanceledOnTouchOutside(false);
@@ -209,8 +223,11 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             showQuoteDialog(-1 * (episode + 1));
         } else {
             if (intent.hasExtra(EPISODE_TITLE) && intent.hasExtra(EPISODE_NUMBER) && intent.hasExtra(EPISODE_AUTHOR)) {
+                boolean refresh = !titles.isEmpty();
                 AssetLoader.handleAssetLoading(this);
-                selectEpisode(searchedWord, episode, intent.getStringExtra(EPISODE_TITLE), intent.getStringExtra(EPISODE_NUMBER), intent.getStringExtra(EPISODE_AUTHOR));
+                String title = refresh && titles.size() > episode ? titles.get(episode) : intent.getStringExtra(EPISODE_TITLE);
+                String author = refresh && dates.size() > episode ? dates.get(episode) : intent.getStringExtra(EPISODE_AUTHOR);
+                selectEpisode(searchedWord, episode, title, intent.getStringExtra(EPISODE_NUMBER), author);
                 updateDrawer();
             } else {
                 selectEpisode(searchedWord, episode);
@@ -224,10 +241,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        if (nightModeAllowed) {
-            updateNightMode();
-        }
-
         if (BuildConfig.DEBUG) { LOG_V("onCreate"); }
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -241,9 +254,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         if (!handleNewIntent(getIntent())) {
             if (BuildConfig.DEBUG) { LOG_V("handleNewIntent() returned false"); }
             EpisodeInfo episodeInfo = findSavedEpisode(savedInstanceState);
-
+            boolean refresh = !titles.isEmpty();
             AssetLoader.handleAssetLoading(this);
-            selectEpisode(episodeInfo.index, episodeInfo.title, episodeInfo.number, episodeInfo.author);
+            String title = refresh && titles.size() > episodeInfo.index ? titles.get(episodeInfo.index) : episodeInfo.title;
+            String author = refresh && dates.size() > episodeInfo.index ? dates.get(episodeInfo.index) : episodeInfo.author;
+            selectEpisode(episodeInfo.index, title, episodeInfo.number, author);
+
             updateDrawer();
         }
 
@@ -335,7 +351,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        if (BuildConfig.DEBUG) { LOG_V("onPrepareOptionsMenu"); }
+        if (BuildConfig.DEBUG) { LOG_V("onCreateOptionsMenu"); }
 
         // Inflate the menu items for use in the action bar
         MenuInflater inflater = getMenuInflater();
@@ -390,7 +406,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 @Override
                 public void onDrawerOpened(View view) {
                     super.onDrawerOpened(view);
-                    String actionBarTitle = "Tracks"; // TODO: resources
+                    String actionBarTitle = getResources().getString(R.string.tracks);
                     if (numbers != null && numbers.size() > 0) {
                         actionBarTitle = actionBarTitle + " " + 1 + "-" + numbers.size();
                     }
@@ -476,9 +492,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             findViewById(R.id.button).setEnabled(true);
             return true;
         } else if (itemId == R.id.action_dark_mode) {
-            boolean newNightMode = !getNightModeFromSharedPrefs();
+            boolean newNightMode = !getNightModeFromSharedPrefs(this);
             getSharedPreferences().edit().putBoolean(NIGHT_MODE, newNightMode).apply();
-            recreate();
+            possiblyUpdateForNightMode(this);
             return true;
         } else if (itemId == R.id.action_toggle) {
             pageAdapter.toggle();
@@ -488,15 +504,24 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
     }
 
-    private boolean getNightModeFromSharedPrefs() {
-        return getSharedPreferences().getBoolean(NIGHT_MODE, false);
+    private static boolean getNightModeFromSharedPrefs(Context context) {
+        return getSharedPreferences(context).getBoolean(NIGHT_MODE, false);
     }
 
-    private void updateNightMode() {
-        boolean nightMode = getNightModeFromSharedPrefs();
+    public static void possiblyUpdateForNightMode(Context context) {
+        if (!nightModeAllowed) {
+            return;
+        }
+        boolean nightMode = getNightModeFromSharedPrefs(context);
         int mode = nightMode ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO;
         if (BuildConfig.DEBUG) { LOG_V("setDefaultNightMode(" + mode + ")"); }
-        AppCompatDelegate.setDefaultNightMode(mode);
+
+        int currentMode = context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+        if (currentMode == Configuration.UI_MODE_NIGHT_NO && mode == AppCompatDelegate.MODE_NIGHT_YES) {
+            AppCompatDelegate.setDefaultNightMode(mode);
+        } else if (currentMode == Configuration.UI_MODE_NIGHT_YES && mode == AppCompatDelegate.MODE_NIGHT_NO) {
+            AppCompatDelegate.setDefaultNightMode(mode);
+        }
     }
 
     private void configureDownload(String episode) {
@@ -538,9 +563,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             }
         }
         if (BuildConfig.DEBUG) { LOG_V("episodesToDownload: " + episodesToDownload); }
+        if (downloadDialogTitle == null) {
+            downloadDialogTitle = getResources().getString(R.string.play);
+        }
         configureDownloadDialog = new AlertDialog.Builder(this)
                 .setCancelable(true)
-                .setTitle(DOWNLOAD_DIALOG_TITLE)
+                .setTitle(downloadDialogTitle)
                 .setMultiChoiceItems(namesToShow.toArray(new String[0]), checkedItems, new DialogInterface.OnMultiChoiceClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i, boolean checked) {
@@ -559,11 +587,11 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                         } else {
                             positiveButton.setEnabled(false);
                         }
-                        updateDownloadDialogTitle(configureDownloadDialog, downloadMb);
+                        updateDownloadDialogTitle(configureDownloadDialog, downloadDialogTitle, downloadMb);
                     }
                 })
                 .setNegativeButton(android.R.string.cancel, null)
-                .setPositiveButton("Play", new DialogInterface.OnClickListener() {
+                .setPositiveButton(downloadDialogTitle, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int which) {
                         if (episodesToDownload.isEmpty()) {
@@ -637,8 +665,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         return downloadedEpisodes;
     }
 
-    private static void updateDownloadDialogTitle(AlertDialog configureDownloadDialog, long downloadMb) {
-        String title = DOWNLOAD_DIALOG_TITLE;
+    private static void updateDownloadDialogTitle(AlertDialog configureDownloadDialog, String plainTitle, long downloadMb) {
+        String title = plainTitle;
         if (downloadMb > 0) {
             // TODO: ovde prebaciti da daje približno trajanje
             // title = title + String.format(Locale.US, " (oko %d MB)", downloadMb);

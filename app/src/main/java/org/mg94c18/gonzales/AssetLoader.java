@@ -1,6 +1,7 @@
 package org.mg94c18.gonzales;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.AssetManager;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -97,10 +98,16 @@ public final class AssetLoader {
         }
     }
 
+
+    public @NonNull static List<String> loadFromAssetOrUpdateOrCyrillic(final Context context, final String assetName, final long syncIndex) {
+        boolean isCyrillicMode = MainActivity.getSharedPreferences(context).getBoolean(MainActivity.CYRILLIC_MODE, false);
+        final String suffix = isCyrillicMode && !assetName.equals("abvgd") ? ".cirilica" : "";
+        return loadFromAssetOrUpdate(context, assetName + suffix, syncIndex);
+    }
+
     public @NonNull static List<String> loadFromAssetOrUpdate(final Context context, final String assetName, final long syncIndex) {
         List<String> fromAsset = loadFromAsset(assetName, context.getAssets());
         if (syncIndex < 0) {
-            if (BuildConfig.DEBUG) { LOG_V("SyncIndex < 0"); }
             return fromAsset;
         }
         File assetDir = new File (context.getFilesDir(), ASSETS + syncIndex);
@@ -259,9 +266,9 @@ public final class AssetLoader {
         final List<String> numbers;
         final List<String> dates;
         if (BuildConfig.DEBUG) { LOG_V("Begin loading: " + System.currentTimeMillis()); }
-        titles = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.TITLES, syncIndex);
+        titles = AssetLoader.loadFromAssetOrUpdateOrCyrillic(context, AssetLoader.TITLES, syncIndex);
         numbers = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.NUMBERS, syncIndex);
-        dates = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.DATES, syncIndex);
+        dates = AssetLoader.loadFromAssetOrUpdateOrCyrillic(context, AssetLoader.DATES, syncIndex);
         if (BuildConfig.DEBUG) { LOG_V("End loading: " + System.currentTimeMillis()); }
 
         int count = titles.size();
@@ -274,5 +281,11 @@ public final class AssetLoader {
 
         MainActivity.updateAssets(titles, numbers, dates, hiddenTitles);
         SearchProvider.populateTrie(context, numbers, titles);
+
+        if (PlaybackService.inForeground) {
+            Intent intent = new Intent(context, PlaybackService.class);
+            intent.setAction(PlaybackService.ACTION_ASSET_UPDATE);
+            context.startService(intent);
+        }
     }
 }

@@ -14,6 +14,7 @@ import androidx.test.filters.MediumTest;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -53,6 +54,9 @@ public class WordPatternTest {
             String[] words;
             for (int i = 2; i < lines.size(); i++) {
                 line = lines.get(i);
+                if (line.equals("§")) {
+                    line = line.substring(1);
+                }
                 line = SearchProvider.htmlTags.matcher(line).replaceAll("");
                 words = SearchProvider.splitPattern.split(line);
                 for (String word : words) {
@@ -88,8 +92,24 @@ public class WordPatternTest {
             Assert.assertTrue(number, bukvalno.get(1).isEmpty());
 
             if (bukvalno.size() > 3) {
+                boolean inTips = false;
+                String line;
                 for (int i = 2; i < bukvalno.size(); i++) {
-                    Assert.assertTrue(lines.get(i) + "->" + bukvalno.get(i), wordGroupingsMatch(lines.get(i), bukvalno.get(i)));
+                    line = lines.get(i);
+                    if (line.equals("§")) {
+                        inTips = true;
+                        Assert.assertTrue(bukvalno.get(i).equals(line));
+                        continue;
+                    }
+                    if (inTips) {
+                        if (lines.get(i).isBlank()) {
+                            Assert.assertTrue(line, bukvalno.get(i).isBlank());
+                        } else {
+                            Assert.assertFalse(line, bukvalno.get(i).isBlank());
+                        }
+                    } else {
+                        Assert.assertTrue(lines.get(i) + "->" + bukvalno.get(i), wordGroupingsMatch(lines.get(i), bukvalno.get(i)));
+                    }
                 }
             }
             if (finalno.size() > 3) {
@@ -140,7 +160,7 @@ public class WordPatternTest {
         }
     }
 
-    private static Set<String> allowedNonPlainKeys = Set.of("ǆ", "ǉ", "ǌ");
+    private static Set<String> allowedNonPlainKeys = Set.of("§");
     @Test
     public void testTrieKeysArePlain() {
         // č -> da se nalazi pod 'c'
@@ -158,7 +178,7 @@ public class WordPatternTest {
         Assert.assertTrue(nonPlainKeys.toString(), nonPlainKeys.isEmpty());
 
         int wc = SearchProvider.wordCount();
-        Assert.assertTrue("" + wc, wc > (context.getPackageName().contains("englez") ? 3236 : 1799));
+        Assert.assertTrue("" + wc, wc > (context.getPackageName().contains("englez") ? 3236 : 2520));
     }
 
     @Test
@@ -189,6 +209,7 @@ public class WordPatternTest {
 
         if (context.getPackageName().contains("englez")) {
             verifyReference(context,"pub", 18, "inat");
+            verifyReference(context, "zlatibore", 31, "vino");
         }
     }
 

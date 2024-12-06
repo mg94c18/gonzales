@@ -50,6 +50,11 @@ public class SearchProvider extends ContentProvider {
         return trie != null;
     }
 
+    public static synchronized void invalidateAssets() {
+        trie = null;
+        threadKickedOff = false;
+    }
+
     private static class Position {
         @Override
         public int hashCode() {
@@ -189,7 +194,7 @@ public class SearchProvider extends ContentProvider {
             if (number.equals("abvgd")) {
                 continue;
             }
-            lines = AssetLoader.loadFromAssetOrUpdate(context, number, MainActivity.syncIndex);
+            lines = AssetLoader.loadFromAssetOrUpdateOrCyrillic(context, number, MainActivity.syncIndex);
             for (int j = 2; j < lines.size(); j++) {
                 String line = htmlTags.matcher(lines.get(j)).replaceAll("").toLowerCase();
                 line = PageAdapter.hintsPattern.matcher(line).replaceAll("");
@@ -550,23 +555,22 @@ public class SearchProvider extends ContentProvider {
             }
         }
         int resultCount = 0;
+        resultCount += tryAddingHiddenResults(Set.of(query), cursor);
+
         if (searchFrom != null) {
             resultCount = trieQuery(query, searchWhat, searchFrom, cursor, new HashSet<>());
         } else {
             resultCount = stdQuery(searchWhat, cursor);
         }
 
-        if (resultCount == 0) {
-            tryAddingHiddenResults(Set.of(query), cursor);
-        }
-
         return cursor;
     }
 
-    private void tryAddingHiddenResults(Set<String> querySet, MatrixCursor cursor) {
+    private int tryAddingHiddenResults(Set<String> querySet, MatrixCursor cursor) {
         Context context = getContext();
+        int resultCount = 0;
         if (context == null) {
-            return;
+            return resultCount;
         }
 
         for (int i = 0; i < HIDDEN_TITLES.size(); i++) {
@@ -583,8 +587,10 @@ public class SearchProvider extends ContentProvider {
                 builder.add(HIDDEN_TITLES.get(i)); // SearchManager.SUGGEST_COLUMN_TEXT_1
                 builder.add(""); // SearchManager.SUGGEST_COLUMN_TEXT_2
                 builder.add(Integer.toString(-1 * (i + 1))); // SearchManager.SUGGEST_COLUMN_INTENT_EXTRA_DATA
+                resultCount += 1;
             }
         }
+        return resultCount;
     }
 
     @Nullable
