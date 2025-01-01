@@ -49,6 +49,13 @@ android {
             applicationId "org.mg94c18.slusac"
         }
     }
+
+    // https://robolectric.org/getting-started/
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
@@ -65,6 +72,10 @@ dependencies {
 
     testImplementation libs.junit
     testImplementation "androidx.test.ext:junit:1.2.1"
+
+    // https://robolectric.org/getting-started/
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.robolectric:robolectric:4.14'
 
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core

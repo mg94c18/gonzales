@@ -11,8 +11,9 @@ import java.util.List;
 import java.util.Scanner;
 
 public class HostUnitTest {
+    // for n in $(cat app/src/dijaspora/assets/numbers | grep -v abvgd) titles dates; do echo $n; cat app/src/dijaspora/assets/$n | /Library/Java/JavaVirtualMachines/amazon-corretto-17.jdk/Contents/Home/bin/java -javaagent:/Applications/IntelliJ\ IDEA.app/Contents/lib/idea_rt.jar=51954:/Applications/IntelliJ\ IDEA.app/Contents/bin -Dfile.encoding=UTF-8 -classpath /Users/sstevano/Documents/my/src/Workspace/Hello/out/production/Hello a3byka.Hijeroglif > app/src/dijaspora/assets/$n.cirilica; done
     @Test
-    public void translationIsUpToDate() throws Exception {
+    public void originalCyrillicIsUpToDate() throws Exception {
         String assetsDir = System.getProperty("user.dir") + "/src/dijaspora/assets/";
         Scanner numbers = new Scanner(new FileInputStream(assetsDir + "numbers"));
 
@@ -23,7 +24,7 @@ public class HostUnitTest {
         String number;
         while (numbers.hasNextLine()) {
             number = numbers.nextLine();
-            Assert.assertTrue(number, fileIsOlder(assetsDir + number, assetsDir + number + ".cirilica"));
+            Assert.assertTrue(number, fileIsOlder(assetsDir + number, assetsDir + number + AssetLoader.CYRILLIC_SUFFIX));
         }
 
         List<String> otherAssets = List.of("titles", "dates");
@@ -31,6 +32,34 @@ public class HostUnitTest {
             Assert.assertTrue(a, fileIsOlder(assetsDir + a, assetsDir + a + ".cirilica"));
         }
         numbers.close();
+    }
+
+    // for n in $(cat app/src/gonzales/assets/numbers | grep -B 100 shakira | grep -vE "chatarra") ; do for p in bukvalno finalno; do echo $n; cat app/src/gonzales/assets/$n.$p | /Applications/Android\ Studio.app//Contents/jbr/Contents/Home/bin/java -cp . a3byka.Hijeroglif > app/src/gonzales/assets/$n.$p.cirilica; done; done
+    @Test
+    public void translationCyrillicIsUpToDate() throws Exception {
+        String assetsDir = System.getProperty("user.dir") + "/src/gonzales/assets/";
+        Scanner numbers = new Scanner(new FileInputStream(assetsDir + "numbers"));
+        int checkedCount = 0;
+        List<String> translations = List.of(".bukvalno", ".finalno");
+
+        String number;
+        String numberTranslation;
+        while (numbers.hasNextLine()) {
+            number = numbers.nextLine();
+            for (String translation : translations) {
+                numberTranslation = number + translation;
+                if (fileExists(assetsDir + numberTranslation + AssetLoader.CYRILLIC_SUFFIX)) {
+                    Assert.assertTrue(number, fileIsOlder(assetsDir + numberTranslation, assetsDir + numberTranslation + AssetLoader.CYRILLIC_SUFFIX));
+                    checkedCount++;
+                }
+            }
+        }
+        numbers.close();
+        Assert.assertTrue(checkedCount >= 62);
+    }
+
+    private static boolean fileExists(String path) {
+        return new File(path).exists();
     }
 
     private static boolean fileIsOlder(String path1, String path2) {

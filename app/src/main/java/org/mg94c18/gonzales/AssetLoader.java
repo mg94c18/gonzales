@@ -100,11 +100,16 @@ public final class AssetLoader {
         }
     }
 
-
+    public static final String CYRILLIC_SUFFIX = ".cirilica";
     public @NonNull static List<String> loadFromAssetOrUpdateOrCyrillic(final Context context, final String assetName, final long syncIndex) {
         boolean isCyrillicMode = MainActivity.getSharedPreferences(context).getBoolean(MainActivity.CYRILLIC_MODE, false);
-        final String suffix = isCyrillicMode && !assetName.equals("abvgd") ? ".cirilica" : "";
-        return loadFromAssetOrUpdate(context, assetName + suffix, syncIndex);
+        final String suffix = isCyrillicMode ? CYRILLIC_SUFFIX : "";
+        List<String> result = loadFromAssetOrUpdate(context, assetName + suffix, syncIndex);
+        if (result.isEmpty() && !suffix.isEmpty()) {
+            // Fallback
+            result = loadFromAssetOrUpdate(context, assetName, syncIndex);
+        }
+        return result;
     }
 
     public @NonNull static List<String> loadFromAssetOrUpdate(final Context context, final String assetName, final long syncIndex) {

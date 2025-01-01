@@ -66,7 +66,7 @@ public class ExternalStorageHelper {
     }
 
     public static File getMyCacheDir(Context context) {
-        if (context.getPackageName().endsWith(".slusac")) {
+        if (context.getPackageName().endsWith(".slusac.d")) {
             return context.getExternalCacheDir();
         } else {
             return context.getCacheDir();

@@ -313,6 +313,7 @@ public class PlaybackService extends Service implements MediaPlayer.OnPreparedLi
         player.pause();
         state = State.PAUSED;
         myStartForeground(false, true);
+        saveOrInvalidateState();
     }
 
     private static int[] episodeIdsFromNumbers(Set<String> numberSet, List<String> numbers) {

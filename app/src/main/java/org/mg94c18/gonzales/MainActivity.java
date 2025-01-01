@@ -166,7 +166,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
 
         dismissAlertDialogs();
-        // TODO: ovde dodati za a3byky
         String[] quotes = {SearchProvider.HIDDEN_TITLES.get(episode)};
         quoteDialog = new AlertDialog.Builder(this)
                 .setTitle(SearchProvider.HIDDEN_TITLES.get(episode))
@@ -174,6 +173,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
+                        if (!SearchProvider.HIDDEN_TITLES.get(episode).equals("a3byka")) {
+                            return;
+                        }
                         SharedPreferences preferences = getSharedPreferences();
                         boolean cyrillic = preferences.getBoolean(CYRILLIC_MODE, false);
                         // 12-05 18:19:27.541 29825 30102 E dijaspora: Nijedna zora ne svane != Ниједна зора не сване

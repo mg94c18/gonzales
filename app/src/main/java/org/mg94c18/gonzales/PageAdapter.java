@@ -136,8 +136,8 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         this.searchedWord = searchedWord;
         SharedPreferences preferences = MainActivity.getSharedPreferences(context);
         links = AssetLoader.loadFromAssetOrUpdateOrCyrillic(context, episode, MainActivity.syncIndex);
-        bukvalno = AssetLoader.loadFromAssetOrUpdate(context, episode + ".bukvalno", MainActivity.syncIndex);
-        finalno = AssetLoader.loadFromAssetOrUpdate(context, episode + ".finalno", MainActivity.syncIndex);
+        bukvalno = AssetLoader.loadFromAssetOrUpdateOrCyrillic(context, episode + ".bukvalno", MainActivity.syncIndex);
+        finalno = AssetLoader.loadFromAssetOrUpdateOrCyrillic(context, episode + ".finalno", MainActivity.syncIndex);
         zaPrikaz = preferences.getBoolean(PREF_BUKVALNO, true) ? bukvalno : finalno;
 
         mScaleDetector = new ScaleGestureDetector(context, this);
@@ -193,10 +193,10 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
             int newHeight = webView.getContentHeight();
             int newScrollY = (int) Math.floor(oldScrollY * newHeight * 1.0 / oldHeight);
             Log.i(TAG, "oldHeight=" + oldHeight + ",oldScrollY=" + oldScrollY + "," + "newHeight=" + newHeight + ",newY=" + newScrollY);
-            if (newScrollY > 0 && newScrollY < 1234567) {
-                webView.setScrollY(newScrollY);
-            }
             webView.post(() -> webView.setOnScrollChangeListener(null));
+            if (newScrollY > 0 && newScrollY < 1234567) {
+                webView.post(() -> webView.setScrollY(newScrollY));
+            }
         });
     }
 

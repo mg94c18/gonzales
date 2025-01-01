@@ -7,10 +7,10 @@ import android.content.Context;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 
 import androidx.test.core.app.ApplicationProvider;
-import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.filters.MediumTest;
+import org.robolectric.RobolectricTestRunner;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,8 +21,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@RunWith(AndroidJUnit4.class)
-@MediumTest
+@RunWith(RobolectricTestRunner.class)
 public class WordPatternTest {
     private static boolean surpiseCharacterExists(String number, String word) {
         String rest = word;
@@ -178,7 +177,7 @@ public class WordPatternTest {
         Assert.assertTrue(nonPlainKeys.toString(), nonPlainKeys.isEmpty());
 
         int wc = SearchProvider.wordCount();
-        Assert.assertTrue("" + wc, wc > (context.getPackageName().contains("englez") ? 3236 : 2520));
+        Assert.assertTrue("" + wc, wc > (context.getPackageName().contains("englez") ? 3236 : 5350));
     }
 
     @Test
