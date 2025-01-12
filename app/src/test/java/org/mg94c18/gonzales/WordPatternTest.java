@@ -10,12 +10,9 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 
 import androidx.test.core.app.ApplicationProvider;
-import org.robolectric.RobolectricTestRunner;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -78,9 +75,9 @@ public class WordPatternTest {
             List<String> bukvalno = AssetLoader.loadFromAssetOrUpdate(context, number + ".bukvalno", MainActivity.syncIndex);
             List<String> finalno = AssetLoader.loadFromAssetOrUpdate(context, number + ".finalno", MainActivity.syncIndex);
 
-            Assert.assertFalse(lines.isEmpty());
-            Assert.assertFalse(bukvalno.isEmpty());
-            Assert.assertFalse(finalno.isEmpty());
+            Assert.assertFalse(number, lines.isEmpty());
+            Assert.assertFalse(number, bukvalno.isEmpty());
+            Assert.assertFalse(number, finalno.isEmpty());
 
             Assert.assertTrue(number,lines.size() == bukvalno.size() || bukvalno.size() == 3);
             Assert.assertTrue(number,lines.size() == finalno.size() || finalno.size() == 3);
@@ -113,7 +110,7 @@ public class WordPatternTest {
             }
             if (finalno.size() > 3) {
                 for (int i = 2; i < finalno.size(); i++) {
-                    String message = "'" + lines.get(i) + "' -> '" + finalno.get(i) + "'";
+                    String message = number + " (" + i + ") : '" + lines.get(i) + "' -> '" + finalno.get(i) + "'";
                     if (lines.get(i).isBlank()) {
                         Assert.assertTrue(message, finalno.get(i).isBlank());
                     } else {
@@ -177,7 +174,7 @@ public class WordPatternTest {
         Assert.assertTrue(nonPlainKeys.toString(), nonPlainKeys.isEmpty());
 
         int wc = SearchProvider.wordCount();
-        Assert.assertTrue("" + wc, wc > (context.getPackageName().contains("englez") ? 3236 : 5350));
+        Assert.assertTrue("" + wc, wc > (context.getPackageName().contains("englez") ? 5680 : 6020));
     }
 
     @Test
@@ -192,9 +189,9 @@ public class WordPatternTest {
             List<String> bukvalno = AssetLoader.loadFromAssetOrUpdate(context, number + ".bukvalno", MainActivity.syncIndex);
             List<String> finalno = AssetLoader.loadFromAssetOrUpdate(context, number + ".finalno", MainActivity.syncIndex);
 
-            Assert.assertFalse(lines.isEmpty());
-            Assert.assertFalse(bukvalno.isEmpty());
-            Assert.assertFalse(finalno.isEmpty());
+            Assert.assertFalse(number, lines.isEmpty());
+            Assert.assertFalse(number, bukvalno.isEmpty());
+            Assert.assertFalse(number, finalno.isEmpty());
 
             Assert.assertTrue(number,lines.size() == bukvalno.size() || bukvalno.size() == 3);
             Assert.assertTrue(number,lines.size() == finalno.size() || finalno.size() == 3);

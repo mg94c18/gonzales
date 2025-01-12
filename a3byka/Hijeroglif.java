@@ -5,8 +5,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public class Hijeroglif {
+    private static Pattern youtubeReferences = Pattern.compile("^orig: [a-zA-Z0-9_\\-]{11},.*");
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         String line;
@@ -14,10 +16,11 @@ public class Hijeroglif {
 
         while (scanner.hasNextLine()) {
             line = scanner.nextLine();
-            if (line.startsWith("https") || line.startsWith("artistic")) {
+            if (line.startsWith("https") || line.startsWith("artistic") || youtubeReferences.matcher(line).matches()) {
                 prevod = line;
             } else {
                 prevod = naCirilicu(line);
+                prevod = paSeVratimDaVratim(prevod);
             }
             System.out.println(prevod);
         }
@@ -25,6 +28,7 @@ public class Hijeroglif {
 
     private static Map<String, String> cirilica;
     private static Set<String> dvoslovni;
+    private static Map<Pattern, String> strancizmi;
 
     static {
         cirilica = new HashMap<>();
@@ -89,7 +93,8 @@ public class Hijeroglif {
         cirilica.put("Dž", "Џ");
         cirilica.put("Š", "Ш");
         // Ostala slova
-        cirilica.put("Y", "J"); // Yoda
+        cirilica.put("Y", "J"); // Yoda, YouTube
+        cirilica.put("y", "у"); // user friendly
         cirilica.put("x", "*"); // x8
         cirilica.put("W", "В"); // WC
         // Naglasci
@@ -140,6 +145,13 @@ public class Hijeroglif {
                 dvoslovni.add(entries.getKey());
             }
         }
+
+        strancizmi = new HashMap<>();
+        strancizmi.put(Pattern.compile("усер фриендлу"), "user friendly");
+        strancizmi.put(Pattern.compile("ЈоуТубе"), "YouTube");
+        strancizmi.put(Pattern.compile("цонвениенце"), "convenience");
+        strancizmi.put(Pattern.compile("онлине"), "online");
+        strancizmi.put(Pattern.compile("маинстреам"), "mainstream");
     }
 
     private static String naCirilicu(String line) {
@@ -171,5 +183,12 @@ public class Hijeroglif {
             line = ostatak;
         }
         return builder.toString();
+    }
+
+    private static String paSeVratimDaVratim(String prevod) {
+        for (Map.Entry<Pattern, String> entry : strancizmi.entrySet()) {
+            prevod = entry.getKey().matcher(prevod).replaceAll(entry.getValue());
+        }
+        return prevod;
     }
 }

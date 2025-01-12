@@ -11,4 +11,6 @@
     <string name="default_episode_title">B02</string>
     <string name="default_episode_number">B02</string>
     <string name="default_episode_author">B02</string>
+    <string name="rationale_title">rationale_title</string>
+    <string name="rationale">rationale</string>
 </resources>

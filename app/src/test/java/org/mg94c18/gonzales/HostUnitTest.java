@@ -5,13 +5,14 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Scanner;
 
 public class HostUnitTest {
-    // for n in $(cat app/src/dijaspora/assets/numbers | grep -v abvgd) titles dates; do echo $n; cat app/src/dijaspora/assets/$n | /Library/Java/JavaVirtualMachines/amazon-corretto-17.jdk/Contents/Home/bin/java -javaagent:/Applications/IntelliJ\ IDEA.app/Contents/lib/idea_rt.jar=51954:/Applications/IntelliJ\ IDEA.app/Contents/bin -Dfile.encoding=UTF-8 -classpath /Users/sstevano/Documents/my/src/Workspace/Hello/out/production/Hello a3byka.Hijeroglif > app/src/dijaspora/assets/$n.cirilica; done
+    // for n in $(cat app/src/dijaspora/assets/numbers | grep -v abvgd) titles dates; do echo $n; cat app/src/dijaspora/assets/$n | /Applications/Android\ Studio.app//Contents/jbr/Contents/Home/bin/java -classpath . a3byka.Hijeroglif > app/src/dijaspora/assets/$n.cirilica; done
     @Test
     public void originalCyrillicIsUpToDate() throws Exception {
         String assetsDir = System.getProperty("user.dir") + "/src/dijaspora/assets/";
@@ -24,6 +25,7 @@ public class HostUnitTest {
         String number;
         while (numbers.hasNextLine()) {
             number = numbers.nextLine();
+            Assert.assertTrue(number, firstLineMatches(assetsDir + number, assetsDir + number + AssetLoader.CYRILLIC_SUFFIX));
             Assert.assertTrue(number, fileIsOlder(assetsDir + number, assetsDir + number + AssetLoader.CYRILLIC_SUFFIX));
         }
 
@@ -60,6 +62,20 @@ public class HostUnitTest {
 
     private static boolean fileExists(String path) {
         return new File(path).exists();
+    }
+
+    private static boolean firstLineMatches(String path1, String path2) throws FileNotFoundException {
+        File file1 = new File(path1);
+        File file2 = new File(path2);
+        Scanner scanner1 = new Scanner(new FileInputStream(file1));
+        Scanner scanner2 = new Scanner(new FileInputStream(file2));
+
+        boolean matches = scanner1.hasNextLine() && scanner2.hasNextLine() && scanner1.nextLine().equals(scanner2.nextLine());
+
+        scanner1.close();
+        scanner2.close();
+
+        return matches;
     }
 
     private static boolean fileIsOlder(String path1, String path2) {
