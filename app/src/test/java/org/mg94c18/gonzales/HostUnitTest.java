@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Scanner;
 
 public class HostUnitTest {
-    // for n in $(cat app/src/dijaspora/assets/numbers | grep -v abvgd) titles dates; do echo $n; cat app/src/dijaspora/assets/$n | /Applications/Android\ Studio.app//Contents/jbr/Contents/Home/bin/java -classpath . a3byka.Hijeroglif > app/src/dijaspora/assets/$n.cirilica; done
+    // for n in $(cat app/src/dijaspora/assets/numbers | grep -v abvgd) titles dates; do echo $n; cat app/src/dijaspora/assets/$n | /Applications/Android\ Studio.app/Contents/jbr/Contents/Home/bin/java -classpath . a3byka.Hijeroglif > app/src/dijaspora/assets/$n.cirilica; done
     @Test
     public void originalCyrillicIsUpToDate() throws Exception {
         String assetsDir = System.getProperty("user.dir") + "/src/dijaspora/assets/";
@@ -36,7 +36,7 @@ public class HostUnitTest {
         numbers.close();
     }
 
-    // for n in $(cat app/src/gonzales/assets/numbers | grep -B 100 shakira | grep -vE "chatarra") ; do for p in bukvalno finalno; do echo $n; cat app/src/gonzales/assets/$n.$p | /Applications/Android\ Studio.app//Contents/jbr/Contents/Home/bin/java -cp . a3byka.Hijeroglif > app/src/gonzales/assets/$n.$p.cirilica; done; done
+    // for n in $(cat app/src/gonzales/assets/numbers | grep -B 100 shakira | grep -vE "chatarra") ; do for p in bukvalno finalno; do echo $n; cat app/src/gonzales/assets/$n.$p | /Applications/Android\ Studio.app/Contents/jbr/Contents/Home/bin/java -cp . a3byka.Hijeroglif > app/src/gonzales/assets/$n.$p.cirilica; done; done
     @Test
     public void translationCyrillicIsUpToDate() throws Exception {
         String assetsDir = System.getProperty("user.dir") + "/src/gonzales/assets/";

@@ -231,9 +231,9 @@ public class SearchProvider extends ContentProvider {
         akasMap.put(Set.of("s", "š"), "s");
         akasMap.put(Set.of("d", "đ"), "d");
         akasMap.put(Set.of("z", "ž"), "z");
-        akasMap.put(Set.of("a", "á", "ȁ", "â"), "a");
+        akasMap.put(Set.of("a", "á", "ȁ", "â", "à"), "a");
         akasMap.put(Set.of("e", "ȅ", "è", "é", "ê"), "e");
-        akasMap.put(Set.of("i", "ȉ","í"), "i");
+        akasMap.put(Set.of("i", "ȉ", "í", "î"), "i");
         akasMap.put(Set.of("o", "ȍ", "ò", "ó"), "o");
         akasMap.put(Set.of("u", "ȕ", "ú", "ü"), "u");
         akasMap.put(Set.of("n", "ñ"), "n");

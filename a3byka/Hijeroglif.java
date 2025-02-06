@@ -7,6 +7,7 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+// /Applications/Android\ Studio.app/Contents/jbr/Contents/Home/bin/javac a3byka/Hijeroglif.java
 public class Hijeroglif {
     private static Pattern youtubeReferences = Pattern.compile("^orig: [a-zA-Z0-9_\\-]{11},.*");
     public static void main(String[] args) {

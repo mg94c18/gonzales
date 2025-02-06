@@ -18,6 +18,7 @@ import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.ProgressBar;
 
@@ -45,6 +46,9 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
     Context context;
     Button button;
     private WebView webView;
+    private String PREF_PSH = "ps.height";
+    private String PREF_PSE = "ps.episode";
+    private String PREF_PSY = "ps.y";
     private boolean inLandscape;
     private int currentWidth;
     MyLoadTask loadTask;
@@ -162,7 +166,10 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
             currentWidth = 5;
         }
         updateScaleFromPrefs(context, webView);
-        refreshWebView();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            setInitialScrollRecovery();
+        }
+        refreshWebView(false);
 
         ProgressBar progressBar = activity.findViewById(R.id.progressBar);
         progressBar.setVisibility(View.VISIBLE);
@@ -173,8 +180,43 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         loadTask.execute();
     }
 
-    private void refreshWebView() {
-        refreshWebView(false);
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private void setInitialScrollRecovery() {
+        int savedScrollHeight;
+        float savedScrollY;
+        String savedEpisode;
+        SharedPreferences preferences = MainActivity.getSharedPreferences(context);
+        savedScrollHeight = preferences.getInt(PREF_PSH, -1);
+        savedScrollY = preferences.getFloat(PREF_PSY, -1f);
+        savedEpisode = preferences.getString(PREF_PSE, "");
+        if (!episode.equals(savedEpisode)
+                || savedScrollHeight < 0
+                || savedScrollY < 0) {
+            Log.wtf(TAG, "setInitialScrollRecovery: savedScrollHeight=" + savedScrollHeight + ",savedScrollY=" + savedScrollY + ",savedEpisode=" + savedEpisode + ",episode=" + episode);
+            return;
+        }
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView webView, String url) {
+                if (webView != PageAdapter.this.webView) {
+                    Log.wtf(TAG, "onPageFinished() - unexpected webView");
+                    return;
+                }
+                webView.postVisualStateCallback(0, new WebView.VisualStateCallback() {
+                    @Override
+                    public void onComplete(long l) {
+                        int newHeight = webView.getContentHeight();
+                        if (newHeight <= 0) {
+                            Log.wtf(TAG, "WebView.VisualStateCallback: newHeight=" + newHeight);
+                        }
+                        int newScrollY = (int) Math.floor(savedScrollY / savedScrollHeight * newHeight);
+                        Log.i(TAG, "savedScrollHeight=" + savedScrollHeight + ",savedScrollY=" + savedScrollY + "," + "newHeight=" + newHeight + ",newY=" + newScrollY);
+                        webView.setScrollY(newScrollY);
+                        webView.setWebViewClient(new WebViewClient());
+                    }
+                });
+            }
+        });
     }
 
     private void refreshWebView(boolean restoreScroll) {
@@ -191,9 +233,10 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         int oldHeight = webView.getContentHeight();
         webView.setOnScrollChangeListener((view, scrollX, scrollY, oldScrollX, oldScrollY) -> {
             int newHeight = webView.getContentHeight();
-            int newScrollY = (int) Math.floor(oldScrollY * newHeight * 1.0 / oldHeight);
+            int newScrollY = (int) Math.floor(oldScrollY * 1.0 / oldHeight * newHeight);
             Log.i(TAG, "oldHeight=" + oldHeight + ",oldScrollY=" + oldScrollY + "," + "newHeight=" + newHeight + ",newY=" + newScrollY);
-            webView.post(() -> webView.setOnScrollChangeListener(null));
+
+            webView.setOnScrollChangeListener(null);
             if (newScrollY > 0 && newScrollY < 1234567) {
                 webView.post(() -> webView.setScrollY(newScrollY));
             }
@@ -202,6 +245,11 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
 
     public void destroy() {
         if (BuildConfig.DEBUG) { LOG_V("destroy(" + episode + ")"); }
+        MainActivity.getSharedPreferences(context).edit()
+                .putString(PREF_PSE, episode)
+                .putInt(PREF_PSH, webView.getContentHeight())
+                .putFloat(PREF_PSY, webView.getScrollY())
+                .apply();
         loadTask.cancel(true);
         loadTask.parentRef.clear();
         if (mediaPlayer != null) {
@@ -388,7 +436,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
                 .putInt(getScaleKey(), newZoom)
                 .apply();
         if (updateScaleFromPrefs(context, webView)) {
-            refreshWebView();
+            refreshWebView(false);
         }
     }
 

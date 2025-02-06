@@ -1,5 +1,6 @@
 -----------------------------------------
 Search ako tražim "acab", a nađe/ponudi acabo, acaba, acaban i acabado, sve u jednoj pesmi, onda treba sve da bude bold, ili pak da glavna reč bude bold a da ostale budu italic
+Za duže pesme, na primer ove ankete, treba da bude kompletno skraćena verzija cele stvari, tako da na primer ima rečenica gde je ta reč ili slična reč, jedna ispod ili iznad kao kontekst, i tri tačke između.  A da se na primer u tom trenutku pojavi opcija u meniju da može da se ugasi skraćeni prikaz i da se prebaci na kompletni.
 Za Android, Search ne pamti prethodni search, mada na iOS pamti.
 Search u vodoravnom položaju: ako tražim "vino", onda će naći "rujno vino" pio, ali ne i "opilo nas vin|o"
 Zapravo će da nađe pesmu, ali neće da stavi u bold.
@@ -13,6 +14,25 @@ spinner se nije ugasio kad sam dodao escucha.mp3 i probao download preko cellula
 nije se ugasio ni kad sam otišao na drugu pesmu; simulirati sa WiFi sharing ali bez kabla, ili pak preko emulatora
 
 Ako ostavim da svira i koristim start/stop na slušalicama (kod provere, na primer), ekran se uopšte ne gasi sam od sebe.
+Ako tražim reč koja se javlja u dužem tekstu (bilo koji od ovih dvosatnih), jako teško se nalazi zbog skrolovanja.
+Ako tražim reč vertikalno (jer položeno je jako teško sa tastaturom), nađem je pa rotiram, opet ode na početak a trebalo bi da bude tu negde na istoj poziciji.  Ovo nije problem za pesme ali jeste za duže tekstove (ankete).
+
+"Like that" vs. "that way" za "tako", ili pak "such {female}"
+bude, budem -> be {in future}
+? self -> myself, itself
+is¿ -> true¿
+sometime, sometimes; nekad->sometime?
+	kod Vas -> near You
+	kod Moskve -> near Moskva
+	kod njih ima beba -> near [of them]
+per->by definitivno, ali tek posle commit
+{all female} -> (all female)
+	potražiti: {all, female, male, gender
+I [I xyz] -> [I xyz], za mislim, sam
+[s obzirom da]
+[like what] vs. [what like]
+[...kind...] -> da bi našao [this kind] vs. [like this]
+let me tell you -> lemme tell you, da ne bude microaggression
 
 Who?
     ovaj, ovi
