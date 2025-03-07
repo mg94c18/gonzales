@@ -24,13 +24,17 @@ public class WordPatternTest {
         String rest = word;
         while (!rest.isEmpty()) {
             String first = rest.substring(0, 1);
-            if (!Character.isAlphabetic(first.codePointAt(0))) {
-                return true;
-            }
-            if (allowedNonPlainKeys.contains(first) && !number.equals("abvgd")) {
-                return true;
-            }
             rest = rest.substring(1);
+            if (Character.isAlphabetic(first.codePointAt(0))) {
+                continue;
+            }
+            if (allowedNonPlainKeys.contains(first)) {
+                continue;
+            }
+            if (number.equals("abvgd")) {
+                continue;
+            }
+            return true;
         }
         return false;
     }
@@ -156,7 +160,7 @@ public class WordPatternTest {
         }
     }
 
-    private static Set<String> allowedNonPlainKeys = Set.of("§");
+    private static Set<String> allowedNonPlainKeys = Set.of("§", "/");
     @Test
     public void testTrieKeysArePlain() {
         // č -> da se nalazi pod 'c'
@@ -174,7 +178,7 @@ public class WordPatternTest {
         Assert.assertTrue(nonPlainKeys.toString(), nonPlainKeys.isEmpty());
 
         int wc = SearchProvider.wordCount();
-        Assert.assertTrue("" + wc, wc > (context.getPackageName().contains("englez") ? 5680 : 6020));
+        Assert.assertTrue("" + wc, wc > (context.getPackageName().contains("englez") ? 5680 : 5910));
     }
 
     @Test

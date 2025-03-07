@@ -126,15 +126,23 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
     PageAdapter(MainActivity activity, String episode, String author, String searchedWord) {
         if (BuildConfig.DEBUG) { LOG_V("PageAdapter(" + episode + ")"); }
 
+        this.context = activity;
+
         if (explicits == null) {
             explicits = new HashMap<>();
-            explicits.put(Pattern.compile("((f)uck)", Pattern.CASE_INSENSITIVE), "***");
-            explicits.put(Pattern.compile("((d)ick)", Pattern.CASE_INSENSITIVE), "***");
-            explicits.put(Pattern.compile("((c)unt)", Pattern.CASE_INSENSITIVE), "***");
-            // explicits.put(Pattern.compile("(([Ss])hit)"), "***");
+
+            if (context.getPackageName().contains("englez")) {
+                explicits.put(Pattern.compile("((f)uck)", Pattern.CASE_INSENSITIVE), "***");
+                explicits.put(Pattern.compile("((d)ick)", Pattern.CASE_INSENSITIVE), "***");
+                explicits.put(Pattern.compile("((c)unt)", Pattern.CASE_INSENSITIVE), "***");
+                // explicits.put(Pattern.compile("(([Ss])hit)"), "***");
+            } else {
+                explicits.put(Pattern.compile("((j)eb)", Pattern.CASE_INSENSITIVE), "**");
+                explicits.put(Pattern.compile("((k)urac)", Pattern.CASE_INSENSITIVE), "****");
+                explicits.put(Pattern.compile("((p)ičk)", Pattern.CASE_INSENSITIVE), "***");
+            }
         }
 
-        this.context = activity;
         this.episode = episode;
         this.author = author;
         this.searchedWord = searchedWord;

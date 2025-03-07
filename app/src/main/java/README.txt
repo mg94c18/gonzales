@@ -156,10 +156,22 @@ Da dodam da glas (tenor, sopran, bas, alt) može da se promeni kroz search kao e
 
 -----------------------------------------
 
+Za pravljenje CD-ova:
+for i in $(seq -f "%02g" 1 41); do mv $(cat ../app/src/dijaspora/assets/numbers | head -n $i | tail -n 1).mp3 $i.mp3; done
+
+for f in $(cat ../app/src/gonzales/assets/numbers); do s3cmd get s3://mg94c18gonzales/$f.mp3; done
+for i in $(seq -f "%02g" 1 41); do mv $(cat ../app/src/gonzales/assets/numbers | head -n $i | tail -n 1).mp3 $i.mp3; done
+
 Slušač:
+
+Još za učenje:
+https://www.youtube.com/@HolaSpanish ali ima dosta koji izgledaju kao da imaju engleski prevod
+https://www.youtube.com/@Linguriosa/videos možda bolje jer nema engleski, ali su teme dublje
+http://164.92.78.19/cgi-bin/YouTube_Fetch.py?channel_id=
+
 adb push ~/clones/youtube-dl/P01.mp3 /storage/emulated/0/Android/data/org.mg94c18.slusac.d/cache/B02.mp3
-Preimenovanje fajlova tako da bude broj-ID.mp4: for i in $(seq -f "%02g" 1 49); do export first=$(ls *.mp4 | grep -vE "^[0-9][0-9]\-" | head -n 1) && echo mv \"${first}\" $i-$(echo ${first} | sed -e 's/.*\-//') > move1 && sh move1; done
-(da bi to radilo, samo pogledam da nema nijedan fajl koji ima dva space-a)
+(da bi preimenovanje radilo, samo pogledam da nema nijedan fajl koji ima dva space-a)
+Preimenovanje fajlova tako da bude broj-ID.mp4: for i in $(seq -f "%02g" 1 99); do export first=$(ls *.mp4 | grep -vE "^[0-9][0-9]\-" | head -n 1) && echo mv \"${first}\" $i-$(echo ${first} | sed -e 's/.*\-//') > move.$i && sh move.$i; done
 Dodavanje novih u assets: for i in $(seq -f "%02g" 1 49); do for a in dates titles numbers; do echo A$i >> app/src/slusac/assets/$a; done; done
 Stavljanje tih u mp3 pa u aplikaciju: for n in $(cat app/src/slusac/assets/numbers | tail -n 49 | tr -d 'A'); do ffmpeg -i ~/clones/youtube-dl/Alo2/$n-*.mp4 A$n.mp3 && adb push A$n.mp3 /storage/emulated/0/Android/data/org.mg94c18.slusac.d/cache/; done
 
@@ -259,6 +271,10 @@ Da svaki glagol ima italic za nastavke po licima i vremenima:
 Sve tekstove da propustim kroz neki checker za španski, pogotovu da stavim akcenat za prošlo i buduće vreme.
     na primer, ako idem ručno, mogu da koristim Pages na Mac, evo vidim da podvlači čak i stvari tipa tu->tú
     mada, ne buni se ako promenim que->qué
+
+https://www.reddit.com/r/learnspanish/comments/yiybd9/se_puede_usar_que_como_un_taquigrafia_de_porque/?rdt=38999
+Su equivalente en inglés es: absolutamente nada.
+"Su regresas" -> sebe vraćaš ili svoj vraćaš?
 
 🎓ako neko treba da uči sam (nema prevod i neće biti)
 🕑za "coming soon"

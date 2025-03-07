@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
 
 public class HostUnitTest {
     // for n in $(cat app/src/dijaspora/assets/numbers | grep -v abvgd) titles dates; do echo $n; cat app/src/dijaspora/assets/$n | /Applications/Android\ Studio.app/Contents/jbr/Contents/Home/bin/java -classpath . a3byka.Hijeroglif > app/src/dijaspora/assets/$n.cirilica; done
@@ -36,7 +37,7 @@ public class HostUnitTest {
         numbers.close();
     }
 
-    // for n in $(cat app/src/gonzales/assets/numbers | grep -B 100 shakira | grep -vE "chatarra") ; do for p in bukvalno finalno; do echo $n; cat app/src/gonzales/assets/$n.$p | /Applications/Android\ Studio.app/Contents/jbr/Contents/Home/bin/java -cp . a3byka.Hijeroglif > app/src/gonzales/assets/$n.$p.cirilica; done; done
+    // for n in $(cat app/src/gonzales/assets/numbers | grep -B 100 sondeoa) ; do for p in bukvalno finalno; do echo $n; cat app/src/gonzales/assets/$n.$p | /Applications/Android\ Studio.app/Contents/jbr/Contents/Home/bin/java -cp . a3byka.Hijeroglif > app/src/gonzales/assets/$n.$p.cirilica; done; done
     @Test
     public void translationCyrillicIsUpToDate() throws Exception {
         String assetsDir = System.getProperty("user.dir") + "/src/gonzales/assets/";
@@ -45,23 +46,81 @@ public class HostUnitTest {
         List<String> translations = List.of(".bukvalno", ".finalno");
 
         String number;
-        String numberTranslation;
+        String numberTranslationPath;
         while (numbers.hasNextLine()) {
             number = numbers.nextLine();
             for (String translation : translations) {
-                numberTranslation = number + translation;
-                if (fileExists(assetsDir + numberTranslation + AssetLoader.CYRILLIC_SUFFIX)) {
-                    Assert.assertTrue(number, fileIsOlder(assetsDir + numberTranslation, assetsDir + numberTranslation + AssetLoader.CYRILLIC_SUFFIX));
+                numberTranslationPath = assetsDir + number + translation;
+                if (fileExists(numberTranslationPath + AssetLoader.CYRILLIC_SUFFIX)) {
+                    Assert.assertTrue(number, fileIsOlder(numberTranslationPath, numberTranslationPath + AssetLoader.CYRILLIC_SUFFIX));
                     checkedCount++;
+
+                    // Možda ovo u neki drugi test, jer ovako su popravke testeraste
+                    Assert.assertFalse(numberTranslationPath, fileContainsAnyOf(new File(numberTranslationPath), Set.of("¿", "¡")));
                 }
             }
         }
         numbers.close();
-        Assert.assertTrue(checkedCount >= 62);
+        Assert.assertTrue(checkedCount >= 2 * COUNT_GONZALES_RELEASE);
+    }
+
+    private static int COUNT_GONZALES_RELEASE = 32;
+    private static int COUNT_ENGLEZ_RELEASE = 40;
+
+    @Test
+    public void testNoLeftoverCharactersSanity() throws Exception {
+        // Pišonja, Žuga...  Ne vredi baš da stavljam slova
+        // testNoLeftoverCharacters("dijaspora", Set.of("đ", "ž", "ć", "č", "š", "Đ", "Ž", "Ć", "Č", "Š"), 82);
+        testNoLeftoverCharacters("dijaspora", Set.of("ß"), 2 * COUNT_ENGLEZ_RELEASE); // Option+S umesto Cmd+S
+        testNoLeftoverCharacters("gonzales", Set.of("¿", "¡", "ß", "y"), 2 * COUNT_GONZALES_RELEASE);
+        // TODO: dodati da finalni prevod nema "takođe"
+    }
+
+    private void testNoLeftoverCharacters(String flavor, Set<String> nonGratas, int expectedCount) throws FileNotFoundException {
+        String assetsDir = System.getProperty("user.dir") + "/src/" + flavor + "/assets/";
+        Scanner numbers = new Scanner(new FileInputStream(assetsDir + "numbers"));
+        List<String> translations = List.of(".bukvalno", ".finalno");
+        int checkedCount = 0;
+
+        String number;
+        String numberTranslationPath;
+        while (numbers.hasNextLine()) {
+            number = numbers.nextLine();
+            if (number.equals("abvgd")) {
+                continue;
+            }
+            for (String translation : translations) {
+                numberTranslationPath = assetsDir + number + translation;
+                Assert.assertFalse(numberTranslationPath, fileContainsAnyOf(new File(numberTranslationPath), nonGratas));
+                checkedCount++;
+            }
+
+            if (checkedCount >= expectedCount) {
+                break;
+            }
+        }
+        numbers.close();
+        Assert.assertEquals(expectedCount, checkedCount);
     }
 
     private static boolean fileExists(String path) {
         return new File(path).exists();
+    }
+
+    private static boolean fileContainsAnyOf(File f, Set<String> nonGratas) throws FileNotFoundException {
+        Scanner scanner = new Scanner(new FileInputStream(f));
+
+        String line;
+        while (scanner.hasNextLine()) {
+            line = scanner.nextLine();
+            for (String nonGrata : nonGratas) {
+                if (line.contains(nonGrata)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private static boolean firstLineMatches(String path1, String path2) throws FileNotFoundException {
