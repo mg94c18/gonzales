@@ -171,7 +171,8 @@ http://164.92.78.19/cgi-bin/YouTube_Fetch.py?channel_id=
 
 adb push ~/clones/youtube-dl/P01.mp3 /storage/emulated/0/Android/data/org.mg94c18.slusac.d/cache/B02.mp3
 (da bi preimenovanje radilo, samo pogledam da nema nijedan fajl koji ima dva space-a)
-Preimenovanje fajlova tako da bude broj-ID.mp4: for i in $(seq -f "%02g" 1 99); do export first=$(ls *.mp4 | grep -vE "^[0-9][0-9]\-" | head -n 1) && echo mv \"${first}\" $i-$(echo ${first} | sed -e 's/.*\-//') > move.$i && sh move.$i; done
+Preimenovanje fajlova tako da bude broj-ID.mp4: for i in $(seq -f "%02g" 1 $(ls *.mp4 | wc -l)); do export first=$(ls *.mp4 | grep -vE "^[0-9][0-9]\-" | head -n 1) && echo mv -i \"${first}\" $i-$(echo ${first} | sed -e 's/.*\-//') > move.$i && sh move.$i; done
+Ili pak za više od 100: for i in $(seq -f "%03g" 1 $(ls *.mp4 | wc -l)); do export first=$(ls *.mp4 | grep -vE "^[0-9][0-9][0-9]\-" | head -n 1) && echo mv -i \"${first}\" $i-$(echo ${first} | sed -e 's/.*\-//') > move.$i && sh move.$i; done
 Dodavanje novih u assets: for i in $(seq -f "%02g" 1 49); do for a in dates titles numbers; do echo A$i >> app/src/slusac/assets/$a; done; done
 Stavljanje tih u mp3 pa u aplikaciju: for n in $(cat app/src/slusac/assets/numbers | tail -n 49 | tr -d 'A'); do ffmpeg -i ~/clones/youtube-dl/Alo2/$n-*.mp4 A$n.mp3 && adb push A$n.mp3 /storage/emulated/0/Android/data/org.mg94c18.slusac.d/cache/; done
 
