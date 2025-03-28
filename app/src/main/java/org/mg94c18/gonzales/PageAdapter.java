@@ -184,7 +184,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         webView.setTag(progressBar);
         webView.setOnTouchListener(this);
 
-        loadTask = new MyLoadTask(links, this, DownloadAndSave.fileNameFromNumber(episode));
+        loadTask = new MyLoadTask(links.isEmpty() ? "" : "https://mg94c18" + BuildConfig.FLAVOR + ".fra1.digitaloceanspaces.com/" + episode + ".mp3", this, DownloadAndSave.fileNameFromNumber(episode));
         loadTask.execute();
     }
 
@@ -472,11 +472,11 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
     private static class MyLoadTask extends AsyncTask<Void, Void, String> {
         String imageFile;
         WeakReference<PageAdapter> parentRef;
-        List<String> links;
+        final String link;
 
-        MyLoadTask(List<String> links, PageAdapter parent, String imageFile) {
+        MyLoadTask(String link, PageAdapter parent, String imageFile) {
             this.imageFile = imageFile;
-            this.links = links;
+            this.link = link;
             this.parentRef = new WeakReference<>(parent);
         }
 
@@ -531,11 +531,11 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
             if (isCancelled()) {
                 return null;
             } else {
-                if (links.isEmpty()) {
+                if (link.isEmpty()) {
                     if (BuildConfig.DEBUG) { LOG_V("No links, likely a migration scenario: " + imageFile); }
                     return null;
                 }
-                return DownloadAndSave.downloadAndSave(links.get(0), imageToDownload, 3);
+                return DownloadAndSave.downloadAndSave(link, imageToDownload, 3);
             }
         }
 

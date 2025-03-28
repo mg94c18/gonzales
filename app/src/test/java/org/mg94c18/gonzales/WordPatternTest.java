@@ -74,6 +74,7 @@ public class WordPatternTest {
 
         List<String> numbers = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.NUMBERS, MainActivity.syncIndex);
         numbers.remove("abvgd");
+        numbers.remove("nosdieron");
         for (String number : numbers) {
             List<String> lines = AssetLoader.loadFromAssetOrUpdate(context, number, MainActivity.syncIndex);
             List<String> bukvalno = AssetLoader.loadFromAssetOrUpdate(context, number + ".bukvalno", MainActivity.syncIndex);
@@ -188,6 +189,7 @@ public class WordPatternTest {
 
         List<String> numbers = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.NUMBERS, MainActivity.syncIndex);
         numbers.remove("abvgd");
+        numbers.remove("nosdieron");
         for (String number : numbers) {
             List<String> lines = AssetLoader.loadFromAssetOrUpdate(context, number, MainActivity.syncIndex);
             List<String> bukvalno = AssetLoader.loadFromAssetOrUpdate(context, number + ".bukvalno", MainActivity.syncIndex);

@@ -37,7 +37,7 @@ public class HostUnitTest {
         numbers.close();
     }
 
-    // for n in $(cat app/src/gonzales/assets/numbers | grep -B 100 sondeoa) ; do for p in bukvalno finalno; do echo $n; cat app/src/gonzales/assets/$n.$p | /Applications/Android\ Studio.app/Contents/jbr/Contents/Home/bin/java -cp . a3byka.Hijeroglif > app/src/gonzales/assets/$n.$p.cirilica; done; done
+    // for n in $(cat app/src/gonzales/assets/numbers | grep -B 100 nosdieron) ; do for p in bukvalno finalno; do echo $n; cat app/src/gonzales/assets/$n.$p | /Applications/Android\ Studio.app/Contents/jbr/Contents/Home/bin/java -cp . a3byka.Hijeroglif > app/src/gonzales/assets/$n.$p.cirilica; done; done
     @Test
     public void translationCyrillicIsUpToDate() throws Exception {
         String assetsDir = System.getProperty("user.dir") + "/src/gonzales/assets/";
@@ -129,12 +129,17 @@ public class HostUnitTest {
         Scanner scanner1 = new Scanner(new FileInputStream(file1));
         Scanner scanner2 = new Scanner(new FileInputStream(file2));
 
-        boolean matches = scanner1.hasNextLine() && scanner2.hasNextLine() && scanner1.nextLine().equals(scanner2.nextLine());
+        if (!scanner1.hasNextLine() || !scanner2.hasNextLine()) {
+            return false;
+        }
+
+        String line1 = scanner1.nextLine();
+        boolean matches = line1.equals(scanner2.nextLine());
 
         scanner1.close();
         scanner2.close();
 
-        return matches;
+        return matches && !line1.startsWith("http");
     }
 
     private static boolean fileIsOlder(String path1, String path2) {
