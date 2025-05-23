@@ -1,0 +1,229 @@
+diff --git a/app/src/main/java/org/mg94c18/gonzales/MainActivity.java b/app/src/main/java/org/mg94c18/gonzales/MainActivity.java
+index 2eaf23a..5ad4973 100755
+--- a/app/src/main/java/org/mg94c18/gonzales/MainActivity.java
++++ b/app/src/main/java/org/mg94c18/gonzales/MainActivity.java
+@@ -855,7 +855,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
+         }
+         mySetActionBarTitle(getMyActionBar(), title);
+         destroyPageAdapter();
+-        pageAdapter = new PageAdapter(this, number, author, searchedWord);
+         if (position >= 0) {
+             selectedEpisode = position;
+             if (BuildConfig.DEBUG) { LOG_V("Saving episode " + selectedEpisode); }
+@@ -872,6 +871,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
+                 updateIntentWithEpisode(intent, selectedEpisode, title, author, number);
+             }
+         }
++        pageAdapter = new PageAdapter(this, number, author, searchedWord, selectedEpisode);
+     }
+ 
+     static void updateIntentWithEpisode(Intent activityIntent, int episodeId, String title, String author, String number) {
+diff --git a/app/src/main/java/org/mg94c18/gonzales/PageAdapter.java b/app/src/main/java/org/mg94c18/gonzales/PageAdapter.java
+index 615a631..00b3b92 100644
+--- a/app/src/main/java/org/mg94c18/gonzales/PageAdapter.java
++++ b/app/src/main/java/org/mg94c18/gonzales/PageAdapter.java
+@@ -27,8 +27,10 @@ import java.io.IOException;
+ import java.lang.ref.WeakReference;
+ import java.util.ArrayList;
+ import java.util.HashMap;
++import java.util.Iterator;
+ import java.util.List;
+ import java.util.Map;
++import java.util.Set;
+ import java.util.concurrent.ExecutorService;
+ import java.util.concurrent.Executors;
+ import java.util.regex.Pattern;
+@@ -40,6 +42,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
+     List<String> finalno;
+     List<String> zaPrikaz;
+     String episode;
++    int episodeId; // not guaranteed to match episode, due to migration or faster loading
+     String author;
+     String searchedWord;
+     String localFilePath;
+@@ -123,7 +126,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
+         }
+     }
+ 
+-    PageAdapter(MainActivity activity, String episode, String author, String searchedWord) {
++    PageAdapter(MainActivity activity, String episode, String author, String searchedWord, int episodeId) {
+         if (BuildConfig.DEBUG) { LOG_V("PageAdapter(" + episode + ")"); }
+ 
+         this.context = activity;
+@@ -144,6 +147,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
+         }
+ 
+         this.episode = episode;
++        this.episodeId = episodeId;
+         this.author = author;
+         this.searchedWord = searchedWord;
+         SharedPreferences preferences = MainActivity.getSharedPreferences(context);
+@@ -233,7 +237,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
+         if (restoreScroll && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+             setRestoreScrollListener();
+         }
+-        webView.loadDataWithBaseURL("file:///android_asset/", createHtml(links, zaPrikaz, zaPrikaz == finalno, author, inLandscape, searchedWord, currentWidth), "text/html", "UTF-8", null);
++        webView.loadDataWithBaseURL("file:///android_asset/", createHtml(links, zaPrikaz, zaPrikaz == finalno, author, inLandscape, searchedWord, currentWidth, episodeId), "text/html", "UTF-8", null);
+     }
+ 
+     @RequiresApi(api = Build.VERSION_CODES.M)
+@@ -282,19 +286,86 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
+         refreshWebView(true);
+     }
+ 
+-    private static String createHtml(List<String> tekst, List<String> prevod, boolean removeGroupings, String author, boolean inLandscape, String searchedWord, int width) {
++    private static String concatenate(Set<String> words, String separator) {
++        StringBuilder builder = new StringBuilder();
++        Iterator<String> iterator = words.iterator();
++        if (!iterator.hasNext()) {
++            Log.wtf(TAG, "searchedWords.contains() is true, so we must have one");
++            return "";
++        }
++        do {
++            builder.append(iterator.next());
++            if (iterator.hasNext()) {
++                builder.append(separator);
++            } else {
++                break;
++            }
++        } while (true);
++        return builder.toString();
++    }
++
++    private static int matchAhead(List<String> tekst, int i, Pattern searchedWordPattern, int ahead) {
++        if (searchedWordPattern == null) {
++            return 0;
++        }
++        for (int j = i; j < tekst.size() && j <= i + ahead; j++) {
++            if (searchedWordPattern.matcher(tekst.get(j)).matches()) {
++                return j - i;
++            }
++        }
++        return -1;
++    }
++
++    private static String createHtml(List<String> tekst, List<String> prevod, boolean removeGroupings, String author, boolean inLandscape, String searchedWord, int width, int episodeId) {
+         StringBuilder builder = new StringBuilder();
+         Pattern searchedWordPattern = null;
++        Pattern matchAheadWordPattern = null;
+         if (!searchedWord.isEmpty()) {
+-            searchedWordPattern = Pattern.compile("\\b(" + searchedWord + ")\\b", Pattern.CASE_INSENSITIVE);
++            Set<String> searchedWords = SearchProvider.getSearchedWords(episodeId);
++            final String toMatch;
++            if (searchedWords.contains(searchedWord)) {
++                String concatenated = concatenate(searchedWords, "|");
++                toMatch = concatenated.isEmpty() ? searchedWord : concatenated;
++            } else {
++                Log.wtf(TAG, "The searched word (" + searchedWord + ") not among other " + searchedWords.size() + " words");
++                toMatch = searchedWord;
++            }
++            searchedWordPattern = Pattern.compile("\\b(" + toMatch + ")\\b", Pattern.CASE_INSENSITIVE);
++            matchAheadWordPattern = Pattern.compile("^.*\\b(" + toMatch + ")\\b.*$", Pattern.CASE_INSENSITIVE);
+         }
+ 
++        boolean shouldShorten = tekst.size() > 100;
++        final int matchContext = 2;
++        final int startLine = 2;
++        boolean inSkipping = false;
++        int nextCheck = startLine;
++
+         // TODO: Probati kao na iOS: <style>p { font-size: 5vw; }</style>
+         builder.append("<html><head><meta http-equiv=\"content-type\" value=\"UTF-8\"><title></title><style>* { font-size: ").append(width).append("vw; }</style></head><body>");
+         if (inLandscape && !prevod.isEmpty()) {
+             builder.append("<table width=\"100%\">");
+-            int i = 2;
++            int i = startLine;
+             for (; i < tekst.size(); i++) {
++                if (shouldShorten) {
++                    if (i == nextCheck) {
++                        int foundAhead = matchAhead(tekst, i, matchAheadWordPattern, matchContext);
++                        if (foundAhead < 0) {
++                            if (!inSkipping) {
++                                builder.append("<tr><td width=\"50%\">...</td><td width=\"50%\">...</td></tr>");
++                                inSkipping = true;
++                            }
++                            nextCheck = i + matchContext;
++                            continue;
++                        } else {
++                            nextCheck = i + 1 + foundAhead + matchContext;
++                        }
++                    } else {
++                        if (inSkipping) {
++                            continue;
++                        }
++                    }
++                }
++                inSkipping = false;
+                 builder.append("<tr><td width=\"50%\">");
+                 if (tekst.get(i).isEmpty()) {
+                     builder.append("&nbsp;");
+@@ -303,7 +374,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
+                 }
+                 builder.append("</td><td width=\"50%\">");
+                 if (i < prevod.size()) {
+-                    builder.append(applyFilters(prevod.get(i), true, false, searchedWordPattern));
++                    builder.append(applyFilters(prevod.get(i), true, false, null));
+                 }
+                 builder.append("</td></tr>");
+             }
+@@ -318,7 +389,27 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
+             }
+             builder.append("<p>");
+             String line;
+-            for (int i = 2; i < tekst.size(); i++) {
++            for (int i = startLine; i < tekst.size(); i++) {
++                if (shouldShorten) {
++                    if (i == nextCheck) {
++                        int foundAhead = matchAhead(tekst, i, matchAheadWordPattern, matchContext);
++                        if (foundAhead < 0) {
++                            if (!inSkipping) {
++                                builder.append("...<br>");
++                                inSkipping = true;
++                            }
++                            nextCheck = i + matchContext;
++                            continue;
++                        } else {
++                            nextCheck = i + 1 + foundAhead + matchContext;
++                        }
++                    } else {
++                        if (inSkipping) {
++                            continue;
++                        }
++                    }
++                }
++                inSkipping = false;
+                 line = tekst.get(i);
+                 if (line.startsWith("§")) {
+                     break;
+diff --git a/app/src/main/java/org/mg94c18/gonzales/SearchProvider.java b/app/src/main/java/org/mg94c18/gonzales/SearchProvider.java
+index ec2ea58..a20c433 100644
+--- a/app/src/main/java/org/mg94c18/gonzales/SearchProvider.java
++++ b/app/src/main/java/org/mg94c18/gonzales/SearchProvider.java
+@@ -155,6 +155,17 @@ public class SearchProvider extends ContentProvider {
+     private static Node lastNode = null;
+     private static String lastMatchedQuery = "";
+     private static Stack<Pair<Node, String>> nodeStack = new Stack<>();
++    private static Set<Position> lastReturnedPositions;
++
++    public static Set<String> getSearchedWords(int episodeId) {
++        Set<String> words = new HashSet<>();
++        for (Position position : lastReturnedPositions) {
++            if (position.episodeId == episodeId) {
++                words.add(position.word);
++            }
++        }
++        return words;
++    }
+ 
+     public static final Pattern splitPattern = Pattern.compile("[\\[\\] .,!?\\|¡¿:;\"\\(\\)'\\-_\\{\\}]");
+     public static final Pattern htmlTags = Pattern.compile("(<[^>]+>)|(\\{[^\\{\\}]+\\})");
+@@ -558,7 +569,8 @@ public class SearchProvider extends ContentProvider {
+         resultCount += tryAddingHiddenResults(Set.of(query), cursor);
+ 
+         if (searchFrom != null) {
+-            resultCount = trieQuery(query, searchWhat, searchFrom, cursor, new HashSet<>());
++            lastReturnedPositions = new HashSet<>();
++            resultCount = trieQuery(query, searchWhat, searchFrom, cursor, lastReturnedPositions);
+         } else {
+             resultCount = stdQuery(searchWhat, cursor);
+         }

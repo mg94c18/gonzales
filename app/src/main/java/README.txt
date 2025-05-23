@@ -169,9 +169,12 @@ https://www.youtube.com/@HolaSpanish ali ima dosta koji izgledaju kao da imaju e
 https://www.youtube.com/@Linguriosa/videos možda bolje jer nema engleski, ali su teme dublje
 http://164.92.78.19/cgi-bin/YouTube_Fetch.py?channel_id=
 
+Ovaj ima kvalitetne titles: https://www.youtube.com/@bbcnewsnasrpskom
+
 adb push ~/clones/youtube-dl/P01.mp3 /storage/emulated/0/Android/data/org.mg94c18.slusac.d/cache/B02.mp3
 (da bi preimenovanje radilo, samo pogledam da nema nijedan fajl koji ima dva space-a)
 Preimenovanje fajlova tako da bude broj-ID.mp4: for i in $(seq -f "%02g" 1 $(ls *.mp4 | wc -l)); do export first=$(ls *.mp4 | grep -vE "^[0-9][0-9]\-" | head -n 1) && echo mv -i \"${first}\" $i-$(echo ${first} | sed -e 's/.*\-//') > move.$i && sh move.$i; done
+Umesto ls *.mp4, možda je bolje cat youtube-dl-output.txt
 Ili pak za više od 100: for i in $(seq -f "%03g" 1 $(ls *.mp4 | wc -l)); do export first=$(ls *.mp4 | grep -vE "^[0-9][0-9][0-9]\-" | head -n 1) && echo mv -i \"${first}\" $i-$(echo ${first} | sed -e 's/.*\-//') > move.$i && sh move.$i; done
 Dodavanje novih u assets: for i in $(seq -f "%02g" 1 49); do for a in dates titles numbers; do echo A$i >> app/src/slusac/assets/$a; done; done
 Stavljanje tih u mp3 pa u aplikaciju: for n in $(cat app/src/slusac/assets/numbers | tail -n 49 | tr -d 'A'); do ffmpeg -i ~/clones/youtube-dl/Alo2/$n-*.mp4 A$n.mp3 && adb push A$n.mp3 /storage/emulated/0/Android/data/org.mg94c18.slusac.d/cache/; done
@@ -372,6 +375,11 @@ jerinicj@ je u Barseloni, ili potražiti nekog drugog (za anketu, ili pak za ša
 
 ffmpeg -ss 2490 -i ~/Movies/Volver.mp3 -t 340 ~/Movies/volvera.mp3
 Približno OK za dalju ručnu obradu: cat Volver.srt.es | grep -A 100000 "Ábreme, Sole\!" | grep -B 100000 "juntitas"  | grep -vE "[0-9][0-9][0-9]" | tr -d '\r' | tr '\n' '#' | sed -e 's/##/\n\- /g' | tr '#' ' ' > app/src/gonzales/assets/volvera
+cat Nazarin-8132428.srt | tr -d '\r' | grep -vE "^[0-9][0-9]?[0-9]?" | tr '\n' '#' | sed -e 's/##/\n\- /g' | tr '#' ' '| sed -e 's|<i>||g' | sed -e 's|</i>||g' > Nazarin.srt
+Stavim ovo u fajl 'script':
+cat "${1}" | tr -d '\r' | grep -vE "^[0-9][0-9]?[0-9]?" | tr '\n' '#' | sed -e 's/##/\n\- /g' | tr '#' ' '| sed -e 's|<i>||g' | sed -e 's|</i>||g' >> "${2}"
+Zatim obradim Seranove SRT preko njega:
+find ~/SRT/Seranovi/ -name \*.srt -print0 | xargs -0 -n 1 -I % /bin/bash script % %.txt
 
 ffmpeg -ss 3210 -i ~/Movies/Volver.mp3 -t 330 ~/Movies/volverb.mp3
 cat Volver.srt.es | grep -A 100000 "00:53:32,612" | grep -B 100000 "no te vayas así"  | grep -vE "[0-9][0-9][0-9]" | tr -d '\r' | tr '\n' '#' | sed -e 's/##/\n\- /g' | tr '#' ' ' > app/src/gonzales/assets/volverb
