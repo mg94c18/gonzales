@@ -124,6 +124,7 @@ public class WordPatternTest {
                 }
             }
         }
+        Assert.assertTrue(declensionsMatch);
     }
 
     private static final Pattern groupingPattern = Pattern.compile("\\[[^\\]]+\\]"); // [je rekao]
@@ -131,6 +132,7 @@ public class WordPatternTest {
     private static final Pattern noTranslationPattern = Pattern.compile("[_¿]"); // ¿ alone tonight?
     private static final Pattern insideWordSeparator = Pattern.compile("['\\-]"); // self's, passers-by, WC-a
 
+    private static boolean declensionsMatch = true;
     private static boolean wordGroupingsMatch(String tekst, String prevod) {
         tekst = groupingPattern.matcher(tekst).replaceAll("group");
         tekst = PageAdapter.hintsPattern.matcher(tekst).replaceAll("");
@@ -154,6 +156,13 @@ public class WordPatternTest {
         while (inTranslation.remove(""));
 
         if (inTranslation.size() == inText.size()) {
+            // Sad nemam više W kao pokazatelj padeža, ali mogu da prođem kasnije ponovo ako treba
+            for (int i = 0; i < inText.size(); i++) {
+                if (inText.get(i).endsWith("W") && !inTranslation.get(i).equals("group")) {
+                    System.err.println("Wrong declensions: '" + tekst + "' -> '" + prevod + "'");
+                    declensionsMatch = false;
+                }
+            }
             return true;
         } else {
             // For the breakpoint :)

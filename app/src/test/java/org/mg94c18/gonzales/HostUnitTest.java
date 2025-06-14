@@ -73,13 +73,17 @@ public class HostUnitTest {
         // testNoLeftoverCharacters("dijaspora", Set.of("đ", "ž", "ć", "č", "š", "Đ", "Ž", "Ć", "Č", "Š"), 82);
         testNoLeftoverCharacters("dijaspora", Set.of("ß"), 2 * COUNT_ENGLEZ_RELEASE); // Option+S umesto Cmd+S
         testNoLeftoverCharacters("gonzales", Set.of("¿", "¡", "ß", "y"), 2 * COUNT_GONZALES_RELEASE);
-        // TODO: dodati da finalni prevod nema "takođe"
+        testNoLeftoverCharacters("gonzales", Set.of("takođe", "]", "["), COUNT_GONZALES_RELEASE, List.of(".finalno"));
+        testNoLeftoverCharacters("dijaspora", Set.of("]", "["), COUNT_ENGLEZ_RELEASE, List.of(".finalno"));
     }
 
     private void testNoLeftoverCharacters(String flavor, Set<String> nonGratas, int expectedCount) throws FileNotFoundException {
+        testNoLeftoverCharacters(flavor, nonGratas, expectedCount, List.of(".bukvalno", ".finalno"));
+    }
+
+    private void testNoLeftoverCharacters(String flavor, Set<String> nonGratas, int expectedCount, List<String> translations) throws FileNotFoundException {
         String assetsDir = System.getProperty("user.dir") + "/src/" + flavor + "/assets/";
         Scanner numbers = new Scanner(new FileInputStream(assetsDir + "numbers"));
-        List<String> translations = List.of(".bukvalno", ".finalno");
         int checkedCount = 0;
 
         String number;
@@ -115,6 +119,7 @@ public class HostUnitTest {
             line = scanner.nextLine();
             for (String nonGrata : nonGratas) {
                 if (line.contains(nonGrata)) {
+                    System.err.println("Found " + nonGrata);
                     return true;
                 }
             }

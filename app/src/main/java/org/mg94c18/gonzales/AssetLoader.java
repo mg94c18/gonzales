@@ -273,9 +273,28 @@ public final class AssetLoader {
         final List<String> numbers;
         final List<String> dates;
         if (BuildConfig.DEBUG) { LOG_V("Begin loading: " + System.currentTimeMillis()); }
-        titles = AssetLoader.loadFromAssetOrUpdateOrCyrillic(context, AssetLoader.TITLES, syncIndex);
-        numbers = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.NUMBERS, syncIndex);
-        dates = AssetLoader.loadFromAssetOrUpdateOrCyrillic(context, AssetLoader.DATES, syncIndex);
+        if (context.getPackageName().endsWith(".slusac.d")) {
+            String[] files = ExternalStorageHelper.getMyCacheDir(context).list(new FilenameFilter() {
+                @Override
+                public boolean accept(File file, String s) {
+                    return s != null && s.endsWith(".mp3");
+                }
+            });
+            if (files == null) {
+                files = new String[0];
+            }
+            for (int i = 0; i < files.length; i++) {
+                files[i] = files[i].substring(0, files[i].length() - 4); // ".mp3"
+            }
+            Arrays.sort(files);
+            titles = Arrays.asList(files);
+            numbers = Arrays.asList(files);
+            dates = Arrays.asList(files);
+        } else {
+            titles = AssetLoader.loadFromAssetOrUpdateOrCyrillic(context, AssetLoader.TITLES, syncIndex);
+            numbers = AssetLoader.loadFromAssetOrUpdate(context, AssetLoader.NUMBERS, syncIndex);
+            dates = AssetLoader.loadFromAssetOrUpdateOrCyrillic(context, AssetLoader.DATES, syncIndex);
+        }
         if (BuildConfig.DEBUG) { LOG_V("End loading: " + System.currentTimeMillis()); }
 
         int count = titles.size();

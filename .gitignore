@@ -21,6 +21,7 @@ local.properties
 app/dijaspora
 app/gonzales
 app/antifon
+app/src/slusac/assets
 diff*
 Volver*
 Return*
@@ -30,3 +31,5 @@ Seranovi*
 cs
 na
 new2024.keystore*
+Entrevista.*.txt
+Quest*.txt
