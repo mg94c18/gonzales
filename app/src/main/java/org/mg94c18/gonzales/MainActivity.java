@@ -855,7 +855,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
         mySetActionBarTitle(getMyActionBar(), title);
         destroyPageAdapter();
-        pageAdapter = new PageAdapter(this, number, author, searchedWord);
         if (position >= 0) {
             selectedEpisode = position;
             if (BuildConfig.DEBUG) { LOG_V("Saving episode " + selectedEpisode); }
@@ -872,6 +871,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 updateIntentWithEpisode(intent, selectedEpisode, title, author, number);
             }
         }
+        pageAdapter = new PageAdapter(this, number, author, searchedWord, selectedEpisode);
     }
 
     static void updateIntentWithEpisode(Intent activityIntent, int episodeId, String title, String author, String number) {

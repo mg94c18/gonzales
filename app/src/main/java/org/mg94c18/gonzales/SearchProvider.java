@@ -155,6 +155,17 @@ public class SearchProvider extends ContentProvider {
     private static Node lastNode = null;
     private static String lastMatchedQuery = "";
     private static Stack<Pair<Node, String>> nodeStack = new Stack<>();
+    private static Set<Position> lastReturnedPositions;
+
+    public static Set<String> getSearchedWords(int episodeId) {
+        Set<String> words = new HashSet<>();
+        for (Position position : lastReturnedPositions) {
+            if (position.episodeId == episodeId) {
+                words.add(position.word);
+            }
+        }
+        return words;
+    }
 
     public static final Pattern splitPattern = Pattern.compile("[\\[\\] .,!?\\|¡¿:;\"\\(\\)'\\-_\\{\\}]");
     public static final Pattern htmlTags = Pattern.compile("(<[^>]+>)|(\\{[^\\{\\}]+\\})");
@@ -558,7 +569,8 @@ public class SearchProvider extends ContentProvider {
         resultCount += tryAddingHiddenResults(Set.of(query), cursor);
 
         if (searchFrom != null) {
-            resultCount = trieQuery(query, searchWhat, searchFrom, cursor, new HashSet<>());
+            lastReturnedPositions = new HashSet<>();
+            resultCount = trieQuery(query, searchWhat, searchFrom, cursor, lastReturnedPositions);
         } else {
             resultCount = stdQuery(searchWhat, cursor);
         }

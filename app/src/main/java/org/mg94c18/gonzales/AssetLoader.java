@@ -109,6 +109,15 @@ public final class AssetLoader {
             // Fallback
             result = loadFromAssetOrUpdate(context, assetName, syncIndex);
         }
+        if (result.isEmpty() && context.getPackageName().endsWith(".slusac.d")) {
+            File srtTxt = new File(ExternalStorageHelper.getMyCacheDir(context), assetName + ".txt");
+            if (srtTxt.exists()) {
+                result = new ArrayList<>();
+                result.add("");
+                result.add("");
+                result.addAll(loadFromFile(srtTxt));
+            }
+        }
         return result;
     }
 
