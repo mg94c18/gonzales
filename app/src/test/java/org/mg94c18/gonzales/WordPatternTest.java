@@ -19,6 +19,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @RunWith(RobolectricTestRunner.class)
+
+// Ovaj treba da startujem jednom za gonzeles i još jednom za dijaspora flavor
 public class WordPatternTest {
     private static boolean surpiseCharacterExists(String number, String word) {
         String rest = word;

@@ -1,6 +1,7 @@
 -----------------------------------------
 Search ako tražim "acab", a nađe/ponudi acabo, acaba, acaban i acabado, sve u jednoj pesmi, onda treba sve da bude bold, ili pak da glavna reč bude bold a da ostale budu italic
 Za duže pesme, na primer ove ankete, treba da bude kompletno skraćena verzija cele stvari, tako da na primer ima rečenica gde je ta reč ili slična reč, jedna ispod ili iznad kao kontekst, i tri tačke između.  A da se na primer u tom trenutku pojavi opcija u meniju da može da se ugasi skraćeni prikaz i da se prebaci na kompletni.
+
 Za Android, Search ne pamti prethodni search, mada na iOS pamti.
 Search u vodoravnom položaju: ako tražim "vino", onda će naći "rujno vino" pio, ali ne i "opilo nas vin|o"
 Zapravo će da nađe pesmu, ali neće da stavi u bold.
@@ -169,15 +170,22 @@ https://www.youtube.com/@HolaSpanish ali ima dosta koji izgledaju kao da imaju e
 https://www.youtube.com/@Linguriosa/videos možda bolje jer nema engleski, ali su teme dublje
 http://164.92.78.19/cgi-bin/YouTube_Fetch.py?channel_id=
 
+Za yt-dlp:
+unutar SG:
+$ python3.14 ../yt_dlp/__main__.py --no-check-certificate
+
 Ovaj ima kvalitetne titles: https://www.youtube.com/@bbcnewsnasrpskom
 
 adb push ~/clones/youtube-dl/P01.mp3 /storage/emulated/0/Android/data/org.mg94c18.slusac.d/cache/B02.mp3
 (da bi preimenovanje radilo, samo pogledam da nema nijedan fajl koji ima dva space-a)
 Preimenovanje fajlova tako da bude broj-ID.mp4: for i in $(seq -f "%02g" 1 $(ls *.mp4 | wc -l)); do export first=$(ls *.mp4 | grep -vE "^[0-9][0-9]\-" | head -n 1) && echo mv -i \"${first}\" $i-$(echo ${first} | sed -e 's/.*\-//') > move.$i && sh move.$i; done
+Slično za yt-dl koji ima drugačiji format: for i in $(seq -f "%02g" 1 $(ls *.mp4 | wc -l)); do export first=$(ls *.mp4 | grep -vE "^[0-9][0-9]\-" | head -n 1) && echo mv -i \"${first}\" $i-$(echo ${first} | sed -e 's/.*\[//' | tr -d ']') > move.$i && sh move.$i; done
+A ako ima i .webm i .mkv: for i in $(seq -f "%02g" 1 $(ls *.mp4 *.mkv *.webm | wc -l)); do export first=$(ls *.mp4 *.mkv *.webm | grep -vE "^[0-9][0-9]\-" | head -n 1) && echo mv -i \"${first}\" $i-$(echo ${first} | sed -e 's/.*\[//' | tr -d ']') > move.$i && sh move.$i; done
 Umesto ls *.mp4, možda je bolje cat youtube-dl-output.txt
 Ili pak za više od 100: for i in $(seq -f "%03g" 1 $(ls *.mp4 | wc -l)); do export first=$(ls *.mp4 | grep -vE "^[0-9][0-9][0-9]\-" | head -n 1) && echo mv -i \"${first}\" $i-$(echo ${first} | sed -e 's/.*\-//') > move.$i && sh move.$i; done
 Dodavanje novih u assets: for i in $(seq -f "%02g" 1 49); do for a in dates titles numbers; do echo A$i >> app/src/slusac/assets/$a; done; done
 Stavljanje tih u mp3 pa u aplikaciju: for n in $(cat app/src/slusac/assets/numbers | tail -n 49 | tr -d 'A'); do ffmpeg -i ~/clones/youtube-dl/Alo2/$n-*.mp4 A$n.mp3 && adb push A$n.mp3 /storage/emulated/0/Android/data/org.mg94c18.slusac.d/cache/; done
+Ili sa prefiksom: for p in GeA JLo CA; do cd $p; for i in $(seq -f "%02g" 1 $(ls ??-*.* | wc -l)); do ffmpeg -i $i-*.* $p-$i.mp3; done; cd -; done
 
 Odslušam sve, izbacim koji je loš zvuk, pa onda za kombinovanje na osnovu trajanja, a sa pamćenjem ID-ova:
 export group=Alo2; export prefix=A; rm -f durations.csv && for a in $(cat app/src/slusac/assets/numbers | tail -n 49 | grep -vE "(24|31|02|30|38)" | tr -d ''${prefix}''); do echo -n ${prefix}${a}, >> durations.csv; ffprobe ${prefix}${a}.mp3 2>&1 | grep Duration | awk '{print $2}' | tr -d '\n' >> durations.csv; export id=$(ls ~/clones/youtube-dl/${group}/${a}-*.mp4 | sed -e 's|.*/[0-9][0-9]\-||' | sed -e 's/\.mp4//'); echo ${a}-${id}; cat ~/clones/youtube-dl/${group}/script | grep ${id} | sed -e 's|.*/watch?v=||' | tr -d '"'  >> durations.csv; done
@@ -360,6 +368,13 @@ i   ȉ   î   ì   í
 o   ȍ   ô   ò   ó
 u   ȕ   û   ù   ú
 
+Slično za Interesas:
+§
+comprendes, comprendas
+perdonas, perdones
+no lo encuentras / [ojalá que] lo encuentres
+sé que lo sabes / quiero que lo sepas
+
 https://issues.chromium.org/issues/350869464
     - ako izvadim WebView->TextView, onda nestane
 
@@ -380,6 +395,8 @@ Stavim ovo u fajl 'script':
 cat "${1}" | tr -d '\r' | grep -vE "^[0-9][0-9]?[0-9]?" | tr '\n' '#' | sed -e 's/##/\n\- /g' | tr '#' ' '| sed -e 's|<i>||g' | sed -e 's|</i>||g' >> "${2}"
 Zatim obradim Seranove SRT preko njega:
 find ~/SRT/Seranovi/ -name \*.srt -print0 | xargs -0 -n 1 -I % /bin/bash script % %.txt
+cat *.txt | tr ' ' '\n' | tr '[:upper:]' '[:lower:]' | sed -r 's/[\"-\.,¿¡?\!]//g' | sort | uniq -c | sort -n > Seranovi.palabras
+Ima oko 35 hiljada raznih reči.  Joder se pominje 1600 puta :), mada manje nego Lucia, Diego ili Fiti.  Od reči koje ne znam (po redosledu pojavljivanja, počevši od najčešćih), "cago", pominje se 465 puta.
 
 ffmpeg -ss 3210 -i ~/Movies/Volver.mp3 -t 330 ~/Movies/volverb.mp3
 cat Volver.srt.es | grep -A 100000 "00:53:32,612" | grep -B 100000 "no te vayas así"  | grep -vE "[0-9][0-9][0-9]" | tr -d '\r' | tr '\n' '#' | sed -e 's/##/\n\- /g' | tr '#' ' ' > app/src/gonzales/assets/volverb

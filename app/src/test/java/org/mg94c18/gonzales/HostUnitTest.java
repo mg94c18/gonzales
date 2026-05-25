@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
 
+// Ovaj je nezavisan od flavor
 public class HostUnitTest {
     // for n in $(cat app/src/dijaspora/assets/numbers | grep -v abvgd) titles dates; do echo $n; cat app/src/dijaspora/assets/$n | /Applications/Android\ Studio.app/Contents/jbr/Contents/Home/bin/java -classpath . a3byka.Hijeroglif > app/src/dijaspora/assets/$n.cirilica; done
     @Test
