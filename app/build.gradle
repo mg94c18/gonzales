@@ -9,8 +9,8 @@ android {
     defaultConfig {
         minSdkVersion 22
         targetSdkVersion 36
-        versionCode 2718281 // izgleda da je 32-bit integer pa ne ne dopušta više decimala
-        versionName "2.718281"
+        versionCode 2718282 // izgleda da je 32-bit integer pa ne ne dopušta više decimala
+        versionName "2.718282"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
