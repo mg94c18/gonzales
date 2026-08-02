@@ -323,8 +323,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         boolean inSkipping = false;
         int nextCheck = startLine;
 
-        // TODO: Probati kao na iOS: <style>p { font-size: 5vw; }</style>
-        builder.append("<html><head><meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\"><title></title><style>p { font-size: ").append(width).append("vw; }</style></head><body>");
+        builder.append("<html><head><meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\"><title></title><style>* { font-size: ").append(width).append("vw; }</style></head><body>");
         if (inLandscape && !prevod.isEmpty()) {
             builder.append("<table width=\"100%\">");
             int i = startLine;
