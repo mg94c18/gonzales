@@ -47,7 +47,6 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
     String searchedWord;
     String localFilePath;
     Context context;
-    Button button;
     private WebView webView;
     private String PREF_PSH = "ps.height";
     private String PREF_PSE = "ps.episode";
@@ -93,7 +92,6 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
             return;
         }
         playerState = State.PLAYBACK_COMPLETED;
-        button.setText(PLAY_START);
     }
 
     @Override
@@ -106,7 +104,6 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         }
         mediaPlayer.release();
         mediaPlayer = null;
-        button.setEnabled(false);
         return true;
     }
 
@@ -118,12 +115,6 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
             return;
         }
         playerState = State.PREPARED;
-        if (!PlaybackService.inForeground) {
-            button.setEnabled(true);
-        }
-        if (inLandscape) {
-            button.setVisibility(View.GONE);
-        }
     }
 
     PageAdapter(MainActivity activity, String episode, String author, String searchedWord, int episodeId) {
@@ -160,18 +151,11 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
 
         webView = activity.findViewById(R.id.webview);
         webView.getSettings().setAllowFileAccess(true);
-        inLandscape = activity.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
-        button = activity.findViewById(R.id.button);
-        if (inLandscape) {
-            button.setVisibility(View.GONE);
-        } else {
-            button.setOnClickListener(this);
-            button.setText("Play");
-            button.setEnabled(false);
-            // Google Play ne voli da ima dugme.  Za sad ovako, a posle da obrišem kompletno.
-            button.setVisibility(View.GONE);
+        if (Build.VERSION.SDK_INT >= 36) {
+            // HW acceleration and drawerToggle.syncState() don't get along
+            webView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         }
-
+        inLandscape = activity.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
         if (inLandscape) {
             currentWidth = 3;
         } else {
@@ -272,7 +256,6 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
                 }
             });
         }
-        button.setEnabled(false);
     }
 
     public void toggle() {
@@ -341,7 +324,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         int nextCheck = startLine;
 
         // TODO: Probati kao na iOS: <style>p { font-size: 5vw; }</style>
-        builder.append("<html><head><meta http-equiv=\"content-type\" value=\"UTF-8\"><title></title><style>* { font-size: ").append(width).append("vw; }</style></head><body>");
+        builder.append("<html><head><meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\"><title></title><style>p { font-size: ").append(width).append("vw; }</style></head><body>");
         if (inLandscape && !prevod.isEmpty()) {
             builder.append("<table width=\"100%\">");
             int i = startLine;
@@ -418,7 +401,7 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
             }
             builder.append("</p>");
         }
-        builder.append("</body></head></html>");
+        builder.append("</body></html>");
         return builder.toString();
     }
 
@@ -550,11 +533,9 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
         if (playerState == State.STARTED) {
             mediaPlayer.pause();
             playerState = State.PAUSED;
-            button.setText("Resume");
         } else if (playerState == State.PAUSED || playerState == State.PREPARED || playerState == State.PLAYBACK_COMPLETED) {
             mediaPlayer.start();
             playerState = State.STARTED;
-            button.setText("Pause");
         } else {
             Log.wtf(TAG, "Unexpected state: " + playerState);
         }
@@ -649,7 +630,6 @@ public class PageAdapter implements View.OnTouchListener, ScaleGestureDetector.O
                 }
                 if (localFile == null) {
                     Log.e(TAG, "localFile=null, likely a download problem");
-                    parent.button.setEnabled(false);
                     return;
                 }
                 parent.onDownloaded(localFile);

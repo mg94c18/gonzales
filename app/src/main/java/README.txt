@@ -397,6 +397,7 @@ Zatim obradim Seranove SRT preko njega:
 find ~/SRT/Seranovi/ -name \*.srt -print0 | xargs -0 -n 1 -I % /bin/bash script % %.txt
 cat *.txt | tr ' ' '\n' | tr '[:upper:]' '[:lower:]' | sed -r 's/[\"-\.,¿¡?\!]//g' | sort | uniq -c | sort -n > Seranovi.palabras
 Ima oko 35 hiljada raznih reči.  Joder se pominje 1600 puta :), mada manje nego Lucia, Diego ili Fiti.  Od reči koje ne znam (po redosledu pojavljivanja, počevši od najčešćih), "cago", pominje se 465 puta.
+ag -i -C 1 "[^a-zA-Z]cago[^a-zA-Z]" Seranovi-0*.txt
 
 ffmpeg -ss 3210 -i ~/Movies/Volver.mp3 -t 330 ~/Movies/volverb.mp3
 cat Volver.srt.es | grep -A 100000 "00:53:32,612" | grep -B 100000 "no te vayas así"  | grep -vE "[0-9][0-9][0-9]" | tr -d '\r' | tr '\n' '#' | sed -e 's/##/\n\- /g' | tr '#' ' ' > app/src/gonzales/assets/volverb

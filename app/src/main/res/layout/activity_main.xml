@@ -2,6 +2,7 @@
 <androidx.drawerlayout.widget.DrawerLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/drawer_layout"
+    android:fitsSystemWindows="true"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -9,25 +10,10 @@
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-    <LinearLayout
+    <WebView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
-        <WebView
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="11"
-            android:id="@+id/webview"/>
-        <Button
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:id="@+id/button"
-            android:layout_weight="1"/>
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="0.2"/>
-    </LinearLayout>
+        android:id="@+id/webview"/>
     <ProgressBar
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

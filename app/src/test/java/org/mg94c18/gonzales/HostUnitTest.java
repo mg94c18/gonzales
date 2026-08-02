@@ -154,4 +154,28 @@ public class HostUnitTest {
 
         return file1.exists() && file2.exists() && file1.lastModified() < file2.lastModified();
     }
+
+    // export N=$(cat app/src/gonzales/assets/numbers | grep -B 82 nosdieron | wc -l); for a in numbers titles dates; do cat app/src/gonzales/assets/$a | head -n $N > app/src/gonzalesRelease/assets/$a; done
+    @Test
+    public void testGonzalesReleaseResources() throws Exception {
+        String assetsDir = System.getProperty("user.dir") + "/src/gonzales/assets/";
+        String assetsReleaseDir = System.getProperty("user.dir") + "/src/gonzalesRelease/assets/";
+        List<String> assetsToCheck = List.of("titles", "numbers", "dates");
+
+        for (String assetToCheck : assetsToCheck) {
+            Scanner asset = new Scanner(new FileInputStream(assetsDir + assetToCheck));
+            Scanner releaseAsset = new Scanner(new FileInputStream(assetsReleaseDir + assetToCheck));
+
+            Assert.assertTrue(releaseAsset.hasNextLine());
+
+            String assetLine;
+            String releaseAssetLine;
+            do {
+                Assert.assertTrue(asset.hasNextLine());
+                assetLine = asset.nextLine();
+                releaseAssetLine = releaseAsset.nextLine();
+                Assert.assertEquals(assetLine, releaseAssetLine);
+            } while (releaseAsset.hasNextLine());
+        }
+    }
 }

@@ -2,19 +2,21 @@
 <resources>
     <string name="app_name">Ja ribam</string>
 
-    <string name="apk_assets_time">1684032299000</string>
+    <string name="apk_assets_time">1785632876000</string>
 
-    <string name="default_episode_title">Para siempre</string>
+    <string name="default_episode_title">Hablemos de presente</string>
     <string name="default_episode_number">valemucho</string>
     <string name="default_episode_author">Vicente Fernández</string>
 
-    <string name="play">Sviraj</string>
-    <string name="otkazi_download">Ugasi</string>
-    <string name="dark_mode">Tamno</string>
-    <string name="toggle">Prevod</string>
-    <string name="na_i">Nađi..</string>
-    <string name="na_i_2">Nađi...</string>
-    <string name="tracks">Pesme</string>
-    <string name="rationale_title">Dozvola za muziku</string>
-    <string name="rationale">Aplikacija mora da ima dozvolu da prikaže notifikacije.  One se koriste za pauziranje ili nastavljanje muzike, ili da se prikaže pesma koja trenutno svira.</string>
+    <string name="play">Reproducir</string>
+    <string name="otkazi_download">Detener</string>
+    <string name="dark_mode">Oscuro</string>
+    <string name="pitanja_i_problemi">Contacto</string>
+    <string name="toggle">Traducción</string>
+    <string name="na_i">Buscar..</string>
+    <string name="na_i_2">Buscar...</string>
+
+    <string name="tracks">Canciones</string>
+    <string name="rationale_title">El permiso de reproducir</string>
+    <string name="rationale">La app tiene que tener el permiso de mostrar notificaciones.  Ellas se utilizan para pausar o continuar la música, o mostrar la cancion que se está reproduciendo.</string>
 </resources>

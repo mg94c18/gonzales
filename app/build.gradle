@@ -8,9 +8,9 @@ android {
     compileSdk 34
     defaultConfig {
         minSdkVersion 22
-        targetSdkVersion 35
-        versionCode 271828 // izgleda da je 32-bit integer pa ne ne dopušta više decimala
-        versionName "2.71828"
+        targetSdkVersion 36
+        versionCode 2718281 // izgleda da je 32-bit integer pa ne ne dopušta više decimala
+        versionName "2.718281"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -75,7 +75,7 @@ dependencies {
 
     // https://robolectric.org/getting-started/
     testImplementation 'junit:junit:4.13.2'
-    testImplementation 'org.robolectric:robolectric:4.14'
+    testImplementation 'org.robolectric:robolectric:4.16'
 
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core

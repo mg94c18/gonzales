@@ -2,11 +2,21 @@
 <resources>
     <string name="app_name">Slušač</string>
 
-    <string name="apk_assets_time">1684032299000</string>
+    <string name="apk_assets_time">1785632876000</string>
 
     <string name="default_episode_title">JS-40</string>
     <string name="default_episode_number">JS-40</string>
     <string name="default_episode_author">JS-40</string>
-    <string name="rationale_title">rationale_title</string>
-    <string name="rationale">rationale</string>
+
+    <string name="play">Sviraj</string>
+    <string name="otkazi_download">Ugasi</string>
+    <string name="dark_mode">Tamno</string>
+    <string name="pitanja_i_problemi">Kontakt</string>
+    <string name="toggle">Prevod</string>
+    <string name="na_i">Nađi..</string>
+    <string name="na_i_2">Nađi...</string>
+
+    <string name="tracks">Pesme</string>
+    <string name="rationale_title">Dozvola za muziku</string>
+    <string name="rationale">Aplikacija mora da ima dozvolu da prikaže notifikacije.  One se koriste za pauziranje ili nastavljanje muzike, ili da se prikaže pesma koja trenutno svira.</string>
 </resources>

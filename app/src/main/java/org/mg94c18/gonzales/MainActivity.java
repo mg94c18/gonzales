@@ -2,6 +2,7 @@ package org.mg94c18.gonzales;
 
 import android.app.AlertDialog;
 import android.app.SearchManager;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -484,8 +485,11 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             String[] emails = {CONTACT_EMAIL};
             emailIntent.putExtra(Intent.EXTRA_EMAIL, emails);
             emailIntent.putExtra(Intent.EXTRA_SUBJECT, getResources().getString(R.string.app_name) + " App");
-            if (emailIntent.resolveActivity(getPackageManager()) != null) {
+            emailIntent.putExtra(Intent.EXTRA_TEXT, "");
+            try {
                 startActivity(emailIntent);
+            } catch (ActivityNotFoundException nfe) {
+                Log.wtf(TAG, "Can't send email", nfe);
             }
             return true;
         } else if (itemId == R.id.action_review) {
@@ -505,7 +509,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             Intent stopIntent = new Intent(this, PlaybackService.class);
             stopIntent.setAction(PlaybackService.ACTION_STOP);
             startService(stopIntent);
-            findViewById(R.id.button).setEnabled(true);
             return true;
         } else if (itemId == R.id.action_dark_mode) {
             boolean newNightMode = !getNightModeFromSharedPrefs(this);
@@ -625,7 +628,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                             return;
                         }
                         startPlaybackService(MainActivity.this, playbackServiceIntent);
-                        findViewById(R.id.button).setEnabled(false);
                     }
                 })
                 .create();

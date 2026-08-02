@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <item android:id="@+id/action_email"
-        android:title="Pitanja i problemi"
-        android:visible="false"
-        app:showAsAction="never" />
     <item android:id="@+id/action_download_internal"
         android:title="@string/play"
         app:showAsAction="never"
@@ -17,6 +13,10 @@
         android:title="@string/dark_mode"
         app:showAsAction="never"
         android:visible="false"/>
+    <item android:id="@+id/action_email"
+        android:title="@string/pitanja_i_problemi"
+        android:visible="true"
+        app:showAsAction="never" />
     <item android:id="@+id/action_review"
         app:showAsAction="never"
         android:visible="false"
